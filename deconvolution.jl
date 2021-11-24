@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.1
+# v0.17.2
 
 using Markdown
 using InteractiveUtils
@@ -90,7 +90,7 @@ end
 
 # ╔═╡ 094decbe-591b-485b-9baf-060e2f2cb023
 let	
-	md"""change window size τ = (-0.3, $(@bind τ2 Slider(0:0.01:20,default=2, show_value=true))) 
+	md"""change window size τ = (-0.3, $(@bind τ2 Slider(0:0.01:20,default=5, show_value=true))) 
 	"""
 end
 
@@ -140,7 +140,7 @@ md"""
 """
 
 # ╔═╡ dc21bb51-547d-4e4d-b047-bde8599b23dd
-f(x) = -5(x-b)ℯ^ -(x-b)^2
+f(x) = -5(x-b)ℯ^ -(x-b)^2;
 
 # ╔═╡ 6bcb8960-cf0d-47d0-ab10-57bdf0aeb037
 begin
@@ -149,7 +149,7 @@ begin
 end
 
 # ╔═╡ ac0add51-84f4-473c-9490-c9e11eda7007
-g(x)=(c)ℯ^(-e.*(x-d)^2)
+g(x)=(c)ℯ^(-e.*(x-d)^2);
 #g(x) = -3(x-b)ℯ^ -(x-b)^2
 
 # ╔═╡ 0bb4cf30-6e78-41d0-8fa5-bbef696ef9f6
@@ -163,11 +163,12 @@ md"""
 ### **Event onsets**
 """
 
-# ╔═╡ 773a0cb8-5105-431c-a155-02e0f62fda67
-event_onsets_f = sort(sample(1:6000, 300, replace = false))
-
 # ╔═╡ 1b9fa185-acde-47ee-ba87-d7db9cdf8426
-event_onsets_g = sort(sample(1:6000, 300, replace = false))
+begin
+	event_onsets_g = sort(sample(MersenneTwister(8),1:6000, 300, replace = false))
+	event_onsets_f = sort(sample(MersenneTwister(1),1:6000, 300, replace = false))
+	[event_onsets_g event_onsets_f]' # for display
+end
 
 # ╔═╡ 4931b75b-28ab-4b65-b0ef-81ec575a3b20
 md"""
@@ -175,20 +176,26 @@ md"""
 """
 
 # ╔═╡ 36d354d4-ffa8-4ce3-9b97-e2cf623c656e
-ef(x) = sum((0, (f(x-a) for a in event_onsets_f if abs(x-a)<10)...))
-
-# ╔═╡ 0508ecde-be68-4dd8-8914-6816696e85c6
-eg(x) = sum((0, (g(x-a) for a in event_onsets_g if abs(x-a)<10)...))
+begin
+	ef(x) = sum((0, (f(x-a) for a in event_onsets_f if abs(x-a)<10)...))
+	eg(x) = sum((0, (g(x-a) for a in event_onsets_g if abs(x-a)<10)...))
+	o(x) = eg(x) .+ ef(x)
+end;
 
 # ╔═╡ 6d9910ea-bbbe-4c2a-b564-02fcd7d28f73
-o(x) = eg(x) .+ ef(x)
+
 
 # ╔═╡ 89fe54a2-c1ff-45d6-93ee-d54a92796fe7
 begin
-	plot(ef, xlims=(-10, 70), ylims=(-5,5), legend=false, linestyle=:dash, linecolor=:orange)
-	plot!(eg, xlims=(-10, 70), ylims=(-5,5), legend=false, linestyle=:dash, linecolor=:green)
-	plot!(-10:0.1:70, o, xlims=(-10, 70), ylims=(-5,5), legend=false, linestyle=:solid, linecolor=:deepskyblue)
+	p1 = plot(-10:0.1:70, o, xlims=(-10, 70), ylims=(-5,5), legend=false,  linecolor=:deepskyblue)
 	vline!([0], linestyle=:dash, linecolor=:black)
+	p2 = plot(-10:0.1:70,ef, xlims=(-10, 70), ylims=(-5,5), legend=false, linecolor=:orange)
+	plot!(-10:0.1:70,eg, xlims=(-10, 70), ylims=(-5,5), legend=false, linecolor=:green)
+	vline!([0], linestyle=:dash, linecolor=:black)
+	vline!(event_onsets_f,linecolor=:orange,linestyle=:dash)
+	vline!(event_onsets_g,linecolor=:green,linestyle=:dash)
+	plot(p1, p2,layout=@layout[a;b])
+	
 end
 
 # ╔═╡ 330881fa-d701-4c3a-835e-c75b33ed135d
@@ -196,30 +203,26 @@ md"""
 ### TODO: Bring Data into Format for Unfold
 """
 
-# ╔═╡ b31c2a28-2eb8-4c81-9c0b-d384b209beb6
-df = DataFrame(latency = event_onsets_f, conditionA=1)
-
-# ╔═╡ 4d0ec94b-08d4-421c-82d1-aa7eafb28d29
-dg = DataFrame(latency = event_onsets_g, conditionB=1)
-
 # ╔═╡ c5b3773a-bdd8-4c1a-b496-da4f555cb97f
 begin
+	df = DataFrame(latency = event_onsets_f, conditionA=1);
+	dg = DataFrame(latency = event_onsets_g, conditionB=1);
 	evts = sort(outerjoin(df, dg, on = :latency), [:latency])
 	insertcols!(evts, 2, :intercept => 1)
 	insertcols!(evts, 2, :type => "stimulus2")
 	evts = coalesce.(evts, 0);
 	evts.latency = evts.latency * 10
-end
+end;
 
 
 # ╔═╡ a3591070-7ddc-4835-99b1-d14dd5d865ba
 begin
 	range = 0:0.1:6000
 	data = o.(range)
-end
+end;
 
 # ╔═╡ 2b1df218-c2fa-4104-bd0e-4f7230c88bb7
-data_noise = data .+ σ .* randn(size(data)) 
+data_noise = data .+ σ .* randn(size(data)) ;
 
 # ╔═╡ f60e7455-b359-43de-9bb1-eae12c9f63e3
 plot(range[1:500],data[1:500])
@@ -272,6 +275,9 @@ condB = filter(row->row.coefname=="conditionB", results)
 # ╔═╡ 69a9fbf1-57f6-4f97-8b71-9545f9278aa4
 plot(condB.time, condB.estimate, ylims=(-5,5), linecolor=:green)
 
+# ╔═╡ 632dd3fd-8326-4a35-b0db-dd2b8021397f
+designmatrix(m).Xs[1:114,:] # just for bene :-)
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -300,7 +306,7 @@ Unfold = "~0.3.4"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.7.0-rc2"
+julia_version = "1.6.3"
 manifest_format = "2.0"
 
 [[deps.AbstractFFTs]]
@@ -945,7 +951,7 @@ uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
 version = "2.36.0+0"
 
 [[deps.LinearAlgebra]]
-deps = ["Libdl", "libblastrampoline_jll"]
+deps = ["Libdl"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[deps.LogExpFunctions]]
@@ -1265,7 +1271,7 @@ deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 
 [[deps.Random]]
-deps = ["SHA", "Serialization"]
+deps = ["Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[deps.Ratios]]
@@ -1682,10 +1688,6 @@ git-tree-sha1 = "5982a94fcba20f02f42ace44b9894ee2b140fe47"
 uuid = "0ac62f75-1d6f-5e53-bd7c-93b484bb37c0"
 version = "0.15.1+0"
 
-[[deps.libblastrampoline_jll]]
-deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
-uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-
 [[deps.libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "daacc84a041563f965be61859a36e17c4e4fcd55"
@@ -1742,7 +1744,7 @@ version = "0.9.1+5"
 # ╟─094decbe-591b-485b-9baf-060e2f2cb023
 # ╟─19f2c526-d9bb-4e77-bdbf-a2bd5ec99a73
 # ╟─e43cb892-bfc5-405f-a5bf-25582c7c18f6
-# ╟─906bcc38-ac08-4c71-a8eb-24321741790f
+# ╠═906bcc38-ac08-4c71-a8eb-24321741790f
 # ╟─5441a4e0-9849-4cee-9f2c-fd5c81a6e838
 # ╠═fa539a20-447e-11ec-0a13-71fa39527f8f
 # ╠═016eed79-8989-4a0c-9319-aebcb8ea3911
@@ -1753,16 +1755,12 @@ version = "0.9.1+5"
 # ╠═ac0add51-84f4-473c-9490-c9e11eda7007
 # ╟─0bb4cf30-6e78-41d0-8fa5-bbef696ef9f6
 # ╟─61e5f8bb-4c24-4eb6-a7d6-31c501a51f05
-# ╠═773a0cb8-5105-431c-a155-02e0f62fda67
 # ╠═1b9fa185-acde-47ee-ba87-d7db9cdf8426
 # ╟─4931b75b-28ab-4b65-b0ef-81ec575a3b20
 # ╠═36d354d4-ffa8-4ce3-9b97-e2cf623c656e
-# ╠═0508ecde-be68-4dd8-8914-6816696e85c6
 # ╠═6d9910ea-bbbe-4c2a-b564-02fcd7d28f73
 # ╠═89fe54a2-c1ff-45d6-93ee-d54a92796fe7
 # ╟─330881fa-d701-4c3a-835e-c75b33ed135d
-# ╠═b31c2a28-2eb8-4c81-9c0b-d384b209beb6
-# ╠═4d0ec94b-08d4-421c-82d1-aa7eafb28d29
 # ╠═c5b3773a-bdd8-4c1a-b496-da4f555cb97f
 # ╠═a3591070-7ddc-4835-99b1-d14dd5d865ba
 # ╠═2b1df218-c2fa-4104-bd0e-4f7230c88bb7
@@ -1781,5 +1779,6 @@ version = "0.9.1+5"
 # ╠═cd93445e-42fd-4572-bd07-c44def848860
 # ╟─c7975d33-1621-4801-8fb4-d3cca1eec7a1
 # ╠═69a9fbf1-57f6-4f97-8b71-9545f9278aa4
+# ╠═632dd3fd-8326-4a35-b0db-dd2b8021397f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
