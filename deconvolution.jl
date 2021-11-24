@@ -90,7 +90,7 @@ end
 
 # ╔═╡ 094decbe-591b-485b-9baf-060e2f2cb023
 let	
-	md"""change window size τ = (-0.3, $(@bind τ2 Slider(0:0.1:5,default=2, show_value=true))) 
+	md"""change window size τ = (-0.3, $(@bind τ2 Slider(0:0.01:20,default=2, show_value=true))) 
 	"""
 end
 
@@ -175,19 +175,19 @@ md"""
 """
 
 # ╔═╡ 36d354d4-ffa8-4ce3-9b97-e2cf623c656e
-ef(x) = sum(f(x-a) for a in event_onsets_f)
+ef(x) = sum((0, (f(x-a) for a in event_onsets_f if abs(x-a)<10)...))
 
 # ╔═╡ 0508ecde-be68-4dd8-8914-6816696e85c6
-eg(x) = sum(g(x-a) for a in event_onsets_g)
+eg(x) = sum((0, (g(x-a) for a in event_onsets_g if abs(x-a)<10)...))
 
 # ╔═╡ 6d9910ea-bbbe-4c2a-b564-02fcd7d28f73
 o(x) = eg(x) .+ ef(x)
 
 # ╔═╡ 89fe54a2-c1ff-45d6-93ee-d54a92796fe7
 begin
-	plot(ef, xlims=(-2, 70), ylims=(-10,10), legend=false, linestyle=:dash, linecolor=:orange)
-	plot!(eg, xlims=(-2, 70), ylims=(-10,10), legend=false, linestyle=:dash, linecolor=:green)
-	plot!(o, xlims=(-2, 70), ylims=(-5,5), legend=false, linestyle=:solid, linecolor=:deepskyblue)
+	plot(ef, xlims=(-10, 70), ylims=(-5,5), legend=false, linestyle=:dash, linecolor=:orange)
+	plot!(eg, xlims=(-10, 70), ylims=(-5,5), legend=false, linestyle=:dash, linecolor=:green)
+	plot!(-10:0.1:70, o, xlims=(-10, 70), ylims=(-5,5), legend=false, linestyle=:solid, linecolor=:deepskyblue)
 	vline!([0], linestyle=:dash, linecolor=:black)
 end
 
@@ -208,15 +208,21 @@ begin
 	insertcols!(evts, 2, :intercept => 1)
 	insertcols!(evts, 2, :type => "stimulus2")
 	evts = coalesce.(evts, 0);
+	evts.latency = evts.latency * 10
 end
 
 
 # ╔═╡ a3591070-7ddc-4835-99b1-d14dd5d865ba
 begin
-	range = 0:last(evts).latency + 10
+	range = 0:0.1:6000
 	data = o.(range)
-	data_noise = data .+ σ .* randn(size(data)) 
 end
+
+# ╔═╡ 2b1df218-c2fa-4104-bd0e-4f7230c88bb7
+data_noise = data .+ σ .* randn(size(data)) 
+
+# ╔═╡ f60e7455-b359-43de-9bb1-eae12c9f63e3
+plot(range[1:500],data[1:500])
 
 # ╔═╡ 62f251b7-6aaf-457a-b777-99e1576e81ba
 md"""
@@ -230,10 +236,10 @@ md"""### Fitting the model"""
 τ = (-0.3,τ2)
 
 # ╔═╡ 80b10fcd-c160-46cb-bbb8-d4bd47d611e9
-basisfunction = firbasis(τ=τ,sfreq=50,name="stimulus")
+basisfunction = firbasis(τ=τ,sfreq=10,name="stimulus")
 
 # ╔═╡ 77f03312-0261-402e-a69c-60b192e827b1
-formula  = @formula 0~1+conditionA+conditionB
+formula  = @formula 0~0+conditionA+conditionB
 
 # ╔═╡ c29f57fa-4eb8-4df9-a2ee-f97f7da990a5
 bfDict = Dict(Any=>(formula,basisfunction))
@@ -258,13 +264,13 @@ end
 condA = filter(row->row.coefname=="conditionA", results)
 
 # ╔═╡ cd93445e-42fd-4572-bd07-c44def848860
-plot(condA.time, condA.estimate, ylims=(-4,4), linecolor=:orange)
+plot(condA.time, condA.estimate, ylims=(-5,5), linecolor=:orange)
 
 # ╔═╡ c7975d33-1621-4801-8fb4-d3cca1eec7a1
 condB = filter(row->row.coefname=="conditionB", results)
 
 # ╔═╡ 69a9fbf1-57f6-4f97-8b71-9545f9278aa4
-plot(condB.time, condB.estimate, ylims=(-4,4), linecolor=:green)
+plot(condB.time, condB.estimate, ylims=(-5,5), linecolor=:green)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1757,8 +1763,10 @@ version = "0.9.1+5"
 # ╟─330881fa-d701-4c3a-835e-c75b33ed135d
 # ╠═b31c2a28-2eb8-4c81-9c0b-d384b209beb6
 # ╠═4d0ec94b-08d4-421c-82d1-aa7eafb28d29
-# ╟─c5b3773a-bdd8-4c1a-b496-da4f555cb97f
+# ╠═c5b3773a-bdd8-4c1a-b496-da4f555cb97f
 # ╠═a3591070-7ddc-4835-99b1-d14dd5d865ba
+# ╠═2b1df218-c2fa-4104-bd0e-4f7230c88bb7
+# ╠═f60e7455-b359-43de-9bb1-eae12c9f63e3
 # ╟─62f251b7-6aaf-457a-b777-99e1576e81ba
 # ╟─e93c8e1c-f984-419f-b3bb-d9ca0396f30a
 # ╟─5c714845-00e6-44f4-a323-ec310d39ccfb
@@ -1770,7 +1778,7 @@ version = "0.9.1+5"
 # ╟─d93765d1-3740-4aaa-96b3-39473adb4ac5
 # ╟─d7867b77-fef0-4095-923f-9428d13b622a
 # ╟─d61449d7-42b1-4555-8d67-6b95eac669c7
-# ╟─cd93445e-42fd-4572-bd07-c44def848860
+# ╠═cd93445e-42fd-4572-bd07-c44def848860
 # ╟─c7975d33-1621-4801-8fb4-d3cca1eec7a1
 # ╠═69a9fbf1-57f6-4f97-8b71-9545f9278aa4
 # ╟─00000000-0000-0000-0000-000000000001
