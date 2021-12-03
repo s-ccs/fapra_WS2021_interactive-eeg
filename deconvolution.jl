@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.2
+# v0.17.1
 
 using Markdown
 using InteractiveUtils
@@ -23,110 +23,25 @@ begin
 	using Unfold
 	using StatsModels
 	using StatsBase
-	using StatsPlots	
-end
-
-# ╔═╡ 016eed79-8989-4a0c-9319-aebcb8ea3911
-begin
+	using StatsPlots
 	using Random
+	using Images
 end
 
 # ╔═╡ c5b90e22-aa20-464f-afab-0e1d7927461e
-md"""# **General Stuff**"""
-
-# ╔═╡ b2898bea-1879-4035-9f88-8635c5e261a0
-md""" ### **HTML, JS and Slider Workarounds**"""
-
-# ╔═╡ ff6fdbc1-5c20-44df-9ba7-d63121bbde95
-html"""
-<div class=sidebar>
-</div>
-<style>
-.sidebar {
-  position: fixed;
-  left: 40px;
-  top: 80px;
-  border: 3px solid rgba(0, 0, 0, 0.15);
-  border-radius: 10px;
-  z-index: 1000;
-  width: 25%;
-  padding: 10px;
-}
-.sidebar > p  {
-  padding: 0px;
-  font-weight: 700;
-  line-height: 1em;
-  display: block;
-}
-.sidebar > p > bond {
-  padding-left: 10px;
-}
-.sidebar > p > bond > input {
-  float: right;
-  width: 25%;
-}
-</style>
-"""
-
-# ╔═╡ a189f45e-50de-4f1e-a6d7-e6756e291e35
-let 
-	md"""Change the value of b $(@bind b Slider(1:1:10, show_value=true))"""
-end
-
-# ╔═╡ fba4bbfc-5f69-4aaf-b852-22c5c5cfdba0
-let
-	md"""Change the value of c $(@bind c Slider(1:1:10, show_value=true))"""
-end
-
-# ╔═╡ cb23f717-5333-4704-ba43-2ddfb075005a
-let
-	md"""Change the value of d $(@bind d Slider(1:1:10, show_value=true))"""
-end
-
-# ╔═╡ 05a7ba2b-f2c6-4612-b06d-ed0888fde6b4
-let
-	md"""Change the value of e $(@bind e Slider(1:1:10, show_value=true))"""
-end
-
-# ╔═╡ 094decbe-591b-485b-9baf-060e2f2cb023
-let	
-	md"""change window size τ = (-0.3, $(@bind τ2 Slider(0:0.01:20,default=5, show_value=true))) 
-	"""
-end
-
-# ╔═╡ 19f2c526-d9bb-4e77-bdbf-a2bd5ec99a73
-let	
-	md"""Change noise: σ = $(@bind σ Slider(0:0.1:5,default=0, show_value=true))
-	"""
-end
-
-# ╔═╡ e43cb892-bfc5-405f-a5bf-25582c7c18f6
-html"""
-<script>
-var els = document.querySelectorAll('bond');
-console.log(els);
-
-var wrapper = document.querySelector('div.sidebar');
-
-while (wrapper.hasChildNodes()) {  
-  wrapper.removeChild(wrapper.firstChild);
-}
-
-for (var i = 0; i < els.length; ++i) {
-  var p = document.createElement("div");
-  var par = els[i].parentNode;
-  wrapper.appendChild(par);
-  
-}
-</script>
-"""
+md"""# **Imports & General Stuff**"""
 
 # ╔═╡ 906bcc38-ac08-4c71-a8eb-24321741790f
 PlutoUI.TableOfContents(aside=true)
 
-# ╔═╡ 5441a4e0-9849-4cee-9f2c-fd5c81a6e838
+# ╔═╡ 8b39f28e-d889-4f98-9601-380e015b7d35
 md"""
-### **Imports**
+# Motivation
+
+In a perfect setup for an EEG experiment
+- separate events in time to avoid overlap
+- 
+- 
 """
 
 # ╔═╡ a9d99a1d-59f2-4c02-89dd-33c9a27db84a
@@ -134,146 +49,340 @@ md"""
 # **Intuition to Convolution**
 """
 
-# ╔═╡ ecc0df31-a29b-4d62-8dbf-08b86c35a885
+# ╔═╡ 86046132-f497-4573-aa48-52a3b7eb7193
 md"""
-### **Kernels**
+Before digging deeper into the features and characteristic of deconvolution we should first briefly take a closer look at the topic of convolution.
+
+In math convolution is a operation which takes two functions as input and outputs a third function. Formal, deconvolution of the functions $f$ and $g$ is written as $(f * g)$. But what does this new output function describe?
+
+For this a closer look to the process of convolution helps: \
+Convolving two functions is often described as sliding one function over another. **TODO**
+
+
+**Consider the following setup:** \
+We want to simulate the measured EEG signal of an experiment. In this experiment we have two different stimuli. Each stimuli evokes a different response. Assume we already know this specific response to each stimuli. 
+Additonal we know from the experiment setup at which timepoint each stimulus occurred.
+
+
+
 """
 
-# ╔═╡ dc21bb51-547d-4e4d-b047-bde8599b23dd
-f(x) = -5(x-b)ℯ^ -(x-b)^2;
+# ╔═╡ ecc0df31-a29b-4d62-8dbf-08b86c35a885
+md"""
+### **Response to Stimuli / Kernel**
+
+As described above, we need for our simulation of the EEG signal, the isolated response of each stimuli. In the context of convolution this is often called kernel. The following figures show the kernel A (orange) and B (green). \
+\
+The **response to stimuli A** is modelled by the function $ERP_A(t)$
+
+"""
+
+# ╔═╡ 5d62c314-804c-4cf0-a3fe-fbf9328a3ee1
+let 
+	md"""Change the value of b $(@bind b Slider(1:1:10, default=5, show_value=true))"""
+end
+
+# ╔═╡ 5c941851-09e8-4cc3-8503-92bcd4dce2ec
+begin
+	erp_A(t) = -5(t-b)ℯ^ -0.5(t-b)^2;
+	Markdown.parse("\$ERP_A(t) = -5(t-$b)ℯ^{-0.5(t-$b)^2}\$")
+end
+	
 
 # ╔═╡ 6bcb8960-cf0d-47d0-ab10-57bdf0aeb037
 begin
-	plot(f, xlims=(-2, 10), ylims=(-5,5), legend=false, linecolor=:orange)
+	kernelA = plot(erp_A, xlims=(-2, 10), ylims=(-5,5), legend=false, linecolor=:orange, size=(600,200))
 	vline!([0], linestyle=:dash, linecolor=:black)
 end
 
-# ╔═╡ ac0add51-84f4-473c-9490-c9e11eda7007
-g(x)=(c)ℯ^(-e.*(x-d)^2);
-#g(x) = -3(x-b)ℯ^ -(x-b)^2
+# ╔═╡ 44938813-2cf6-4381-afe7-28758adc0abe
+md"""
+Analogous to this the **response to stimuli B** is modelled by $ERP_B(t)$. 
+"""
+
+# ╔═╡ a53b8fd0-e061-4147-9dc1-d6313f392ece
+let
+	md"""Change the value of d $(@bind d Slider(1:1:10, default=5, show_value=true))"""
+end
+
+# ╔═╡ dca3bf1a-cc61-4a70-8cea-20808279acc4
+begin
+	erp_B(t)=2.5ℯ^(-(t-d)^2);
+	Markdown.parse("\$ERP_B(t) = 2.5ℯ^{-(t-$d)^2}\$")
+end
 
 # ╔═╡ 0bb4cf30-6e78-41d0-8fa5-bbef696ef9f6
 begin
-	plot(g, xlims=(-2, 10), ylims=(-5,5), linecolor=:green, legend=false)
+	plot(erp_B, xlims=(-2, 10), ylims=(-5,5), linecolor=:green, legend=false, size=(600,200))
 	vline!([0], linestyle=:dash, linecolor=:black)
 end
 
 # ╔═╡ 61e5f8bb-4c24-4eb6-a7d6-31c501a51f05
 md"""
 ### **Event onsets**
+
+The next figure shows the **event onsets**. They are part of the experiment design. Normally in research those event onsets are distributed in such a way that overlapping responses are avoided at all costs. But this is not always possible given  the experiment or research. (EXAMPLE?)
+For a purpose we will see later, we will not avoid overlapping responses in our experiment. More: We will enforce them to happen at some level.
+\
+\
+The orange vertical line corresponds to the event onsets of stimuli A. The green line to the event onsets of stimuli B. \
+\
+Since we want to create a simulated EEG signal we simply choose 300 random values between 1 and 6000 for each stimuli. 
+\
+\
 """
 
 # ╔═╡ 1b9fa185-acde-47ee-ba87-d7db9cdf8426
 begin
-	event_onsets_g = sort(sample(MersenneTwister(8),1:6000, 300, replace = false))
-	event_onsets_f = sort(sample(MersenneTwister(1),1:6000, 300, replace = false))
-	[event_onsets_g event_onsets_f]' # for display
+	# sample event onsets
+	event_onsets_A = sort(sample(MersenneTwister(8),1:6000, 300, replace = false))
+	event_onsets_B = sort(sample(MersenneTwister(1),1:6000, 300, replace = false))
+	[event_onsets_A event_onsets_B]' # for display
+end;
+
+# ╔═╡ 4cbafc47-71c7-4dfa-9deb-f1b9ca418426
+begin
+	# graph of event onsets for stimuli A
+	e1 = vline(event_onsets_A, xlims=(0,100), ylims=(0,1), 	
+		linecolor=:orange,linestyle=:dash, label="event onset of stimuli A")
+
+	# graph of event onsets for stimuli B
+	e2 = vline!(event_onsets_B, xlims=(0,100),ylims=(0,1), 
+		linecolor=:green,linestyle=:dash, label="event onset of stimuli B")
+
+	# plotting
+	plot(e2, size=(600,200))
 end
 
 # ╔═╡ 4931b75b-28ab-4b65-b0ef-81ec575a3b20
 md"""
 ### **Convolution of kernels with event onsets**
+
+In our process to simulate the continuous EEG signal, we rely on multiple assumptions. One main assumption is that signals within the brain add up linear. Based on this, we can describe the continuous EEG Signal at each timepoint t as following:
 """
+
+# ╔═╡ 2d8e3bce-1120-4eae-871e-508844f08a8b
+Markdown.parse("\$EEG(t)=∑_{i=1}^{n_A}ERP_A(t-eventOnsetA_i)+∑_{i=1}^{n_B}ERP_B(t-eventOnsetB_i)\$")
 
 # ╔═╡ 36d354d4-ffa8-4ce3-9b97-e2cf623c656e
 begin
-	ef(x) = sum((0, (f(x-a) for a in event_onsets_f if abs(x-a)<10)...))
-	eg(x) = sum((0, (g(x-a) for a in event_onsets_g if abs(x-a)<10)...))
-	o(x) = eg(x) .+ ef(x)
+	# assemble the separate signals via the event onsets
+	eeg_A(t) = sum((0, (erp_A(t-a) for a in event_onsets_A if abs(t-a)<10)...))
+	eeg_B(t) = sum((0, (erp_B(t-a) for a in event_onsets_B if abs(t-a)<10)...))
+	
+	# addition of the separate signals at each timepoint
+	eeg(t) = eeg_A(t) .+ eeg_B(t)
 end;
 
-# ╔═╡ 6d9910ea-bbbe-4c2a-b564-02fcd7d28f73
+# ╔═╡ b5546f79-3629-4acd-a7c3-c893f4b56e94
+md"""
+### Is this a convolution?  
+Yes indeed. By replacing the event onsets with a vector g with 0 everywhere and 1 at the event onsets, we can reformulate the equation from above:
+"""
 
+# ╔═╡ 4fc50f5a-e798-4337-8df6-508af0709b71
+Markdown.parse("\$EEG(t)=g_A*ERP_A+g_B*ERP_B\$")
+
+# ╔═╡ a13a0023-55cd-4987-95ba-5802d01512de
+md"""
+This is a sum of two convolutions!
+\
+\
+"""
+
+# ╔═╡ d9e53857-d59d-4302-b9b9-175c14a87f71
+md"""
+Computing the EEG signals following the second equation:
+```julia
+# convert event onsets to vector of 0 and 1
+range = 0:0.1:6000
+g_A = convert.(Int, [i in event_onsets_A for i in range])
+g_B = convert.(Int, [i in event_onsets_B for i in range])
+```
+```julia
+# compute the eeg signal as convolution
+eeg = conv(g_A, erp_A.(range)) + conv(g_B, erp_B.(range))
+```
+```julia
+# plot the eeg signal
+plot(eeg_, xlims=(0,700), formatter=x->x/10)
+```
+\
+\
+"""
+
+# ╔═╡ 4cbaaa15-b1d2-4a4e-b100-51589a026ad3
+md""" 
+### Simulated EEG signal
+How does this sum of convolutions look like? Take a look at the next figure!         
+
+The **first graph** shows the signals of the *convolution of the event onsets with the respective kernel of the stimulus*. This results in a signal for each stimulus. The orange signal belongs to stimuli A, the green to stimuli B. The vertical lines show the event onsets in the respective color. \
+The blue graph below shows the overall signal. This results from adding up the orange and green signal at each timepoint.
+"""
 
 # ╔═╡ 89fe54a2-c1ff-45d6-93ee-d54a92796fe7
 begin
-	p1 = plot(-10:0.1:70, o, xlims=(-10, 70), ylims=(-5,5), legend=false,  linecolor=:deepskyblue)
+	p1 = plot(-10:0.1:70, eeg, xlims=(-10, 70), ylims=(-5,5), legend=false,  linecolor=:deepskyblue)
 	vline!([0], linestyle=:dash, linecolor=:black)
-	p2 = plot(-10:0.1:70,ef, xlims=(-10, 70), ylims=(-5,5), legend=false, linecolor=:orange)
-	plot!(-10:0.1:70,eg, xlims=(-10, 70), ylims=(-5,5), legend=false, linecolor=:green)
+	p2 = plot(-10:0.1:70,eeg_A, xlims=(-10, 70), ylims=(-5,5), legend=false, linecolor=:orange)
+	plot!(-10:0.1:70,eeg_B, xlims=(-10, 70), ylims=(-5,5), legend=false, linecolor=:green)
 	vline!([0], linestyle=:dash, linecolor=:black)
-	vline!(event_onsets_f,linecolor=:orange,linestyle=:dash)
-	vline!(event_onsets_g,linecolor=:green,linestyle=:dash)
-	plot(p1, p2,layout=@layout[a;b])
+	vline!(event_onsets_A,linecolor=:orange,linestyle=:dash)
+	vline!(event_onsets_B,linecolor=:green,linestyle=:dash)
+	plot(p2, p1,layout=@layout[a;b])
 	
 end
 
 # ╔═╡ 330881fa-d701-4c3a-835e-c75b33ed135d
 md"""
-### TODO: Bring Data into Format for Unfold
+# Prepare Data for Unfold
 """
 
 # ╔═╡ c5b3773a-bdd8-4c1a-b496-da4f555cb97f
 begin
-	df = DataFrame(latency = event_onsets_f, conditionA=1);
-	dg = DataFrame(latency = event_onsets_g, conditionB=1);
-	evts = sort(outerjoin(df, dg, on = :latency), [:latency])
-	insertcols!(evts, 2, :intercept => 1)
-	insertcols!(evts, 2, :type => "stimulus2")
-	evts = coalesce.(evts, 0);
-	evts.latency = evts.latency * 10
+	events_A = DataFrame(latency = event_onsets_A, conditionA=1);
+	events_B = DataFrame(latency = event_onsets_B, conditionB=1);
+	events = sort(outerjoin(events_A, events_B, on = :latency), [:latency])
+	insertcols!(events, 2, :intercept => 1)
+	insertcols!(events, 2, :type => "stimulus")
+	events = coalesce.(events, 0);
+	events.latency = events.latency * 10
 end;
 
+# ╔═╡ c8d13716-9e0c-4bf9-8612-798e854bf573
+md"""
+# Data + Noise
+For illustration purpose we introduce noise to the data. The level of noise is contolled by the \
+variable σ.
+The greater σ, the more noise is added to the original data. \
+\
+Feel free to adjust the noise, and see how the quality of the results change.
+"""
+
+# ╔═╡ 554d009f-da73-4ac2-82cd-561cf841e9ac
+let	
+	md"""Change noise: σ = $(@bind σ Slider(0:0.1:5, default=0, show_value=true))
+	"""
+end
 
 # ╔═╡ a3591070-7ddc-4835-99b1-d14dd5d865ba
 begin
 	range = 0:0.1:6000
-	data = o.(range)
+	data = eeg.(range)
+	data_noise = data .+ σ .* randn(size(data)) ;
 end;
-
-# ╔═╡ 2b1df218-c2fa-4104-bd0e-4f7230c88bb7
-data_noise = data .+ σ .* randn(size(data)) ;
-
-# ╔═╡ f60e7455-b359-43de-9bb1-eae12c9f63e3
-plot(range[1:500],data[1:500])
 
 # ╔═╡ 62f251b7-6aaf-457a-b777-99e1576e81ba
 md"""
-# **Deconvolution with Unfold**
+# **Linear Deconvolution with Unfold**
 """
+
+# ╔═╡ fedf1525-042a-4e82-b152-c30d3385555b
+md"""
+From here on, lets assume we **measured** the **blue signal** from the above in our **eeg experiment**. From our experiment we additional know at which time each respective stimulus was presented (event onsets). Based on this we try to recover the underlying ERP for each stimulus. In our case stimuli A and stimuli B. This is the inverse operation of the above performed convolution.
+"""
+
+# ╔═╡ a15d2791-9266-47e5-837d-0074395b98a4
+begin
+	plot(range, data_noise, xlims=(-10, 70), ylims=(-5,5), legend=false,  linecolor=:deepskyblue, size=(600,200))
+	vline!([0], linestyle=:dash, linecolor=:black)
+end
+
+# ╔═╡ b22e3a42-b652-4c83-a05c-0bd2b1b316ad
+Markdown.parse("\$EEG(t)=g_A*ERP_A+g_B*ERP_B\$")
+
+# ╔═╡ f02e783f-6793-4393-aa7f-8ab28cb879b5
+md"""
+By taking a closer look at the formula this means the folloeing: 
+- We know the measured EEG Signal, thus we know $EEG(t)$
+- We know the event onsets for each stimuli ($g_A, g_B$)
+- We want to recover the isolated response function to each stimuli $ERP_A$ and $ERP_B$
+\
+To achieve this, **Linear Modeling** comes to our rescue! 
+- possible because overlap is always a bit different 
+- assumes that first doesnt influence the processing of second event
+"""
+
+# ╔═╡ 37011d23-eeaa-47ed-9ff2-23b177324cfc
+md"""
+!!! tip \"Idea\"
+
+    Each **timepoint / observed sample** of the EEG signal can be modelled as a **linear combination** of the (possibly) **overlapping responses / kernels**. 
+
+**TODO**: τ := time respective to current event onset
+
+This key idea is visualized in the following figure. On the left side the figure shows the continuous EEG recording together with the event onsets. **TODO**
+"""
+
+# ╔═╡ 77d11203-9950-459c-bdc4-6b5384a28b39
+begin
+	url = "https://dfzljdn9uc3pi.cloudfront.net/2019/7838/1/fig-2-2x.jpg"
+	img = load(url)
+	plot(img, bordercolor=:white, textcolor=:white, 
+		xlabel="https://doi.org/10.7717/peerj.7838/fig-2")
+end
+
+# ╔═╡ 47b949cc-ce87-406c-bb6f-0ae10a338521
+md"""
+#### Window size
+"""
+
+# ╔═╡ 8de9dc91-8ed2-4e1d-927b-cfbdc3f617b0
+md"""
+As additional variable we introduce the window size. Feel free to change the upper bound and inspect the results graph.
+"""
+
+# ╔═╡ fa965472-c3f3-40c4-83a7-eb76bec93c80
+md"""
+Change window size τ = (-2.0, $(@bind τ2 Slider(-2:0.1:20,default=5, show_value=true))) 
+"""
+
+
+# ╔═╡ 60e739ff-a8d4-42b8-8b6e-d73e398f8c80
+τ = (-2, τ2) # window size definition for deconvolution with unfold
 
 # ╔═╡ e93c8e1c-f984-419f-b3bb-d9ca0396f30a
 md"""### Fitting the model"""
 
-# ╔═╡ 5c714845-00e6-44f4-a323-ec310d39ccfb
-τ = (-0.3,τ2)
+# ╔═╡ 85c45d53-8963-4688-b815-93b24f44b057
+md"""
+#### FIR Basis & Wilkinson Notation
+"""
 
-# ╔═╡ 80b10fcd-c160-46cb-bbb8-d4bd47d611e9
-basisfunction = firbasis(τ=τ,sfreq=10,name="stimulus")
+# ╔═╡ 0b4fc788-4f82-458b-a0fa-922069a126f4
+md"""
+$EEG\sim 0+conditionA+conditionB$
+"""
 
 # ╔═╡ 77f03312-0261-402e-a69c-60b192e827b1
-formula  = @formula 0~0+conditionA+conditionB
-
-# ╔═╡ c29f57fa-4eb8-4df9-a2ee-f97f7da990a5
-bfDict = Dict(Any=>(formula,basisfunction))
-
-# ╔═╡ f07384a7-afe2-45f7-b546-2c3c52e0bee8
-m = fit(UnfoldModel,bfDict,evts, data_noise);
-
-# ╔═╡ d8612ea1-8c4e-4c8b-8322-db37149ef877
-results = coeftable(m)
+begin
+	# basisfunction via FIR basis
+	basisfunction = firbasis(τ=τ,sfreq=10,name="stimulus")
+	# formula in wilikinson notation
+	formula  = @formula 0~0+conditionA+conditionB;
+	bfDict = Dict(Any=>(formula,basisfunction));
+	m = fit(UnfoldModel,bfDict,events, data_noise);
+	results = coeftable(m);
+end;
 
 # ╔═╡ d93765d1-3740-4aaa-96b3-39473adb4ac5
 md"""### Plotting the results"""
 
-# ╔═╡ d7867b77-fef0-4095-923f-9428d13b622a
-begin
-	Plots.plot(results.time,results.estimate,
-    	group=results.coefname,
-    	layout=1,legend=:outerbottom)
-end
-
-# ╔═╡ d61449d7-42b1-4555-8d67-6b95eac669c7
-condA = filter(row->row.coefname=="conditionA", results)
 
 # ╔═╡ cd93445e-42fd-4572-bd07-c44def848860
-plot(condA.time, condA.estimate, ylims=(-5,5), linecolor=:orange)
+begin
+	# condition A
+	condA = filter(row->row.coefname=="conditionA", results)
+	plot(condA.time, condA.estimate, ylims=(-5,5), linecolor=:orange, 
+		label="conditionA", legend=:outerbottom)
 
-# ╔═╡ c7975d33-1621-4801-8fb4-d3cca1eec7a1
-condB = filter(row->row.coefname=="conditionB", results)
+	# condition B
+	condB = filter(row->row.coefname=="conditionB", results)
+	plot!(condB.time, condB.estimate, ylims=(-5,5), linecolor=:green, 
+		label="conditionB")
 
-# ╔═╡ 69a9fbf1-57f6-4f97-8b71-9545f9278aa4
-plot(condB.time, condB.estimate, ylims=(-5,5), linecolor=:green)
+	vline!([0], linestyle=:dash, linecolor=:black, label="")
+end
 
 # ╔═╡ 632dd3fd-8326-4a35-b0db-dd2b8021397f
 designmatrix(m).Xs[1:114,:] # just for bene :-)
@@ -283,6 +392,7 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
@@ -294,6 +404,7 @@ Unfold = "181c99d8-e21b-4ff3-b70b-c233eddec679"
 [compat]
 DSP = "~0.7.3"
 DataFrames = "~1.2.2"
+Images = "~0.25.0"
 Plots = "~1.23.5"
 PlutoUI = "~0.7.18"
 StatsBase = "~0.33.13"
@@ -306,7 +417,7 @@ Unfold = "~0.3.4"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.6.3"
+julia_version = "1.7.0-rc2"
 manifest_format = "2.0"
 
 [[deps.AbstractFFTs]]
@@ -335,6 +446,12 @@ version = "3.3.1"
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
 
+[[deps.ArnoldiMethod]]
+deps = ["LinearAlgebra", "Random", "StaticArrays"]
+git-tree-sha1 = "62e51b39331de8911e4a7ff6f5aaf38a5f4cc0ae"
+uuid = "ec485272-7323-5ecc-a04f-4719b315124d"
+version = "0.2.0"
+
 [[deps.Arpack]]
 deps = ["Arpack_jll", "Libdl", "LinearAlgebra"]
 git-tree-sha1 = "2ff92b71ba1747c5fdd541f8fc87736d82f40ec9"
@@ -346,6 +463,12 @@ deps = ["Libdl", "OpenBLAS_jll", "Pkg"]
 git-tree-sha1 = "e214a9b9bd1b4e1b4f15b22c0994862b66af7ff7"
 uuid = "68821587-b530-5797-8361-c406ea357684"
 version = "3.5.0+3"
+
+[[deps.ArrayInterface]]
+deps = ["Compat", "IfElse", "LinearAlgebra", "Requires", "SparseArrays", "Static"]
+git-tree-sha1 = "265b06e2b1f6a216e0e8f183d28e4d354eab3220"
+uuid = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
+version = "3.2.1"
 
 [[deps.Arrow]]
 deps = ["ArrowTypes", "BitIntegers", "CodecLz4", "CodecZstd", "DataAPI", "Dates", "Mmap", "PooledArrays", "SentinelArrays", "Tables", "TimeZones", "UUIDs"]
@@ -367,6 +490,12 @@ deps = ["LinearAlgebra", "Random", "SparseArrays", "WoodburyMatrices"]
 git-tree-sha1 = "66771c8d21c8ff5e3a93379480a2307ac36863f7"
 uuid = "13072b0f-2c55-5437-9ae7-d433b7a33950"
 version = "1.0.1"
+
+[[deps.AxisArrays]]
+deps = ["Dates", "IntervalSets", "IterTools", "RangeArrays"]
+git-tree-sha1 = "d127d5e4d86c7680b20c35d40b503c74b9a39b5e"
+uuid = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
+version = "0.4.4"
 
 [[deps.BSplines]]
 deps = ["LinearAlgebra", "OffsetArrays", "RecipesBase"]
@@ -411,6 +540,18 @@ deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll",
 git-tree-sha1 = "f2202b55d816427cd385a9a4f3ffb226bee80f99"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+0"
+
+[[deps.Calculus]]
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "f641eb0a4f00c343bbc32346e1217b86f3ce9dad"
+uuid = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
+version = "0.5.1"
+
+[[deps.CatIndices]]
+deps = ["CustomUnitRanges", "OffsetArrays"]
+git-tree-sha1 = "a0f80a09780eed9b1d106a1bf62041c2efc995bc"
+uuid = "aafaddc9-749c-510e-ac4f-586e18779b91"
+version = "0.2.2"
 
 [[deps.CategoricalArrays]]
 deps = ["DataAPI", "Future", "Missings", "Printf", "Requires", "Statistics", "Unicode"]
@@ -472,6 +613,12 @@ git-tree-sha1 = "024fe24d83e4a5bf5fc80501a314ce0d1aa35597"
 uuid = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
 version = "0.11.0"
 
+[[deps.ColorVectorSpace]]
+deps = ["ColorTypes", "FixedPointNumbers", "LinearAlgebra", "SpecialFunctions", "Statistics", "TensorCore"]
+git-tree-sha1 = "3f1f500312161f1ae067abe07d13b40f78f32e07"
+uuid = "c3611d14-8923-5661-9e6a-0046d554d3a4"
+version = "0.9.8"
+
 [[deps.Colors]]
 deps = ["ColorTypes", "FixedPointNumbers", "Reexport"]
 git-tree-sha1 = "417b0ed7b8b838aa6ca0a87aadf1bb9eb111ce40"
@@ -488,6 +635,11 @@ version = "3.40.0"
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 
+[[deps.ComputationalResources]]
+git-tree-sha1 = "52cb3ec90e8a8bea0e62e275ba577ad0f74821f7"
+uuid = "ed09eef8-17a6-5b46-8889-db040fac31e3"
+version = "0.3.2"
+
 [[deps.Conda]]
 deps = ["JSON", "VersionParsing"]
 git-tree-sha1 = "299304989a5e6473d985212c28928899c74e9421"
@@ -500,10 +652,21 @@ git-tree-sha1 = "9f02045d934dc030edad45944ea80dbd1f0ebea7"
 uuid = "d38c429a-6771-53c6-b99e-75d170b6e991"
 version = "0.5.7"
 
+[[deps.CoordinateTransformations]]
+deps = ["LinearAlgebra", "StaticArrays"]
+git-tree-sha1 = "681ea870b918e7cff7111da58791d7f718067a19"
+uuid = "150eb455-5306-5404-9cee-2592286d6298"
+version = "0.6.2"
+
 [[deps.Crayons]]
 git-tree-sha1 = "3f71217b538d7aaee0b69ab47d9b7724ca8afa0d"
 uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
 version = "4.0.4"
+
+[[deps.CustomUnitRanges]]
+git-tree-sha1 = "1a3f97f907e6dd8983b744d2642651bb162a3f7a"
+uuid = "dc8bdbbb-1ca9-579f-8c36-e416f6a65cce"
+version = "1.0.2"
 
 [[deps.DSP]]
 deps = ["Compat", "FFTW", "IterTools", "LinearAlgebra", "Polynomials", "Random", "Reexport", "SpecialFunctions", "Statistics"]
@@ -579,11 +742,23 @@ version = "0.8.6"
 deps = ["ArgTools", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 
+[[deps.DualNumbers]]
+deps = ["Calculus", "NaNMath", "SpecialFunctions"]
+git-tree-sha1 = "fe385ec95ac5533650fb9b1ba7869e9bc28cdd0a"
+uuid = "fa6b7ba4-c1ee-5f82-b5fc-ecf0adba8f74"
+version = "0.6.5"
+
 [[deps.EarCut_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "3f3a2501fa7236e9b911e0f7a588c657e822bb6d"
 uuid = "5ae413db-bbd1-5e63-b57d-d24a61df00f5"
 version = "2.2.3+0"
+
+[[deps.EllipsisNotation]]
+deps = ["ArrayInterface"]
+git-tree-sha1 = "3fe985505b4b667e1ae303c9ca64d181f09d5c05"
+uuid = "da5c29d0-fa7d-589e-88eb-ea29b0a81949"
+version = "1.1.3"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -608,6 +783,12 @@ git-tree-sha1 = "d8a578692e3077ac998b50c0217dfd67f21d1e5f"
 uuid = "b22a6f82-2f65-5046-a5b2-351ab43fb4e5"
 version = "4.4.0+0"
 
+[[deps.FFTViews]]
+deps = ["CustomUnitRanges", "FFTW"]
+git-tree-sha1 = "cbdf14d1e8c7c8aacbe8b19862e0179fd08321c2"
+uuid = "4f61f5a4-77b1-5117-aa51-3ab5ef4ef0cd"
+version = "0.3.2"
+
 [[deps.FFTW]]
 deps = ["AbstractFFTs", "FFTW_jll", "LinearAlgebra", "MKL_jll", "Preferences", "Reexport"]
 git-tree-sha1 = "463cb335fa22c4ebacfd1faba5fde14edb80d96c"
@@ -619,6 +800,12 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "c6033cc3892d0ef5bb9cd29b7f2f0331ea5184ea"
 uuid = "f5851436-0d7a-5f13-b9de-f02708fd171a"
 version = "3.3.10+0"
+
+[[deps.FileIO]]
+deps = ["Pkg", "Requires", "UUIDs"]
+git-tree-sha1 = "2db648b6712831ecb333eae76dbfd1c156ca13bb"
+uuid = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+version = "1.11.2"
 
 [[deps.FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
@@ -704,15 +891,27 @@ version = "0.21.0+0"
 
 [[deps.Glib_jll]]
 deps = ["Artifacts", "Gettext_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Libiconv_jll", "Libmount_jll", "PCRE_jll", "Pkg", "Zlib_jll"]
-git-tree-sha1 = "7bf67e9a481712b3dbe9cb3dac852dc4b1162e02"
+git-tree-sha1 = "74ef6288d071f58033d54fd6708d4bc23a8b8972"
 uuid = "7746bdde-850d-59dc-9ae8-88ece973131d"
-version = "2.68.3+0"
+version = "2.68.3+1"
+
+[[deps.Graphics]]
+deps = ["Colors", "LinearAlgebra", "NaNMath"]
+git-tree-sha1 = "1c5a84319923bea76fa145d49e93aa4394c73fc2"
+uuid = "a2bd30eb-e257-5431-a919-1863eab51364"
+version = "1.1.1"
 
 [[deps.Graphite2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "344bf40dcab1073aca04aa0df4fb092f920e4011"
 uuid = "3b182d85-2403-5c21-9c21-1e1f0cc25472"
 version = "1.3.14+0"
+
+[[deps.Graphs]]
+deps = ["ArnoldiMethod", "DataStructures", "Distributed", "Inflate", "LinearAlgebra", "Random", "SharedArrays", "SimpleTraits", "SparseArrays", "Statistics"]
+git-tree-sha1 = "92243c07e786ea3458532e199eb3feee0e7e08eb"
+uuid = "86223c79-3864-5bf0-83f7-82e725a168b6"
+version = "1.4.1"
 
 [[deps.Grisu]]
 git-tree-sha1 = "53bb909d1151e57e2484c3d1b53e19552b887fb2"
@@ -727,9 +926,9 @@ version = "0.9.16"
 
 [[deps.HarfBuzz_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "Graphite2_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg"]
-git-tree-sha1 = "8a954fed8ac097d5be04921d595f741115c1b2ad"
+git-tree-sha1 = "129acf094d168394e80ee1dc4bc06ec835e510a3"
 uuid = "2e76f6c2-a576-52d4-95c1-20adfe4de566"
-version = "2.8.1+0"
+version = "2.8.1+1"
 
 [[deps.Hyperscript]]
 deps = ["Test"]
@@ -748,11 +947,128 @@ git-tree-sha1 = "f7be53659ab06ddc986428d3a9dcc95f6fa6705a"
 uuid = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
 version = "0.2.2"
 
+[[deps.IfElse]]
+git-tree-sha1 = "debdd00ffef04665ccbb3e150747a77560e8fad1"
+uuid = "615f187c-cbe4-4ef1-ba3b-2fcf58d6d173"
+version = "0.1.1"
+
+[[deps.ImageAxes]]
+deps = ["AxisArrays", "ImageBase", "ImageCore", "Reexport", "SimpleTraits"]
+git-tree-sha1 = "c54b581a83008dc7f292e205f4c409ab5caa0f04"
+uuid = "2803e5a7-5153-5ecf-9a86-9b4c37f5f5ac"
+version = "0.6.10"
+
+[[deps.ImageBase]]
+deps = ["ImageCore", "Reexport"]
+git-tree-sha1 = "b51bb8cae22c66d0f6357e3bcb6363145ef20835"
+uuid = "c817782e-172a-44cc-b673-b171935fbb9e"
+version = "0.1.5"
+
+[[deps.ImageContrastAdjustment]]
+deps = ["ImageCore", "ImageTransformations", "Parameters"]
+git-tree-sha1 = "0d75cafa80cf22026cea21a8e6cf965295003edc"
+uuid = "f332f351-ec65-5f6a-b3d1-319c6670881a"
+version = "0.3.10"
+
+[[deps.ImageCore]]
+deps = ["AbstractFFTs", "ColorVectorSpace", "Colors", "FixedPointNumbers", "Graphics", "MappedArrays", "MosaicViews", "OffsetArrays", "PaddedViews", "Reexport"]
+git-tree-sha1 = "9a5c62f231e5bba35695a20988fc7cd6de7eeb5a"
+uuid = "a09fc81d-aa75-5fe9-8630-4744c3626534"
+version = "0.9.3"
+
+[[deps.ImageDistances]]
+deps = ["Distances", "ImageCore", "ImageMorphology", "LinearAlgebra", "Statistics"]
+git-tree-sha1 = "7a20463713d239a19cbad3f6991e404aca876bda"
+uuid = "51556ac3-7006-55f5-8cb3-34580c88182d"
+version = "0.2.15"
+
+[[deps.ImageFiltering]]
+deps = ["CatIndices", "ComputationalResources", "DataStructures", "FFTViews", "FFTW", "ImageBase", "ImageCore", "LinearAlgebra", "OffsetArrays", "Reexport", "SparseArrays", "StaticArrays", "Statistics", "TiledIteration"]
+git-tree-sha1 = "15bd05c1c0d5dbb32a9a3d7e0ad2d50dd6167189"
+uuid = "6a3955dd-da59-5b1f-98d4-e7296123deb5"
+version = "0.7.1"
+
+[[deps.ImageIO]]
+deps = ["FileIO", "Netpbm", "OpenEXR", "PNGFiles", "TiffImages", "UUIDs"]
+git-tree-sha1 = "a2951c93684551467265e0e32b577914f69532be"
+uuid = "82e4d734-157c-48bb-816b-45c225c6df19"
+version = "0.5.9"
+
+[[deps.ImageMagick]]
+deps = ["FileIO", "ImageCore", "ImageMagick_jll", "InteractiveUtils"]
+git-tree-sha1 = "ca8d917903e7a1126b6583a097c5cb7a0bedeac1"
+uuid = "6218d12a-5da1-5696-b52f-db25d2ecc6d1"
+version = "1.2.2"
+
+[[deps.ImageMagick_jll]]
+deps = ["JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pkg", "Zlib_jll", "libpng_jll"]
+git-tree-sha1 = "1c0a2295cca535fabaf2029062912591e9b61987"
+uuid = "c73af94c-d91f-53ed-93a7-00f77d67a9d7"
+version = "6.9.10-12+3"
+
+[[deps.ImageMetadata]]
+deps = ["AxisArrays", "ImageAxes", "ImageBase", "ImageCore"]
+git-tree-sha1 = "36cbaebed194b292590cba2593da27b34763804a"
+uuid = "bc367c6b-8a6b-528e-b4bd-a4b897500b49"
+version = "0.9.8"
+
+[[deps.ImageMorphology]]
+deps = ["ImageCore", "LinearAlgebra", "Requires", "TiledIteration"]
+git-tree-sha1 = "5581e18a74a5838bd919294a7138c2663d065238"
+uuid = "787d08f9-d448-5407-9aad-5290dd7ab264"
+version = "0.3.0"
+
+[[deps.ImageQualityIndexes]]
+deps = ["ImageContrastAdjustment", "ImageCore", "ImageDistances", "ImageFiltering", "OffsetArrays", "Statistics"]
+git-tree-sha1 = "1d2d73b14198d10f7f12bf7f8481fd4b3ff5cd61"
+uuid = "2996bd0c-7a13-11e9-2da2-2f5ce47296a9"
+version = "0.3.0"
+
+[[deps.ImageSegmentation]]
+deps = ["Clustering", "DataStructures", "Distances", "Graphs", "ImageCore", "ImageFiltering", "ImageMorphology", "LinearAlgebra", "MetaGraphs", "RegionTrees", "SimpleWeightedGraphs", "StaticArrays", "Statistics"]
+git-tree-sha1 = "36832067ea220818d105d718527d6ed02385bf22"
+uuid = "80713f31-8817-5129-9cf8-209ff8fb23e1"
+version = "1.7.0"
+
+[[deps.ImageShow]]
+deps = ["Base64", "FileIO", "ImageBase", "ImageCore", "OffsetArrays", "StackViews"]
+git-tree-sha1 = "d0ac64c9bee0aed6fdbb2bc0e5dfa9a3a78e3acc"
+uuid = "4e3cecfd-b093-5904-9786-8bbb286a6a31"
+version = "0.3.3"
+
+[[deps.ImageTransformations]]
+deps = ["AxisAlgorithms", "ColorVectorSpace", "CoordinateTransformations", "ImageBase", "ImageCore", "Interpolations", "OffsetArrays", "Rotations", "StaticArrays"]
+git-tree-sha1 = "b4b161abc8252d68b13c5cc4a5f2ba711b61fec5"
+uuid = "02fcd773-0e25-5acc-982a-7f6622650795"
+version = "0.9.3"
+
+[[deps.Images]]
+deps = ["Base64", "FileIO", "Graphics", "ImageAxes", "ImageBase", "ImageContrastAdjustment", "ImageCore", "ImageDistances", "ImageFiltering", "ImageIO", "ImageMagick", "ImageMetadata", "ImageMorphology", "ImageQualityIndexes", "ImageSegmentation", "ImageShow", "ImageTransformations", "IndirectArrays", "IntegralArrays", "Random", "Reexport", "SparseArrays", "StaticArrays", "Statistics", "StatsBase", "TiledIteration"]
+git-tree-sha1 = "35dc1cd115c57ad705c7db9f6ef5cc14412e8f00"
+uuid = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
+version = "0.25.0"
+
+[[deps.Imath_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "87f7662e03a649cffa2e05bf19c303e168732d3e"
+uuid = "905a6f67-0a94-5f89-b386-d35d92009cd1"
+version = "3.1.2+0"
+
 [[deps.IncompleteLU]]
 deps = ["LinearAlgebra", "SparseArrays"]
 git-tree-sha1 = "a22b92ffedeb499383720dfedcd473deb9608b62"
 uuid = "40713840-3770-5561-ab4c-a76e7d0d7895"
 version = "0.2.0"
+
+[[deps.IndirectArrays]]
+git-tree-sha1 = "012e604e1c7458645cb8b436f8fba789a51b257f"
+uuid = "9b13fd28-a010-5f03-acff-a1bbcff69959"
+version = "1.0.0"
+
+[[deps.Inflate]]
+git-tree-sha1 = "f5fc07d4e706b84f72d54eedcc1c13d92fb0871c"
+uuid = "d25df0c9-e2be-5dd7-82c8-3ad0b3e990b9"
+version = "0.1.2"
 
 [[deps.IniFile]]
 deps = ["Test"]
@@ -765,6 +1081,12 @@ deps = ["Parsers"]
 git-tree-sha1 = "19cb49649f8c41de7fea32d089d37de917b553da"
 uuid = "842dd82b-1e85-43dc-bf29-5d0ee9dffc48"
 version = "1.0.1"
+
+[[deps.IntegralArrays]]
+deps = ["IntervalSets"]
+git-tree-sha1 = "4fdfe55b432bbb97adbb0c85c39dd208a7b2bd36"
+uuid = "1d092043-8f09-5a30-832f-7509e371ab51"
+version = "0.1.1"
 
 [[deps.IntelOpenMP_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -781,6 +1103,12 @@ deps = ["AxisAlgorithms", "ChainRulesCore", "LinearAlgebra", "OffsetArrays", "Ra
 git-tree-sha1 = "61aa005707ea2cebf47c8d780da8dc9bc4e0c512"
 uuid = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 version = "0.13.4"
+
+[[deps.IntervalSets]]
+deps = ["Dates", "EllipsisNotation", "Statistics"]
+git-tree-sha1 = "3cc368af3f110a767ac786560045dceddfc16758"
+uuid = "8197267c-284f-5f27-9208-e0e47529a953"
+version = "0.5.3"
 
 [[deps.Intervals]]
 deps = ["Dates", "Printf", "RecipesBase", "Serialization", "TimeZones"]
@@ -819,6 +1147,12 @@ version = "0.9.2"
 git-tree-sha1 = "a3f24677c21f5bbe9d2a714f95dcd58337fb2856"
 uuid = "82899510-4779-5014-852e-03e436cf321d"
 version = "1.0.0"
+
+[[deps.JLD2]]
+deps = ["DataStructures", "FileIO", "MacroTools", "Mmap", "Pkg", "Printf", "Reexport", "TranscodingStreams", "UUIDs"]
+git-tree-sha1 = "46b7834ec8165c541b0b5d1c8ba63ec940723ffb"
+uuid = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
+version = "0.4.15"
 
 [[deps.JLLWrappers]]
 deps = ["Preferences"]
@@ -951,7 +1285,7 @@ uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
 version = "2.36.0+0"
 
 [[deps.LinearAlgebra]]
-deps = ["Libdl"]
+deps = ["Libdl", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[deps.LogExpFunctions]]
@@ -987,6 +1321,11 @@ git-tree-sha1 = "3d3e902b31198a27340d0bf00d6ac452866021cf"
 uuid = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
 version = "0.5.9"
 
+[[deps.MappedArrays]]
+git-tree-sha1 = "e8b359ef06ec72e8c030463fe02efe5527ee5142"
+uuid = "dbb5928d-eab1-5f90-85c2-b9b0edb7c900"
+version = "0.4.1"
+
 [[deps.Markdown]]
 deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
@@ -1017,6 +1356,12 @@ uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
 git-tree-sha1 = "e498ddeee6f9fdb4551ce855a46f54dbd900245f"
 uuid = "442fdcdd-2543-5da2-b0f3-8c86c306513e"
 version = "0.3.1"
+
+[[deps.MetaGraphs]]
+deps = ["Graphs", "JLD2", "Random"]
+git-tree-sha1 = "2af69ff3c024d13bde52b34a2a7d6887d4e7b438"
+uuid = "626554b9-1ddb-594c-aa3c-2596fe9399a5"
+version = "0.7.1"
 
 [[deps.Missings]]
 deps = ["DataAPI"]
@@ -1050,6 +1395,12 @@ deps = ["Compat", "ExprTools"]
 git-tree-sha1 = "29714d0a7a8083bba8427a4fbfb00a540c681ce7"
 uuid = "78c3b35d-d492-501b-9361-3d52fe80e533"
 version = "0.7.3"
+
+[[deps.MosaicViews]]
+deps = ["MappedArrays", "OffsetArrays", "PaddedViews", "StackViews"]
+git-tree-sha1 = "b34e3bc3ca7c94914418637cb10cc4d1d80d877d"
+uuid = "e94cdb99-869f-56ef-bcf0-1ae2bcbe0389"
+version = "0.3.3"
 
 [[deps.MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
@@ -1089,6 +1440,12 @@ git-tree-sha1 = "16baacfdc8758bc374882566c9187e785e85c2f0"
 uuid = "b8a86587-4115-5ab1-83bc-aa920d37bbce"
 version = "0.4.9"
 
+[[deps.Netpbm]]
+deps = ["FileIO", "ImageCore"]
+git-tree-sha1 = "18efc06f6ec36a8b801b23f076e3c6ac7c3bf153"
+uuid = "f09324ee-3d7c-5217-9330-fc30815ba969"
+version = "1.0.2"
+
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 
@@ -1112,6 +1469,18 @@ version = "1.3.5+0"
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
+
+[[deps.OpenEXR]]
+deps = ["Colors", "FileIO", "OpenEXR_jll"]
+git-tree-sha1 = "327f53360fdb54df7ecd01e96ef1983536d1e633"
+uuid = "52e1d378-f018-4a11-a4be-720524705ac7"
+version = "0.3.2"
+
+[[deps.OpenEXR_jll]]
+deps = ["Artifacts", "Imath_jll", "JLLWrappers", "Libdl", "Pkg", "Zlib_jll"]
+git-tree-sha1 = "923319661e9a22712f24596ce81c54fc0366f304"
+uuid = "18a262bb-aa17-5467-a713-aee519bc75cb"
+version = "3.1.1+0"
 
 [[deps.OpenLibm_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -1152,6 +1521,24 @@ git-tree-sha1 = "ee26b350276c51697c9c2d88a072b339f9f03d73"
 uuid = "90014a1f-27ba-587c-ab20-58faa44d9150"
 version = "0.11.5"
 
+[[deps.PNGFiles]]
+deps = ["Base64", "CEnum", "ImageCore", "IndirectArrays", "OffsetArrays", "libpng_jll"]
+git-tree-sha1 = "6d105d40e30b635cfed9d52ec29cf456e27d38f8"
+uuid = "f57f5aa1-a3ce-4bc8-8ab9-96f992907883"
+version = "0.3.12"
+
+[[deps.PaddedViews]]
+deps = ["OffsetArrays"]
+git-tree-sha1 = "646eed6f6a5d8df6708f15ea7e02a7a2c4fe4800"
+uuid = "5432bcbf-9aad-5242-b902-cca2824c8663"
+version = "0.5.10"
+
+[[deps.Parameters]]
+deps = ["OrderedCollections", "UnPack"]
+git-tree-sha1 = "34c0e9ad262e5f7fc75b10a9952ca7692cfc5fbe"
+uuid = "d96e819e-fc66-5662-9728-84c9c7592b0a"
+version = "0.12.3"
+
 [[deps.Parsers]]
 deps = ["Dates"]
 git-tree-sha1 = "ae4bbcadb2906ccc085cf52ac286dc1377dceccc"
@@ -1173,6 +1560,12 @@ deps = ["BenchmarkTools", "Dates", "InteractiveUtils", "JSON", "LibGit2", "Loggi
 git-tree-sha1 = "e4a10b7cdb7ec836850e43a4cee196f4e7b02756"
 uuid = "32113eaa-f34f-5b0d-bd6c-c81e245fc73d"
 version = "0.2.12"
+
+[[deps.PkgVersion]]
+deps = ["Pkg"]
+git-tree-sha1 = "a7a7e1a88853564e551e4eba8650f8c38df79b37"
+uuid = "eebad327-c553-4316-9ea0-9fa01ccd7688"
+version = "0.1.1"
 
 [[deps.PlotThemes]]
 deps = ["PlotUtils", "Requires", "Statistics"]
@@ -1266,13 +1659,24 @@ git-tree-sha1 = "78aadffb3efd2155af139781b8a8df1ef279ea39"
 uuid = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 version = "2.4.2"
 
+[[deps.Quaternions]]
+deps = ["DualNumbers", "LinearAlgebra"]
+git-tree-sha1 = "adf644ef95a5e26c8774890a509a55b7791a139f"
+uuid = "94ee1d12-ae83-5a48-8b1c-48b8ff168ae0"
+version = "0.4.2"
+
 [[deps.REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 
 [[deps.Random]]
-deps = ["Serialization"]
+deps = ["SHA", "Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+
+[[deps.RangeArrays]]
+git-tree-sha1 = "b9039e93773ddcfc828f12aadf7115b4b4d225f5"
+uuid = "b3c3ace0-ae52-54e7-9d0b-2c1406fd6b9d"
+version = "0.3.2"
 
 [[deps.Ratios]]
 deps = ["Requires"]
@@ -1295,6 +1699,12 @@ version = "0.4.1"
 git-tree-sha1 = "45e428421666073eab6f2da5c9d310d99bb12f9b"
 uuid = "189a3867-3050-52da-a836-e630ba90ab69"
 version = "1.2.2"
+
+[[deps.RegionTrees]]
+deps = ["IterTools", "LinearAlgebra", "StaticArrays"]
+git-tree-sha1 = "4618ed0da7a251c7f92e869ae1a19c74a7d2a7f9"
+uuid = "dee08c22-ab7f-5625-9660-a9af2021b33f"
+version = "0.3.2"
 
 [[deps.Requires]]
 deps = ["UUIDs"]
@@ -1319,6 +1729,12 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "68db32dff12bb6127bac73c209881191bf0efbb7"
 uuid = "f50d1b31-88e8-58de-be2c-1cc44531875f"
 version = "0.3.0+0"
+
+[[deps.Rotations]]
+deps = ["LinearAlgebra", "Quaternions", "Random", "StaticArrays", "Statistics"]
+git-tree-sha1 = "dbf5f991130238f10abbf4f2d255fb2837943c43"
+uuid = "6038ab10-8711-5258-84ad-4b1120ba62dc"
+version = "1.1.0"
 
 [[deps.SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
@@ -1353,6 +1769,18 @@ git-tree-sha1 = "91eddf657aca81df9ae6ceb20b959ae5653ad1de"
 uuid = "992d4aef-0814-514b-bc4d-f2e9a6c4116f"
 version = "1.0.3"
 
+[[deps.SimpleTraits]]
+deps = ["InteractiveUtils", "MacroTools"]
+git-tree-sha1 = "5d7e3f4e11935503d3ecaf7186eac40602e7d231"
+uuid = "699a6c99-e7fa-54fc-8d76-47d257e15c1d"
+version = "0.9.4"
+
+[[deps.SimpleWeightedGraphs]]
+deps = ["Graphs", "LinearAlgebra", "Markdown", "SparseArrays", "Test"]
+git-tree-sha1 = "a6f404cc44d3d3b28c793ec0eb59af709d827e4e"
+uuid = "47aef6b3-ad0c-573a-a1e2-d07658019622"
+version = "1.2.1"
+
 [[deps.Sockets]]
 uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
 
@@ -1371,6 +1799,18 @@ deps = ["ChainRulesCore", "IrrationalConstants", "LogExpFunctions", "OpenLibm_jl
 git-tree-sha1 = "f0bccf98e16759818ffc5d97ac3ebf87eb950150"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
 version = "1.8.1"
+
+[[deps.StackViews]]
+deps = ["OffsetArrays"]
+git-tree-sha1 = "46e589465204cd0c08b4bd97385e4fa79a0c770c"
+uuid = "cae243ae-269e-4f55-b966-ac2d0dc13c15"
+version = "0.1.1"
+
+[[deps.Static]]
+deps = ["IfElse"]
+git-tree-sha1 = "e7bc80dc93f50857a5d1e3c8121495852f407e6a"
+uuid = "aedffcd0-7271-4cad-89d0-dc628f76c6d3"
+version = "0.4.0"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "Random", "Statistics"]
@@ -1453,6 +1893,12 @@ version = "1.6.0"
 deps = ["ArgTools", "SHA"]
 uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 
+[[deps.TensorCore]]
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "1feb45f88d133a655e001435632f019a9a1bcdb6"
+uuid = "62fd8b95-f654-4bbd-a8a5-9c27f68ccd50"
+version = "0.1.1"
+
 [[deps.TerminalLoggers]]
 deps = ["LeftChildRightSiblingTrees", "Logging", "Markdown", "Printf", "ProgressLogging", "UUIDs"]
 git-tree-sha1 = "62846a48a6cd70e63aa29944b8c4ef704360d72f"
@@ -1462,6 +1908,18 @@ version = "0.1.5"
 [[deps.Test]]
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[[deps.TiffImages]]
+deps = ["ColorTypes", "DataStructures", "DocStringExtensions", "FileIO", "FixedPointNumbers", "IndirectArrays", "Inflate", "OffsetArrays", "PkgVersion", "ProgressMeter", "UUIDs"]
+git-tree-sha1 = "c342ae2abf4902d65a0b0bf59b28506a6e17078a"
+uuid = "731e570b-9d59-4bfa-96dc-6df516fadf69"
+version = "0.5.2"
+
+[[deps.TiledIteration]]
+deps = ["OffsetArrays"]
+git-tree-sha1 = "5683455224ba92ef59db72d10690690f4a8dc297"
+uuid = "06e1c1a7-607b-532d-9fad-de7d9aa2abac"
+version = "0.3.1"
 
 [[deps.TimeZones]]
 deps = ["Dates", "Downloads", "InlineStrings", "LazyArtifacts", "Mocking", "Pkg", "Printf", "RecipesBase", "Serialization", "Unicode"]
@@ -1489,6 +1947,11 @@ version = "1.3.0"
 [[deps.UUIDs]]
 deps = ["Random", "SHA"]
 uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
+
+[[deps.UnPack]]
+git-tree-sha1 = "387c1f73762231e86e0c9c5443ce3b4a0a9a0c2b"
+uuid = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
+version = "1.0.2"
 
 [[deps.Unfold]]
 deps = ["BSplines", "CategoricalArrays", "DSP", "DataFrames", "Distributions", "DocStringExtensions", "GLM", "IncompleteLU", "IterativeSolvers", "LinearAlgebra", "MLBase", "Missings", "MixedModels", "MixedModelsPermutations", "MixedModelsSim", "PkgBenchmark", "ProgressMeter", "PyMNE", "Random", "SparseArrays", "StaticArrays", "Statistics", "StatsBase", "StatsModels", "Tables", "Test", "TimerOutputs"]
@@ -1688,6 +2151,10 @@ git-tree-sha1 = "5982a94fcba20f02f42ace44b9894ee2b140fe47"
 uuid = "0ac62f75-1d6f-5e53-bd7c-93b484bb37c0"
 version = "0.15.1+0"
 
+[[deps.libblastrampoline_jll]]
+deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
+uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
+
 [[deps.libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "daacc84a041563f965be61859a36e17c4e4fcd55"
@@ -1735,50 +2202,53 @@ version = "0.9.1+5"
 
 # ╔═╡ Cell order:
 # ╟─c5b90e22-aa20-464f-afab-0e1d7927461e
-# ╟─b2898bea-1879-4035-9f88-8635c5e261a0
-# ╟─ff6fdbc1-5c20-44df-9ba7-d63121bbde95
-# ╟─a189f45e-50de-4f1e-a6d7-e6756e291e35
-# ╟─fba4bbfc-5f69-4aaf-b852-22c5c5cfdba0
-# ╟─cb23f717-5333-4704-ba43-2ddfb075005a
-# ╟─05a7ba2b-f2c6-4612-b06d-ed0888fde6b4
-# ╟─094decbe-591b-485b-9baf-060e2f2cb023
-# ╟─19f2c526-d9bb-4e77-bdbf-a2bd5ec99a73
-# ╟─e43cb892-bfc5-405f-a5bf-25582c7c18f6
-# ╠═906bcc38-ac08-4c71-a8eb-24321741790f
-# ╟─5441a4e0-9849-4cee-9f2c-fd5c81a6e838
 # ╠═fa539a20-447e-11ec-0a13-71fa39527f8f
-# ╠═016eed79-8989-4a0c-9319-aebcb8ea3911
+# ╠═906bcc38-ac08-4c71-a8eb-24321741790f
+# ╟─8b39f28e-d889-4f98-9601-380e015b7d35
 # ╟─a9d99a1d-59f2-4c02-89dd-33c9a27db84a
+# ╟─86046132-f497-4573-aa48-52a3b7eb7193
 # ╟─ecc0df31-a29b-4d62-8dbf-08b86c35a885
-# ╠═dc21bb51-547d-4e4d-b047-bde8599b23dd
+# ╟─5d62c314-804c-4cf0-a3fe-fbf9328a3ee1
+# ╟─5c941851-09e8-4cc3-8503-92bcd4dce2ec
 # ╟─6bcb8960-cf0d-47d0-ab10-57bdf0aeb037
-# ╠═ac0add51-84f4-473c-9490-c9e11eda7007
+# ╟─44938813-2cf6-4381-afe7-28758adc0abe
+# ╟─a53b8fd0-e061-4147-9dc1-d6313f392ece
+# ╟─dca3bf1a-cc61-4a70-8cea-20808279acc4
 # ╟─0bb4cf30-6e78-41d0-8fa5-bbef696ef9f6
 # ╟─61e5f8bb-4c24-4eb6-a7d6-31c501a51f05
 # ╠═1b9fa185-acde-47ee-ba87-d7db9cdf8426
+# ╟─4cbafc47-71c7-4dfa-9deb-f1b9ca418426
 # ╟─4931b75b-28ab-4b65-b0ef-81ec575a3b20
+# ╟─2d8e3bce-1120-4eae-871e-508844f08a8b
 # ╠═36d354d4-ffa8-4ce3-9b97-e2cf623c656e
-# ╠═6d9910ea-bbbe-4c2a-b564-02fcd7d28f73
-# ╠═89fe54a2-c1ff-45d6-93ee-d54a92796fe7
+# ╟─b5546f79-3629-4acd-a7c3-c893f4b56e94
+# ╟─4fc50f5a-e798-4337-8df6-508af0709b71
+# ╟─a13a0023-55cd-4987-95ba-5802d01512de
+# ╟─d9e53857-d59d-4302-b9b9-175c14a87f71
+# ╟─4cbaaa15-b1d2-4a4e-b100-51589a026ad3
+# ╟─89fe54a2-c1ff-45d6-93ee-d54a92796fe7
 # ╟─330881fa-d701-4c3a-835e-c75b33ed135d
 # ╠═c5b3773a-bdd8-4c1a-b496-da4f555cb97f
+# ╟─c8d13716-9e0c-4bf9-8612-798e854bf573
+# ╟─554d009f-da73-4ac2-82cd-561cf841e9ac
 # ╠═a3591070-7ddc-4835-99b1-d14dd5d865ba
-# ╠═2b1df218-c2fa-4104-bd0e-4f7230c88bb7
-# ╠═f60e7455-b359-43de-9bb1-eae12c9f63e3
 # ╟─62f251b7-6aaf-457a-b777-99e1576e81ba
+# ╟─fedf1525-042a-4e82-b152-c30d3385555b
+# ╟─a15d2791-9266-47e5-837d-0074395b98a4
+# ╟─b22e3a42-b652-4c83-a05c-0bd2b1b316ad
+# ╟─f02e783f-6793-4393-aa7f-8ab28cb879b5
+# ╟─37011d23-eeaa-47ed-9ff2-23b177324cfc
+# ╟─77d11203-9950-459c-bdc4-6b5384a28b39
+# ╟─47b949cc-ce87-406c-bb6f-0ae10a338521
+# ╟─8de9dc91-8ed2-4e1d-927b-cfbdc3f617b0
+# ╟─fa965472-c3f3-40c4-83a7-eb76bec93c80
+# ╠═60e739ff-a8d4-42b8-8b6e-d73e398f8c80
 # ╟─e93c8e1c-f984-419f-b3bb-d9ca0396f30a
-# ╟─5c714845-00e6-44f4-a323-ec310d39ccfb
-# ╠═80b10fcd-c160-46cb-bbb8-d4bd47d611e9
+# ╟─85c45d53-8963-4688-b815-93b24f44b057
+# ╟─0b4fc788-4f82-458b-a0fa-922069a126f4
 # ╠═77f03312-0261-402e-a69c-60b192e827b1
-# ╠═c29f57fa-4eb8-4df9-a2ee-f97f7da990a5
-# ╠═f07384a7-afe2-45f7-b546-2c3c52e0bee8
-# ╠═d8612ea1-8c4e-4c8b-8322-db37149ef877
 # ╟─d93765d1-3740-4aaa-96b3-39473adb4ac5
-# ╟─d7867b77-fef0-4095-923f-9428d13b622a
-# ╟─d61449d7-42b1-4555-8d67-6b95eac669c7
-# ╠═cd93445e-42fd-4572-bd07-c44def848860
-# ╟─c7975d33-1621-4801-8fb4-d3cca1eec7a1
-# ╠═69a9fbf1-57f6-4f97-8b71-9545f9278aa4
-# ╠═632dd3fd-8326-4a35-b0db-dd2b8021397f
+# ╟─cd93445e-42fd-4572-bd07-c44def848860
+# ╟─632dd3fd-8326-4a35-b0db-dd2b8021397f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
