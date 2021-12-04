@@ -77,15 +77,27 @@ The **response to stimuli A** is modelled by the function $ERP_A(t)$
 
 """
 
+# ╔═╡ cfba1eb3-aeac-45ff-a563-817516011c3b
+md"""Choose the response function for stimulus A: $(
+	@bind selection₁ Select([1=>"Function1", 2=> "Function2", 3=> "Function3"], default=1))
+"""
+
 # ╔═╡ 5d62c314-804c-4cf0-a3fe-fbf9328a3ee1
 let 
 	md"""Change the value of b $(@bind b Slider(1:1:10, default=5, show_value=true))"""
 end
 
 # ╔═╡ 5c941851-09e8-4cc3-8503-92bcd4dce2ec
-begin
+if selection₁ == 1
 	erp_A(t) = -5(t-b)ℯ^ -0.5(t-b)^2;
 	Markdown.parse("\$ERP_A(t) = -5(t-$b)ℯ^{-0.5(t-$b)^2}\$")
+elseif selection₁ == 2
+	erp_A(t) = 2.5ℯ^(-(t-b)^2);
+	Markdown.parse("\$ERP_A(t) = 2.5ℯ^{-(t-$b)^2}\$")
+elseif selection₁ == 3
+	H(t) = 0.5 * (sign(t) + 1)
+	erp_A(t) = H(t-1) - H(t-b)
+	Markdown.parse("\$ERP_A(t) = H(t-1)-H(t-$b) \\text{ with }H(X):=\\text{Heaviside Step Function}\$")
 end
 	
 
@@ -100,15 +112,27 @@ md"""
 Analogous to this the **response to stimuli B** is modelled by $ERP_B(t)$. 
 """
 
+# ╔═╡ 1e7d5af3-0f55-4b19-8b1a-bb0cb1e71868
+md"""Choose the response function for stimulus B: $(
+	@bind selection₂ Select([1=>"Function1", 2=>"Function2", 3=> "Function3"],
+		default=2))
+"""
+
 # ╔═╡ a53b8fd0-e061-4147-9dc1-d6313f392ece
 let
 	md"""Change the value of d $(@bind d Slider(1:1:10, default=5, show_value=true))"""
 end
 
-# ╔═╡ dca3bf1a-cc61-4a70-8cea-20808279acc4
-begin
-	erp_B(t)=2.5ℯ^(-(t-d)^2);
+# ╔═╡ 63887aaf-0aeb-44eb-8349-13d47ce6b873
+if selection₂ == 1
+	erp_B(t) = -5(t-d)ℯ^ -0.5(t-d)^2;
+	Markdown.parse("\$ERP_A(t) = -5(t-$d)ℯ^{-0.5(t-$d)^2}\$")
+elseif selection₂ == 2
+	erp_B(t) = 2.5ℯ^(-(t-d)^2);
 	Markdown.parse("\$ERP_B(t) = 2.5ℯ^{-(t-$d)^2}\$")
+elseif selection₂ == 3
+	erp_B(t) = H(t-1) - H(t-d)
+	Markdown.parse("\$ERP_B(t) = H(t-1)-H(t-$d) \\text{ with }H(X):=\\text{Heaviside Step Function}\$")
 end
 
 # ╔═╡ 0bb4cf30-6e78-41d0-8fa5-bbef696ef9f6
@@ -125,10 +149,7 @@ The next figure shows the **event onsets**. They are part of the experiment desi
 For a purpose we will see later, we will not avoid overlapping responses in our experiment. More: We will enforce them to happen at some level.
 \
 \
-The orange vertical line corresponds to the event onsets of stimuli A. The green line to the event onsets of stimuli B. \
-\
-Since we want to create a simulated EEG signal we simply choose 300 random values between 1 and 6000 for each stimuli. 
-\
+Since we want to create a simulated EEG signal we simply choose 300 random values between 1 and 6000 for each stimuli. The event onsets are visualized in the figure below. The orange vertical line corresponds to the event onsets of stimuli A. The green line to the event onsets of stimuli B. \
 \
 """
 
@@ -293,8 +314,8 @@ Markdown.parse("\$EEG(t)=g_A*ERP_A+g_B*ERP_B\$")
 
 # ╔═╡ f02e783f-6793-4393-aa7f-8ab28cb879b5
 md"""
-By taking a closer look at the formula this means the folloeing: 
-- We know the measured EEG Signal, thus we know $EEG(t)$
+By taking a closer look at the formula this means the following: 
+- We know the measured EEG Signal at each timepoint ($EEG(t))$
 - We know the event onsets for each stimuli ($g_A, g_B$)
 - We want to recover the isolated response function to each stimuli $ERP_A$ and $ERP_B$
 \
@@ -342,7 +363,11 @@ Change window size τ = (-2.0, $(@bind τ2 Slider(-2:0.1:20,default=5, show_valu
 τ = (-2, τ2) # window size definition for deconvolution with unfold
 
 # ╔═╡ e93c8e1c-f984-419f-b3bb-d9ca0396f30a
-md"""### Fitting the model"""
+md"""### Fitting the model
+
+- next step to fit the above explaiined model to our data / find the best fitting β's
+- 
+"""
 
 # ╔═╡ 85c45d53-8963-4688-b815-93b24f44b057
 md"""
@@ -357,11 +382,18 @@ $EEG\sim 0+conditionA+conditionB$
 # ╔═╡ 77f03312-0261-402e-a69c-60b192e827b1
 begin
 	# basisfunction via FIR basis
-	basisfunction = firbasis(τ=τ,sfreq=10,name="stimulus")
+	basisfunction = firbasis(τ=τ, sfreq=10, name="stimulus")
+	
 	# formula in wilikinson notation
 	formula  = @formula 0~0+conditionA+conditionB;
+
+	# map basidfunction & formula into a dict
 	bfDict = Dict(Any=>(formula,basisfunction));
+
+	# fit model
 	m = fit(UnfoldModel,bfDict,events, data_noise);
+
+	# create result dataframe
 	results = coeftable(m);
 end;
 
@@ -2208,12 +2240,14 @@ version = "0.9.1+5"
 # ╟─a9d99a1d-59f2-4c02-89dd-33c9a27db84a
 # ╟─86046132-f497-4573-aa48-52a3b7eb7193
 # ╟─ecc0df31-a29b-4d62-8dbf-08b86c35a885
+# ╟─cfba1eb3-aeac-45ff-a563-817516011c3b
 # ╟─5d62c314-804c-4cf0-a3fe-fbf9328a3ee1
 # ╟─5c941851-09e8-4cc3-8503-92bcd4dce2ec
 # ╟─6bcb8960-cf0d-47d0-ab10-57bdf0aeb037
 # ╟─44938813-2cf6-4381-afe7-28758adc0abe
+# ╟─1e7d5af3-0f55-4b19-8b1a-bb0cb1e71868
+# ╟─63887aaf-0aeb-44eb-8349-13d47ce6b873
 # ╟─a53b8fd0-e061-4147-9dc1-d6313f392ece
-# ╟─dca3bf1a-cc61-4a70-8cea-20808279acc4
 # ╟─0bb4cf30-6e78-41d0-8fa5-bbef696ef9f6
 # ╟─61e5f8bb-4c24-4eb6-a7d6-31c501a51f05
 # ╠═1b9fa185-acde-47ee-ba87-d7db9cdf8426
@@ -2243,7 +2277,7 @@ version = "0.9.1+5"
 # ╟─8de9dc91-8ed2-4e1d-927b-cfbdc3f617b0
 # ╟─fa965472-c3f3-40c4-83a7-eb76bec93c80
 # ╠═60e739ff-a8d4-42b8-8b6e-d73e398f8c80
-# ╟─e93c8e1c-f984-419f-b3bb-d9ca0396f30a
+# ╠═e93c8e1c-f984-419f-b3bb-d9ca0396f30a
 # ╟─85c45d53-8963-4688-b815-93b24f44b057
 # ╟─0b4fc788-4f82-458b-a0fa-922069a126f4
 # ╠═77f03312-0261-402e-a69c-60b192e827b1
