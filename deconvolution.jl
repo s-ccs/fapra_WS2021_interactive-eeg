@@ -28,21 +28,21 @@ begin
 	using Images
 end
 
-# ╔═╡ c5b90e22-aa20-464f-afab-0e1d7927461e
-md"""# **Imports & General Stuff**"""
-
-# ╔═╡ 906bcc38-ac08-4c71-a8eb-24321741790f
-PlutoUI.TableOfContents(aside=true)
-
 # ╔═╡ 8b39f28e-d889-4f98-9601-380e015b7d35
 md"""
-# Motivation
+# Deconvolution (Overlap-Correction)
 
 In a perfect setup for an EEG experiment
 - separate events in time to avoid overlap
 - 
 - 
 """
+
+# ╔═╡ c5b90e22-aa20-464f-afab-0e1d7927461e
+md"""## Imports & General Stuff"""
+
+# ╔═╡ 906bcc38-ac08-4c71-a8eb-24321741790f
+PlutoUI.TableOfContents(aside=true)
 
 # ╔═╡ a9d99a1d-59f2-4c02-89dd-33c9a27db84a
 md"""
@@ -256,7 +256,9 @@ end
 
 # ╔═╡ 330881fa-d701-4c3a-835e-c75b33ed135d
 md"""
-# Prepare Data for Unfold
+#### Prepare Data for Unfold
+
+For simplification we transform the data at this point into a event dataframe. This is not further important, but allows us to use the toolbox `unfold.jl` to deconvolute our signal. 
 """
 
 # ╔═╡ c5b3773a-bdd8-4c1a-b496-da4f555cb97f
@@ -270,29 +272,6 @@ begin
 	events.latency = events.latency * 10
 end;
 
-# ╔═╡ c8d13716-9e0c-4bf9-8612-798e854bf573
-md"""
-# Data + Noise
-For illustration purpose we introduce noise to the data. The level of noise is contolled by the \
-variable σ.
-The greater σ, the more noise is added to the original data. \
-\
-Feel free to adjust the noise, and see how the quality of the results change.
-"""
-
-# ╔═╡ 554d009f-da73-4ac2-82cd-561cf841e9ac
-let	
-	md"""Change noise: σ = $(@bind σ Slider(0:0.1:5, default=0, show_value=true))
-	"""
-end
-
-# ╔═╡ a3591070-7ddc-4835-99b1-d14dd5d865ba
-begin
-	range = 0:0.1:6000
-	data = eeg.(range)
-	data_noise = data .+ σ .* randn(size(data)) ;
-end;
-
 # ╔═╡ 62f251b7-6aaf-457a-b777-99e1576e81ba
 md"""
 # **Linear Deconvolution with Unfold**
@@ -300,8 +279,29 @@ md"""
 
 # ╔═╡ fedf1525-042a-4e82-b152-c30d3385555b
 md"""
-From here on, lets assume we **measured** the **blue signal** from the above in our **eeg experiment**. From our experiment we additional know at which time each respective stimulus was presented (event onsets). Based on this we try to recover the underlying ERP for each stimulus. In our case stimuli A and stimuli B. This is the inverse operation of the above performed convolution.
+From here on, lets assume we **measured** the **blue signal** from the above in our **eeg experiment**. From our experiment we additional know at which time each respective stimulus was presented (event onsets). Based on this we try to recover the underlying ERP for each stimulus. In our case stimuli A and stimuli B. This is the inverse operation of the above performed convolution. \
+\
+For illustration purpose we introduce noise to the data. The level of noise is contolled by the \
+variable σ.
+The greater σ, the more noise is added to the original data. \
+\
+Feel free to adjust the noise, and see how the quality of the results change.
+
+
 """
+
+# ╔═╡ 1ab44014-42de-4811-b5db-b62c9af8b393
+begin	
+	md"""Change noise: σ = $(@bind σ Slider(0:0.1:5, default=0, 
+		show_value=true))""";
+end
+
+# ╔═╡ bd06e0c4-4728-4c6f-a1d0-a371c91750fd
+begin
+	range = 0:0.1:6000;
+	data = eeg.(range);
+	data_noise = data .+ σ .* randn(size(data));
+end;
 
 # ╔═╡ a15d2791-9266-47e5-837d-0074395b98a4
 begin
@@ -342,6 +342,11 @@ begin
 	plot(img, bordercolor=:white, textcolor=:white, 
 		xlabel="https://doi.org/10.7717/peerj.7838/fig-2")
 end
+
+# ╔═╡ 634c0f3e-c02f-4ebf-8b54-5b181981b52b
+md"""
+Take a look at the example for $EEG_{25}$
+"""
 
 # ╔═╡ 47b949cc-ce87-406c-bb6f-0ae10a338521
 md"""
@@ -410,10 +415,39 @@ begin
 
 	# condition B
 	condB = filter(row->row.coefname=="conditionB", results)
-	plot!(condB.time, condB.estimate, ylims=(-5,5), linecolor=:green, 
+	pₒ = plot!(condB.time, condB.estimate, ylims=(-5,5), linecolor=:green, 
 		label="conditionB")
 
 	vline!([0], linestyle=:dash, linecolor=:black, label="")
+end
+
+# ╔═╡ 71b0682e-228b-48fe-8754-a81b42abb948
+md"""
+# Deconvolution vs. Mass-Univariate
+
+This plot shows the comparison between the **deconvolution with overlap correction** (left) and the **mass-univariate approach** (right).
+"""
+
+# ╔═╡ f0f36214-29f6-4483-b39c-4a65b78f5f03
+begin
+	data_r = reshape(data,(1,:))
+	data_epochs, times = Unfold.epoch(data=data_r,tbl=events,τ=τ,sfreq=10);
+	f  = @formula 0~0+conditionA+conditionB
+	m_ = fit(UnfoldModel, Dict(Any=>(f, times)), events, data_epochs);
+	results_ = coeftable(m_)
+
+	# condition A
+	condA_ = filter(row->row.coefname=="conditionA", results_)
+	plot(condA_.time, condA_.estimate, ylims=(-5,5), linecolor=:orange, 
+		label="conditionA", legend=:outerbottom)
+
+	# condition B
+	condB_ = filter(row->row.coefname=="conditionB", results_)
+	pₘ = plot!(condB_.time, condB_.estimate, ylims=(-5,5), linecolor=:green, 
+		label="conditionB")
+	
+	plot(pₒ, pₘ, )
+	
 end
 
 # ╔═╡ 632dd3fd-8326-4a35-b0db-dd2b8021397f
@@ -2233,10 +2267,10 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
+# ╠═8b39f28e-d889-4f98-9601-380e015b7d35
 # ╟─c5b90e22-aa20-464f-afab-0e1d7927461e
 # ╠═fa539a20-447e-11ec-0a13-71fa39527f8f
 # ╠═906bcc38-ac08-4c71-a8eb-24321741790f
-# ╟─8b39f28e-d889-4f98-9601-380e015b7d35
 # ╟─a9d99a1d-59f2-4c02-89dd-33c9a27db84a
 # ╟─86046132-f497-4573-aa48-52a3b7eb7193
 # ╟─ecc0df31-a29b-4d62-8dbf-08b86c35a885
@@ -2246,8 +2280,8 @@ version = "0.9.1+5"
 # ╟─6bcb8960-cf0d-47d0-ab10-57bdf0aeb037
 # ╟─44938813-2cf6-4381-afe7-28758adc0abe
 # ╟─1e7d5af3-0f55-4b19-8b1a-bb0cb1e71868
-# ╟─63887aaf-0aeb-44eb-8349-13d47ce6b873
 # ╟─a53b8fd0-e061-4147-9dc1-d6313f392ece
+# ╟─63887aaf-0aeb-44eb-8349-13d47ce6b873
 # ╟─0bb4cf30-6e78-41d0-8fa5-bbef696ef9f6
 # ╟─61e5f8bb-4c24-4eb6-a7d6-31c501a51f05
 # ╠═1b9fa185-acde-47ee-ba87-d7db9cdf8426
@@ -2263,16 +2297,16 @@ version = "0.9.1+5"
 # ╟─89fe54a2-c1ff-45d6-93ee-d54a92796fe7
 # ╟─330881fa-d701-4c3a-835e-c75b33ed135d
 # ╠═c5b3773a-bdd8-4c1a-b496-da4f555cb97f
-# ╟─c8d13716-9e0c-4bf9-8612-798e854bf573
-# ╟─554d009f-da73-4ac2-82cd-561cf841e9ac
-# ╠═a3591070-7ddc-4835-99b1-d14dd5d865ba
 # ╟─62f251b7-6aaf-457a-b777-99e1576e81ba
 # ╟─fedf1525-042a-4e82-b152-c30d3385555b
+# ╟─1ab44014-42de-4811-b5db-b62c9af8b393
+# ╟─bd06e0c4-4728-4c6f-a1d0-a371c91750fd
 # ╟─a15d2791-9266-47e5-837d-0074395b98a4
 # ╟─b22e3a42-b652-4c83-a05c-0bd2b1b316ad
 # ╟─f02e783f-6793-4393-aa7f-8ab28cb879b5
 # ╟─37011d23-eeaa-47ed-9ff2-23b177324cfc
 # ╟─77d11203-9950-459c-bdc4-6b5384a28b39
+# ╟─634c0f3e-c02f-4ebf-8b54-5b181981b52b
 # ╟─47b949cc-ce87-406c-bb6f-0ae10a338521
 # ╟─8de9dc91-8ed2-4e1d-927b-cfbdc3f617b0
 # ╟─fa965472-c3f3-40c4-83a7-eb76bec93c80
@@ -2283,6 +2317,8 @@ version = "0.9.1+5"
 # ╠═77f03312-0261-402e-a69c-60b192e827b1
 # ╟─d93765d1-3740-4aaa-96b3-39473adb4ac5
 # ╟─cd93445e-42fd-4572-bd07-c44def848860
+# ╟─71b0682e-228b-48fe-8754-a81b42abb948
+# ╟─f0f36214-29f6-4483-b39c-4a65b78f5f03
 # ╟─632dd3fd-8326-4a35-b0db-dd2b8021397f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
