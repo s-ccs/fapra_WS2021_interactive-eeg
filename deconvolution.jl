@@ -88,18 +88,23 @@ let
 end
 
 # ╔═╡ 5c941851-09e8-4cc3-8503-92bcd4dce2ec
-if selection₁ == 1
-	erp_A(t) = -5(t-b)ℯ^ -0.5(t-b)^2;
-	Markdown.parse("\$ERP_A(t) = -5(t-$b)ℯ^{-0.5(t-$b)^2}\$")
-elseif selection₁ == 2
-	erp_A(t) = 2.5ℯ^(-(t-b)^2);
-	Markdown.parse("\$ERP_A(t) = 2.5ℯ^{-(t-$b)^2}\$")
-elseif selection₁ == 3
+begin
+	# define heaviside function for ploxplot
 	H(t) = 0.5 * (sign(t) + 1)
-	erp_A(t) = H(t-1) - H(t-b)
-	Markdown.parse("\$ERP_A(t) = H(t-1)-H(t-$b) \\text{ with }H(X):=\\text{Heaviside Step Function}\$")
-end
 	
+	# selection
+	if selection₁ == 1
+		erp_A(t) = -5(t-b)ℯ^ -0.5(t-b)^2;
+		Markdown.parse("\$ERP_A(t) = -5(t-$b)ℯ^{-0.5(t-$b)^2}\$")
+	elseif selection₁ == 2
+		erp_A(t) = 2.5ℯ^(-(t-b)^2);
+		Markdown.parse("\$ERP_A(t) = 2.5ℯ^{-(t-$b)^2}\$")
+	elseif selection₁ == 3
+		erp_A(t) = H(t-1) - H(t-b)
+		Markdown.parse("\$ERP_A(t) = H(t-1)-H(t-$b) \\text{ with }H(X):=\\text{Heaviside Step Function}\$")
+	end
+		
+end
 
 # ╔═╡ 6bcb8960-cf0d-47d0-ab10-57bdf0aeb037
 begin
@@ -2316,7 +2321,7 @@ version = "0.9.1+5"
 # ╟─0b4fc788-4f82-458b-a0fa-922069a126f4
 # ╠═77f03312-0261-402e-a69c-60b192e827b1
 # ╟─d93765d1-3740-4aaa-96b3-39473adb4ac5
-# ╟─cd93445e-42fd-4572-bd07-c44def848860
+# ╠═cd93445e-42fd-4572-bd07-c44def848860
 # ╟─71b0682e-228b-48fe-8754-a81b42abb948
 # ╟─f0f36214-29f6-4483-b39c-4a65b78f5f03
 # ╟─632dd3fd-8326-4a35-b0db-dd2b8021397f
