@@ -29,8 +29,8 @@ end
 
 
 # ╔═╡ e026cfe6-61fb-48b0-bda9-2969c28d8956
-md"""
-#### Non-Linear Function (gray) and samples datapoints (blue)
+html"""
+<h4>Figure 1. <span style="color:gray">Non-Linear function</span> and sampled <span style="color:darkblue">datapoints</span></h4>
 We start our exploration with defining a non-linear function and samples from that function.
 
 Our task is to estimate the non-linear relationship solely based on the blue samples
@@ -38,15 +38,28 @@ Our task is to estimate the non-linear relationship solely based on the blue sam
 
 # ╔═╡ 09449f95-851c-4b27-8464-488b5f3465af
 md"""
-#### Spline Basis function, weighted or non-weighted
+#### Figure 2. Spline basis set
 Linear regression will not lead us anywhere, we need to do something better. One way we can do this, is instead of fitting one parameter, fit a whole set of parameters. You might know **polynomial expansion** where in addition to `y~1+x` you add `y~1+x+x²+x³`. Another example would be to split up the x-axis into discrete bins, [0-0.1],[0.1-0.2]...[0.9-1], and then estimating one parameter per range. This has the problem of discrete "jumps" between the bins. To fix this, we will use overlapping bases, ensuring our fitted function is smooth
 
 This basis set spans the complete x-axis, by scaling each basis function up or down (coefficients in plot) and summing for each x-value, one can approximate many smooth functions.
 """
 
-# ╔═╡ 33a7376e-8d5f-4c5b-828b-29600be54c2a
+# ╔═╡ 422fb2e4-820a-4cfb-be87-d4921cafaf37
 md"""
-#### Original function (gray) and spline approximation (black)
+!!! note 
+	**Irregular spline spacing:** You might notice that the splines are not spaced out regularly - there are typically more splines, where there are more samples! Play around with the number of samples and observe, that with increasing number of samples, the splines are placed more regularly. Does it make sense, that the placing doesnt matter on the underlying non-linear function?
+"""
+
+# ╔═╡ e6b2f2be-425e-4780-bcfd-9338880fbcaf
+md"""
+!!! note
+	**Where is the missing spline?**  A spline in the center is missing - where did it go?
+"""
+
+# ╔═╡ 33a7376e-8d5f-4c5b-828b-29600be54c2a
+html"""
+<h4>Figure 3. <span style="color:gray">Non-Linear function</span> and fitted <span style="font-weight:bolder">spline approximation</span></h4>
+
 Typically we can approximate these functions well, but if you put the `n_splines` slider to a high value, you will see overfitting - the spline is too flexible.
 """
 
@@ -55,31 +68,31 @@ md"#### Code Appendix"
 
 # ╔═╡ 8adbb241-c0cc-4cdf-98a0-7c6c45081b4a
 sidebar = Div([
-	md"""### Change it up""",
-	md"""Select a nonlinear function$(@bind bt_nonLinearFun Radio(["0" => "x","1"=>"x²","2"=>"sin(x)"],default="1"))""",
+	md"""##### Change it up""",
+	md"""Select a nonlinear function$(test = @bind bt_nonLinearFun Select(["x","x²","sin(x)"],default="x²"))""",
 	md"---",
-	md"""How many samples? $(@bind n_samples PlutoUI.Slider(5:10:100;default=40,show_value=true))""",
+	md"""How many samples? $(@bind n_samples PlutoUI.Slider(5:5:100;default=40,show_value=true))""",
 	md"---",
-	
 	md"""Scale the noise σ: 	$(@bind σ PlutoUI.Slider(0:0.1:1;default=0.2,show_value=true))""",
 	md"---",
-	md"### Options for plot 2 & 3",
-	md"""Number of splines $(@bind n_splines PlutoUI.Slider(3:1:50;default=4,show_value=true))""",
+	md"##### Plot 2",
+	md""" Weight basisfunctions by β?$(@bind bt_weighted CheckBox())""",
 	md"---",
-	md""" Display basisfunctions weighted or not?$(@bind bt_weighted Radio(["0" => "Basis","1"=>"Basis weighted by β"],default="0"))""",
+	md"##### Plot 2&3",
+	md"""Number of splines $(@bind n_splines PlutoUI.Slider(3:1:50;default=10,show_value=true))""",
 	
 	],
 	
-	style="flex: 1 1 120px; background: #fef; padding: 1em; border-radius: 1em;"
+	style="flex: 1 1 120px; background: rgb(244, 247, 231); padding: 1em; border-radius: 1em;"
 );
 
 # ╔═╡ a62c9541-7d42-422f-a36c-77c931c09993
 begin
-if bt_nonLinearFun=="0"
-	nonLinearFun(x) = x
-elseif bt_nonLinearFun=="1"
-	nonLinearFun(x) = (x.-0.3).^2
-elseif bt_nonLinearFun=="2"
+if bt_nonLinearFun=="x"
+	nonLinearFun(x) = 3 .*x .-1.5
+elseif bt_nonLinearFun=="x²"
+	nonLinearFun(x) = (3*x.-0.9).^2 .-1.5
+elseif bt_nonLinearFun=="sin(x)"
 	nonLinearFun(x) = sin.(10*x)
 end
 end;
@@ -116,7 +129,7 @@ begin
 	ax3 = Axis(fig3[1,1])
 	for k = 1:n_splines
 		
-		if bt_weighted == "1"
+		if bt_weighted
 			singleBasis = β[k+1]*splBasis[:,k]
 		else
 			singleBasis = splBasis[:,k]
@@ -127,13 +140,13 @@ begin
 		color = get(colorschemes[:glasbey_hv_n256],k,(1,n_splines))
 		colorA = coloralpha(color,0.5)
 		lines!(ax2,x,singleBasis,color=color)
-		text!(ax2,string(round.(Float64.(β[k+1]),digits=1)),position=(x[po],m+0.4*posneg),align=(:center,:center),color=colorA,alpha=0.5)
+		text!(ax2,string(round.(Float64.(β[k+1]),digits=1)),position=(x[po],m+0.2*posneg),align=(:center,:center),color=colorA,alpha=0.5)
 	end
 	plot!(ax1,x,nonLinearFun(x),color="gray") # org Function
 	scatter!(ax1,events.continuousA,data[1,1,:])
 	plot!(ax3,x,nonLinearFun(x),color="gray") # org Function
 	lines!(ax3,x,Float64.(splBasis*β[2:end].+β[1]),color="black",linewidth=10) #
-	#ylims!(ax1,(-2,2))
+	ylims!(ax1,(-2,2))
 	#ylims!(ax2,(-1,4))
 	#ylims!(ax3,(-2,2))
 	hidespines!.([ax1,ax2,ax3])
@@ -162,16 +175,17 @@ hbox([
 ])
 
 # ╔═╡ cd8ccc13-d96b-4938-a9ac-f4b2055859d0
-
+test
 
 # ╔═╡ 72663be3-1b0f-490b-be4a-e50d8d9cd5d2
 html"""
 <style>
   main {
-    max-width: 1100px;
+    max-width: 950px;
   }
-  svg {
-    width: 80%;
+  pluto-output img {
+    width: 60%;
+	height:60%;
   }
 
 </style>
@@ -1658,6 +1672,8 @@ version = "3.5.0+0"
 # ╟─c3a54666-7e61-4950-9ca9-7390da43f5ec
 # ╟─09449f95-851c-4b27-8464-488b5f3465af
 # ╟─ac7cbeac-9bd9-4803-a041-49bb247cb36c
+# ╟─422fb2e4-820a-4cfb-be87-d4921cafaf37
+# ╟─e6b2f2be-425e-4780-bcfd-9338880fbcaf
 # ╟─33a7376e-8d5f-4c5b-828b-29600be54c2a
 # ╟─bb228bf6-6e43-45e4-9e79-294eea2f813b
 # ╠═96c35188-aafc-481d-9d44-6aa6d138e016
