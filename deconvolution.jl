@@ -26,23 +26,24 @@ begin
 	using StatsPlots
 	using Random
 	using Images
+	using PlutoUI.ExperimentalLayout: vbox, hbox, Div
+	
+	# Table of contents
+	PlutoUI.TableOfContents(aside=true, depth=2)
 end
 
 # ╔═╡ 8b39f28e-d889-4f98-9601-380e015b7d35
 md"""
 # Deconvolution (Overlap-Correction)
 
-In a perfect setup for an EEG experiment
-- separate events in time to avoid overlap
-- 
-- 
+Let's get right into it - you are probably asking yourself, what is this about? Do i need to know this? Here is a small motivatiton...
+
+In state-of-the-art EEG research the experiment setup is highly controlled and simplified in a way to avoid overlaps of stimuli responses. This means often only a single stimulation per trial is presented. But the more complex and realistic the research topic, the more complex gets the experiment design. Up to a point were it isn't anymore possible to avoid overlaps. Examples for this are experiments were eye tracking and EEG is combined or the tracking of EEG data in a free environment. However also classic EEG research experiments often contain overlapping responses as simple as a manual button presses or involuntary microsaccades. 
+
+In this case adequately modeling of those overlaps, different to simple averaging is required! If not further considered, this can lead to wrong interpretations and false reasoning.
+
+This notebook should give an intuition **why** the approach of deconvolution should further be investigated and **what** the consequences of not accounting for overlaps are!
 """
-
-# ╔═╡ c5b90e22-aa20-464f-afab-0e1d7927461e
-md"""## Imports & General Stuff"""
-
-# ╔═╡ 906bcc38-ac08-4c71-a8eb-24321741790f
-PlutoUI.TableOfContents(aside=true)
 
 # ╔═╡ a9d99a1d-59f2-4c02-89dd-33c9a27db84a
 md"""
@@ -51,7 +52,7 @@ md"""
 
 # ╔═╡ 86046132-f497-4573-aa48-52a3b7eb7193
 md"""
-Before digging deeper into the features and characteristic of deconvolution we should first briefly take a closer look at the topic of convolution.
+Before we start digging deeper into the features and characteristic of deconvolution we should first briefly take a closer look at the topic of convolution.
 
 In math convolution is a operation which takes two functions as input and outputs a third function. Formal, deconvolution of the functions $f$ and $g$ is written as $(f * g)$. But what does this new output function describe?
 
@@ -62,10 +63,10 @@ Convolving two functions is often described as sliding one function over another
 **Consider the following setup:** \
 We want to simulate the measured EEG signal of an experiment. In this experiment we have two different stimuli. Each stimuli evokes a different response. Assume we already know this specific response to each stimuli. 
 Additonal we know from the experiment setup at which timepoint each stimulus occurred.
-
-
-
 """
+
+# ╔═╡ dc8dd8d2-2a8a-42c8-b6b1-8a3111429e11
+
 
 # ╔═╡ ecc0df31-a29b-4d62-8dbf-08b86c35a885
 md"""
@@ -78,9 +79,12 @@ The **response to stimuli A** is modelled by the function $ERP_A(t)$
 """
 
 # ╔═╡ cfba1eb3-aeac-45ff-a563-817516011c3b
-md"""Choose the response function for stimulus A: $(
-	@bind selection₁ Select([1=>"Function1", 2=> "Function2", 3=> "Function3"], default=1))
-"""
+begin
+	function_A_selection = md"""Choose the response function for stimulus A: $(
+		@bind selection₁ Select(
+			[1=>"Function1", 2=> "Function2", 3=> "Function3", 4=> "Function4"],
+		default=1))"""
+end
 
 # ╔═╡ 5d62c314-804c-4cf0-a3fe-fbf9328a3ee1
 let 
@@ -95,15 +99,18 @@ begin
 	# selection
 	if selection₁ == 1
 		erp_A(t) = -5(t-b)ℯ^ -0.5(t-b)^2;
-		Markdown.parse("\$ERP_A(t) = -5(t-$b)ℯ^{-0.5(t-$b)^2}\$")
+		l_A = Markdown.parse("\$ERP_A(t) = -5(t-$b)ℯ^{-0.5(t-$b)^2}\$")
 	elseif selection₁ == 2
 		erp_A(t) = 2.5ℯ^(-(t-b)^2);
-		Markdown.parse("\$ERP_A(t) = 2.5ℯ^{-(t-$b)^2}\$")
+		l_A = Markdown.parse("\$ERP_A(t) = 2.5ℯ^{-(t-$b)^2}\$")
 	elseif selection₁ == 3
 		erp_A(t) = H(t-1) - H(t-b)
-		Markdown.parse("\$ERP_A(t) = H(t-1)-H(t-$b) \\text{ with }H(X):=\\text{Heaviside Step Function}\$")
-	end
-		
+		l_A = Markdown.parse("\$ERP_A(t) = H(t-1)-H(t-$b)\$ \
+		with \$H(X)\$ := Heaviside Step Function")
+	elseif selection₁ ==4
+		erp_A(t) = (1/(abs(1/10)*sqrt(π)))ℯ^-((t-b)/(1/10))^2
+		l_A = Markdown.parse("")
+	end		
 end
 
 # ╔═╡ 6bcb8960-cf0d-47d0-ab10-57bdf0aeb037
@@ -118,10 +125,12 @@ Analogous to this the **response to stimuli B** is modelled by $ERP_B(t)$.
 """
 
 # ╔═╡ 1e7d5af3-0f55-4b19-8b1a-bb0cb1e71868
-md"""Choose the response function for stimulus B: $(
-	@bind selection₂ Select([1=>"Function1", 2=>"Function2", 3=> "Function3"],
-		default=2))
-"""
+begin
+function_B_selection = md"""Choose the response function for stimulus B: $(
+	@bind selection₂ Select(
+		[1=>"Function1", 2=>"Function2", 3=> "Function3", 4=> "Function4"],
+		default=2))"""
+end
 
 # ╔═╡ a53b8fd0-e061-4147-9dc1-d6313f392ece
 let
@@ -131,13 +140,17 @@ end
 # ╔═╡ 63887aaf-0aeb-44eb-8349-13d47ce6b873
 if selection₂ == 1
 	erp_B(t) = -5(t-d)ℯ^ -0.5(t-d)^2;
-	Markdown.parse("\$ERP_A(t) = -5(t-$d)ℯ^{-0.5(t-$d)^2}\$")
+	l_B = Markdown.parse("\$ERP_A(t) = -5(t-$d)ℯ^{-0.5(t-$d)^2}\$")
 elseif selection₂ == 2
 	erp_B(t) = 2.5ℯ^(-(t-d)^2);
-	Markdown.parse("\$ERP_B(t) = 2.5ℯ^{-(t-$d)^2}\$")
+	l_B = Markdown.parse("\$ERP_B(t) = 2.5ℯ^{-(t-$d)^2}\$")
 elseif selection₂ == 3
 	erp_B(t) = H(t-1) - H(t-d)
-	Markdown.parse("\$ERP_B(t) = H(t-1)-H(t-$d) \\text{ with }H(X):=\\text{Heaviside Step Function}\$")
+	l_B = Markdown.parse("\$ERP_B(t) = H(t-1)-H(t-$d)\$ \
+	with \$H(X)\$ := Heaviside Step Function")
+elseif selection₂ ==4
+	erp_B(t) = (1/(abs(1/8)*sqrt(π)))ℯ^-((t-d)/(1/8))^2
+	l_B = Markdown.parse("")
 end
 
 # ╔═╡ 0bb4cf30-6e78-41d0-8fa5-bbef696ef9f6
@@ -146,28 +159,28 @@ begin
 	vline!([0], linestyle=:dash, linecolor=:black)
 end
 
+# ╔═╡ 43231e9d-c852-4f2f-8fe5-c44fbae20f8a
+
+
 # ╔═╡ 61e5f8bb-4c24-4eb6-a7d6-31c501a51f05
 md"""
 ### **Event onsets**
 
-The next figure shows the **event onsets**. They are part of the experiment design. Normally in research those event onsets are distributed in such a way that overlapping responses are avoided at all costs. But this is not always possible given  the experiment or research. (EXAMPLE?)
-For a purpose we will see later, we will not avoid overlapping responses in our experiment. More: We will enforce them to happen at some level.
+The next figure shows the **event onsets**. They are part of the experiment design. Normally in research those event onsets are distributed in such a way that overlapping responses are avoided at all costs. But this is not always possible given  the experiment or research.
+To later dicuss the problems of not using overlap-correction, we will not avoid overlapping responses in our simulated EEG data. More: We will enforce them to happen at some level.
 \
 \
 Since we want to create a simulated EEG signal we simply choose 300 random values between 1 and 6000 for each stimuli. The event onsets are visualized in the figure below. The orange vertical line corresponds to the event onsets of stimuli A. The green line to the event onsets of stimuli B. \
 \
 """
 
-# ╔═╡ 1b9fa185-acde-47ee-ba87-d7db9cdf8426
+# ╔═╡ 4cbafc47-71c7-4dfa-9deb-f1b9ca418426
 begin
 	# sample event onsets
 	event_onsets_A = sort(sample(MersenneTwister(8),1:6000, 300, replace = false))
 	event_onsets_B = sort(sample(MersenneTwister(1),1:6000, 300, replace = false))
 	[event_onsets_A event_onsets_B]' # for display
-end;
-
-# ╔═╡ 4cbafc47-71c7-4dfa-9deb-f1b9ca418426
-begin
+	
 	# graph of event onsets for stimuli A
 	e1 = vline(event_onsets_A, xlims=(0,100), ylims=(0,1), 	
 		linecolor=:orange,linestyle=:dash, label="event onset of stimuli A")
@@ -179,6 +192,9 @@ begin
 	# plotting
 	plot(e2, size=(600,200))
 end
+
+# ╔═╡ 5aaf25c7-cbcb-4a7a-ab31-c48ae2f8a9e1
+
 
 # ╔═╡ 4931b75b-28ab-4b65-b0ef-81ec575a3b20
 md"""
@@ -203,7 +219,7 @@ end;
 # ╔═╡ b5546f79-3629-4acd-a7c3-c893f4b56e94
 md"""
 ### Is this a convolution?  
-Yes indeed. By replacing the event onsets with a vector g with 0 everywhere and 1 at the event onsets, we can reformulate the equation from above:
+Yes indeed. By replacing the event onsets with a vector g with zeros everywhere and 1 at the event onsets, we can reformulate the equation from above:
 """
 
 # ╔═╡ 4fc50f5a-e798-4337-8df6-508af0709b71
@@ -211,9 +227,8 @@ Markdown.parse("\$EEG(t)=g_A*ERP_A+g_B*ERP_B\$")
 
 # ╔═╡ a13a0023-55cd-4987-95ba-5802d01512de
 md"""
-This is a sum of two convolutions!
-\
-\
+!!! tip \"Take Away!\"
+	This is a sum of two convolutions!
 """
 
 # ╔═╡ d9e53857-d59d-4302-b9b9-175c14a87f71
@@ -235,14 +250,14 @@ plot(eeg_, xlims=(0,700), formatter=x->x/10)
 ```
 \
 \
-"""
+""";
 
 # ╔═╡ 4cbaaa15-b1d2-4a4e-b100-51589a026ad3
 md""" 
 ### Simulated EEG signal
 How does this sum of convolutions look like? Take a look at the next figure!         
 
-The **first graph** shows the signals of the *convolution of the event onsets with the respective kernel of the stimulus*. This results in a signal for each stimulus. The orange signal belongs to stimuli A, the green to stimuli B. The vertical lines show the event onsets in the respective color. \
+The first graph shows the signals of the convolution of the event onsets with the respective kernel of the stimulus. This results in a signal for each stimulus. The orange signal belongs to stimuli A, the green to stimuli B. The vertical lines show the event onsets in the respective color. \
 The blue graph below shows the overall signal. This results from adding up the orange and green signal at each timepoint.
 """
 
@@ -261,13 +276,14 @@ end
 
 # ╔═╡ 330881fa-d701-4c3a-835e-c75b33ed135d
 md"""
-#### Prepare Data for Unfold
+### Prepare Data for Unfold
 
 For simplification we transform the data at this point into a event dataframe. This is not further important, but allows us to use the toolbox `unfold.jl` to deconvolute our signal. 
-"""
+""";
 
 # ╔═╡ c5b3773a-bdd8-4c1a-b496-da4f555cb97f
 begin
+	# convert the created function into a event dataframe for unfold
 	events_A = DataFrame(latency = event_onsets_A, conditionA=1);
 	events_B = DataFrame(latency = event_onsets_B, conditionB=1);
 	events = sort(outerjoin(events_A, events_B, on = :latency), [:latency])
@@ -297,8 +313,8 @@ Feel free to adjust the noise, and see how the quality of the results change.
 
 # ╔═╡ 1ab44014-42de-4811-b5db-b62c9af8b393
 begin	
-	md"""Change noise: σ = $(@bind σ Slider(0:0.1:5, default=0, 
-		show_value=true))""";
+	noise_slider = md"""Change noise: σ = $(@bind σ Slider(0:0.1:5, default=0, 
+		show_value=true))"""
 end
 
 # ╔═╡ bd06e0c4-4728-4c6f-a1d0-a371c91750fd
@@ -324,20 +340,27 @@ By taking a closer look at the formula this means the following:
 - We know the event onsets for each stimuli ($g_A, g_B$)
 - We want to recover the isolated response function to each stimuli $ERP_A$ and $ERP_B$
 \
-To achieve this, **Linear Modeling** comes to our rescue! 
-- possible because overlap is always a bit different 
-- assumes that first doesnt influence the processing of second event
+To achieve this, **Linear Modeling** comes to our rescue! Why? We can use LMs because of two reasons / assumptions: 
+
+1) The **overlap** for every event onset is always **slightly different**. This makes it possible to disentangle the two separate responses.
+2) We assume that two in time following events don't influence each other within the brain. More specific: The first event **does not influence** the **processing** of the second event.
 """
 
 # ╔═╡ 37011d23-eeaa-47ed-9ff2-23b177324cfc
 md"""
-!!! tip \"Idea\"
+!!! tip \"Key Idea\"
 
     Each **timepoint / observed sample** of the EEG signal can be modelled as a **linear combination** of the (possibly) **overlapping responses / kernels**. 
+\
+This key idea is visualized in the following figure. \
+\
+On the left side the figure shows the continuous EEG recording together with the event onsets. It is splitted into distinctive samples for each timepoint and forms the vector $y$.\
+\
+$X_{dc}$ is the timeexpanded designmatrix. The timeexpansion is indicated by the diagonal columns with the value one over time. Time in this case means timesteps after the specific event onset ($\tau$).\
 
-**TODO**: τ := time respective to current event onset
+To get the in the figure stated equation the designmatrix is then multplied by the vector b. This gives us an equation which we can optimize for the best fitting betas.
 
-This key idea is visualized in the following figure. On the left side the figure shows the continuous EEG recording together with the event onsets. **TODO**
+Intuitively this is what we would expect. The response to the event onset at timepoint t=21 influences the value of the $EEG_{21}$ by $b_1$ aswell as the following after $EEG_{21}$, for example $EEG_{22}$ by $b_2$. 
 """
 
 # ╔═╡ 77d11203-9950-459c-bdc4-6b5384a28b39
@@ -350,12 +373,13 @@ end
 
 # ╔═╡ 634c0f3e-c02f-4ebf-8b54-5b181981b52b
 md"""
-Take a look at the example for $EEG_{25}$
-"""
-
-# ╔═╡ 47b949cc-ce87-406c-bb6f-0ae10a338521
-md"""
-#### Window size
+Take a closer look at the example for $EEG_{25}$. \
+\
+The equation for $EEG_{25}$ includes 3 weights:
+- β₁ : The response to stimuli A at the local time τ=1
+- β₅ : The response to stimuli A, 5 seconds after the event onset (τ=5)
+- β₉ : The response to stimuli B at the local time τ=4
+This tells us that each of those weights accounts to some extend to the value of $EEG_{25}$. Those multiple equations (each for one timepoint) with a slightly different linear combinations of weights allow us to find the best fitting β's to model our data.
 """
 
 # ╔═╡ 8de9dc91-8ed2-4e1d-927b-cfbdc3f617b0
@@ -364,30 +388,49 @@ As additional variable we introduce the window size. Feel free to change the upp
 """
 
 # ╔═╡ fa965472-c3f3-40c4-83a7-eb76bec93c80
-md"""
-Change window size τ = (-2.0, $(@bind τ2 Slider(-2:0.1:20,default=5, show_value=true))) 
-"""
+begin
+	window_slider = md"""Change window size τ = (-2.0, $(@bind τ2 Slider(-2:0.1:20,default=12,show_value=true)))"""
+end
 
+# ╔═╡ 32a4879a-7916-4b33-93cf-1e5a395c62b7
+begin
+	style = "
+		position: fixed;
+		right: 1rem;
+		top: 17rem;
+		width: 25%;
+		padding: 10px;
+		border: 3px solid rgba(0, 0, 0, 0.15);
+		border-radius: 10px;
+		box-shadow: 0 0 11px 0px #00000010;
+		max-height: calc(100vh - 5rem - 56px);
+		overflow: auto;
+		z-index: 10;
+		background: white;
+		color: grey;
+	";
+	sidebar = Div([
+		html"""<nav class="plutoui-toc">
+			<header style="color: hsl(0,0%,25%) !important">
+			Interactive Sliders
+			</header>
+			</nav>""",
+		md"""Here are all interactive bits of the notebook at one place.\
+		Feel free to change them!""",
+		md"""-----""",
+		function_A_selection,
+		l_A,
+		md"""-----""",
+		function_B_selection,
+		l_B,
+		md"""---""",
+		noise_slider,
+		window_slider,
+	], style=style)
+end
 
 # ╔═╡ 60e739ff-a8d4-42b8-8b6e-d73e398f8c80
-τ = (-2, τ2) # window size definition for deconvolution with unfold
-
-# ╔═╡ e93c8e1c-f984-419f-b3bb-d9ca0396f30a
-md"""### Fitting the model
-
-- next step to fit the above explaiined model to our data / find the best fitting β's
-- 
-"""
-
-# ╔═╡ 85c45d53-8963-4688-b815-93b24f44b057
-md"""
-#### FIR Basis & Wilkinson Notation
-"""
-
-# ╔═╡ 0b4fc788-4f82-458b-a0fa-922069a126f4
-md"""
-$EEG\sim 0+conditionA+conditionB$
-"""
+τ = (-2, τ2); # window size definition for deconvolution with unfold
 
 # ╔═╡ 77f03312-0261-402e-a69c-60b192e827b1
 begin
@@ -408,7 +451,10 @@ begin
 end;
 
 # ╔═╡ d93765d1-3740-4aaa-96b3-39473adb4ac5
-md"""### Plotting the results"""
+md"""
+### Plotting the results
+
+"""
 
 
 # ╔═╡ cd93445e-42fd-4572-bd07-c44def848860
@@ -426,16 +472,28 @@ begin
 	vline!([0], linestyle=:dash, linecolor=:black, label="")
 end
 
+# ╔═╡ 2ea71185-e200-4dbf-9009-0892ff6b7b59
+md""" 
+
+!!! tip \"Take Away !\"
+	**Deconvolution recovers the respective kernels** in this case regardless of overlaps!
+
+!!! note \"Question ?\" 
+	Does the same apply for the widly used mass-univariate approach?
+"""
+
 # ╔═╡ 71b0682e-228b-48fe-8754-a81b42abb948
 md"""
 # Deconvolution vs. Mass-Univariate
 
 This plot shows the comparison between the **deconvolution with overlap correction** (left) and the **mass-univariate approach** (right).
+
+As a reminder: Feel free to play around with the interaactive parts (at the right side) and compare the results for differnt functions and values.
 """
 
 # ╔═╡ f0f36214-29f6-4483-b39c-4a65b78f5f03
 begin
-	data_r = reshape(data,(1,:))
+	data_r = reshape(data_noise,(1,:))
 	data_epochs, times = Unfold.epoch(data=data_r,tbl=events,τ=τ,sfreq=10);
 	f  = @formula 0~0+conditionA+conditionB
 	m_ = fit(UnfoldModel, Dict(Any=>(f, times)), events, data_epochs);
@@ -451,12 +509,9 @@ begin
 	pₘ = plot!(condB_.time, condB_.estimate, ylims=(-5,5), linecolor=:green, 
 		label="conditionB")
 	
-	plot(pₒ, pₘ, )
+	plot(pₒ, pₘ, layout=(1,2))
 	
 end
-
-# ╔═╡ 632dd3fd-8326-4a35-b0db-dd2b8021397f
-designmatrix(m).Xs[1:114,:] # just for bene :-)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2272,12 +2327,12 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
-# ╠═8b39f28e-d889-4f98-9601-380e015b7d35
-# ╟─c5b90e22-aa20-464f-afab-0e1d7927461e
-# ╠═fa539a20-447e-11ec-0a13-71fa39527f8f
-# ╠═906bcc38-ac08-4c71-a8eb-24321741790f
+# ╟─8b39f28e-d889-4f98-9601-380e015b7d35
+# ╟─fa539a20-447e-11ec-0a13-71fa39527f8f
+# ╟─32a4879a-7916-4b33-93cf-1e5a395c62b7
 # ╟─a9d99a1d-59f2-4c02-89dd-33c9a27db84a
 # ╟─86046132-f497-4573-aa48-52a3b7eb7193
+# ╟─dc8dd8d2-2a8a-42c8-b6b1-8a3111429e11
 # ╟─ecc0df31-a29b-4d62-8dbf-08b86c35a885
 # ╟─cfba1eb3-aeac-45ff-a563-817516011c3b
 # ╟─5d62c314-804c-4cf0-a3fe-fbf9328a3ee1
@@ -2288,12 +2343,13 @@ version = "0.9.1+5"
 # ╟─a53b8fd0-e061-4147-9dc1-d6313f392ece
 # ╟─63887aaf-0aeb-44eb-8349-13d47ce6b873
 # ╟─0bb4cf30-6e78-41d0-8fa5-bbef696ef9f6
+# ╟─43231e9d-c852-4f2f-8fe5-c44fbae20f8a
 # ╟─61e5f8bb-4c24-4eb6-a7d6-31c501a51f05
-# ╠═1b9fa185-acde-47ee-ba87-d7db9cdf8426
 # ╟─4cbafc47-71c7-4dfa-9deb-f1b9ca418426
+# ╟─5aaf25c7-cbcb-4a7a-ab31-c48ae2f8a9e1
 # ╟─4931b75b-28ab-4b65-b0ef-81ec575a3b20
 # ╟─2d8e3bce-1120-4eae-871e-508844f08a8b
-# ╠═36d354d4-ffa8-4ce3-9b97-e2cf623c656e
+# ╟─36d354d4-ffa8-4ce3-9b97-e2cf623c656e
 # ╟─b5546f79-3629-4acd-a7c3-c893f4b56e94
 # ╟─4fc50f5a-e798-4337-8df6-508af0709b71
 # ╟─a13a0023-55cd-4987-95ba-5802d01512de
@@ -2301,7 +2357,7 @@ version = "0.9.1+5"
 # ╟─4cbaaa15-b1d2-4a4e-b100-51589a026ad3
 # ╟─89fe54a2-c1ff-45d6-93ee-d54a92796fe7
 # ╟─330881fa-d701-4c3a-835e-c75b33ed135d
-# ╠═c5b3773a-bdd8-4c1a-b496-da4f555cb97f
+# ╟─c5b3773a-bdd8-4c1a-b496-da4f555cb97f
 # ╟─62f251b7-6aaf-457a-b777-99e1576e81ba
 # ╟─fedf1525-042a-4e82-b152-c30d3385555b
 # ╟─1ab44014-42de-4811-b5db-b62c9af8b393
@@ -2312,18 +2368,14 @@ version = "0.9.1+5"
 # ╟─37011d23-eeaa-47ed-9ff2-23b177324cfc
 # ╟─77d11203-9950-459c-bdc4-6b5384a28b39
 # ╟─634c0f3e-c02f-4ebf-8b54-5b181981b52b
-# ╟─47b949cc-ce87-406c-bb6f-0ae10a338521
 # ╟─8de9dc91-8ed2-4e1d-927b-cfbdc3f617b0
 # ╟─fa965472-c3f3-40c4-83a7-eb76bec93c80
-# ╠═60e739ff-a8d4-42b8-8b6e-d73e398f8c80
-# ╠═e93c8e1c-f984-419f-b3bb-d9ca0396f30a
-# ╟─85c45d53-8963-4688-b815-93b24f44b057
-# ╟─0b4fc788-4f82-458b-a0fa-922069a126f4
-# ╠═77f03312-0261-402e-a69c-60b192e827b1
+# ╟─60e739ff-a8d4-42b8-8b6e-d73e398f8c80
+# ╟─77f03312-0261-402e-a69c-60b192e827b1
 # ╟─d93765d1-3740-4aaa-96b3-39473adb4ac5
-# ╠═cd93445e-42fd-4572-bd07-c44def848860
+# ╟─cd93445e-42fd-4572-bd07-c44def848860
+# ╟─2ea71185-e200-4dbf-9009-0892ff6b7b59
 # ╟─71b0682e-228b-48fe-8754-a81b42abb948
 # ╟─f0f36214-29f6-4483-b39c-4a65b78f5f03
-# ╟─632dd3fd-8326-4a35-b0db-dd2b8021397f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
