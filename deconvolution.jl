@@ -32,6 +32,11 @@ begin
 	PlutoUI.TableOfContents(aside=true, depth=2)
 end
 
+# ╔═╡ f44a3659-d7ec-45de-abee-1c026eac4ce5
+begin
+	using Distributions
+end
+
 # ╔═╡ 8b39f28e-d889-4f98-9601-380e015b7d35
 md"""
 # Deconvolution (Overlap-Correction)
@@ -57,9 +62,57 @@ Before we start digging deeper into the features and characteristic of deconvolu
 In math convolution is a operation which takes two functions as input and outputs a third function. Formal, deconvolution of the functions $f$ and $g$ is written as $(f * g)$. But what does this new output function describe?
 
 For this a closer look to the process of convolution helps: \
-Convolving two functions is often described as sliding one function over another. **TODO**
+Convolving two functions is often described as sliding one function over another. 
+Try sliding the orange function over the blue by changing the value of the slider below.
+"""
 
 
+# ╔═╡ 18f302aa-35d5-441e-ad18-a107d4bf9cc4
+# define heaviside function for ploxplot
+H(t) = 0.5 * (sign(t) + 1);
+
+# ╔═╡ df5a7318-de9f-487d-907b-9535620f95ba
+let 
+	md"""Change the position of the orange function
+	$(@bind s Slider(-1.5:0.5:5.5, default=-1, show_value=true))"""
+end
+
+# ╔═╡ 9488f19b-0dab-4c46-8a1f-043946cf6b09
+let
+	fₐ(t) = H(t-2) - H(t-4)
+	fₛ(t) = H(t-s) - H(t-(s+2))
+
+	range = 0:0.01:10
+	conv = DSP.conv(fₐ.(range), fₐ.(range))[1:floor(Int64, length(range))] ./ 100
+
+	orange_left = s
+	orange_right = s + 2
+	blue_left = 2
+	blue_right = 4
+	
+	area = Shape([0,0,0,0],[0,0,0,0])
+	diff = 0
+	if (orange_left <= blue_left) & (blue_left <= orange_right)
+		diff = orange_right - blue_left
+		area = Shape(blue_left .+ [0,diff,diff,0], 0 .+ [0,0,1,1])
+	elseif (blue_left < orange_left) & (orange_left < blue_right)
+		diff = blue_right - orange_left
+		area = Shape(orange_left .+ [0,diff,diff,0], 0 .+ [0,0,1,1])
+	end
+	
+	plot([fₐ, fₛ], ylim=(0,3), xlim=(0,6), size=(600,200))
+	plot!(0:0.01:5.01, conv[500-200:end-200], color=:green)
+	plot!(area, opacity=.2, color="grey")
+	vline!([s+1], linecolor=:black, linestyle=:dash)
+	scatter!([(s+1, diff)], color="grey", legend=:none)
+	
+end
+
+# ╔═╡ 869b8045-794a-4d01-a030-5652a6d5bc13
+;
+
+# ╔═╡ c6d354e1-eb78-4285-8dbf-8d3a617900e4
+md"""
 **Consider the following setup:** \
 We want to simulate the measured EEG signal of an experiment. In this experiment we have two different stimuli. Each stimuli evokes a different response. Assume we already know this specific response to each stimuli. 
 Additonal we know from the experiment setup at which timepoint each stimulus occurred.
@@ -93,9 +146,6 @@ end
 
 # ╔═╡ 5c941851-09e8-4cc3-8503-92bcd4dce2ec
 begin
-	# define heaviside function for ploxplot
-	H(t) = 0.5 * (sign(t) + 1)
-	
 	# selection
 	if selection₁ == 1
 		erp_A(t) = -5(t-b)ℯ^ -0.5(t-b)^2;
@@ -155,7 +205,7 @@ end
 
 # ╔═╡ 0bb4cf30-6e78-41d0-8fa5-bbef696ef9f6
 begin
-	plot(erp_B, xlims=(-2, 10), ylims=(-5,5), linecolor=:green, legend=false, size=(600,200))
+	plot(erp_B, xlims=(-2, 10), ylims=(-5,5), linecolor=:deepskyblue, legend=false, size=(600,200))
 	vline!([0], linestyle=:dash, linecolor=:black)
 end
 
@@ -174,11 +224,23 @@ Since we want to create a simulated EEG signal we simply choose 300 random value
 \
 """
 
+# ╔═╡ 8300dc2f-8022-4ada-aade-fd3c8263be9d
+begin	
+	noise1_slider = md"""Change noise: σ\_1 = $(@bind σ₁ Slider(0:0.01:10, default=0.1, show_value=true))"""
+end
+
+# ╔═╡ ba43ef93-6d4a-4aee-962b-76e78a1e3188
+begin	
+	mean_slider = md"""Change mean:μ\_1 = $(@bind μ Slider(0:0.01:5, default=0, 
+		show_value=true))"""
+end
+
 # ╔═╡ 4cbafc47-71c7-4dfa-9deb-f1b9ca418426
 begin
 	# sample event onsets
 	event_onsets_A = sort(sample(MersenneTwister(8),1:6000, 300, replace = false))
-	event_onsets_B = sort(sample(MersenneTwister(1),1:6000, 300, replace = false))
+	event_onsets_B = event_onsets_A + rand(LogNormal(μ, σ₁),300)
+	#event_onsets_B = sort(sample(MersenneTwister(1),1:6000, 300, replace = false))
 	[event_onsets_A event_onsets_B]' # for display
 	
 	# graph of event onsets for stimuli A
@@ -187,7 +249,7 @@ begin
 
 	# graph of event onsets for stimuli B
 	e2 = vline!(event_onsets_B, xlims=(0,100),ylims=(0,1), 
-		linecolor=:green,linestyle=:dash, label="event onset of stimuli B")
+		linecolor=:deepskyblue,linestyle=:dash, label="event onset of stimuli B")
 
 	# plotting
 	plot(e2, size=(600,200))
@@ -258,18 +320,18 @@ md"""
 How does this sum of convolutions look like? Take a look at the next figure!         
 
 The first graph shows the signals of the convolution of the event onsets with the respective kernel of the stimulus. This results in a signal for each stimulus. The orange signal belongs to stimuli A, the green to stimuli B. The vertical lines show the event onsets in the respective color. \
-The blue graph below shows the overall signal. This results from adding up the orange and green signal at each timepoint.
+The green graph below shows the overall signal. This results from adding up the orange and blue signal at each timepoint.
 """
 
 # ╔═╡ 89fe54a2-c1ff-45d6-93ee-d54a92796fe7
 begin
-	p1 = plot(-10:0.1:70, eeg, xlims=(-10, 70), ylims=(-5,5), legend=false,  linecolor=:deepskyblue)
+	p1 = plot(-10:0.1:70, eeg, xlims=(-10, 70), ylims=(-5,5), legend=false,  linecolor=:green)
 	vline!([0], linestyle=:dash, linecolor=:black)
 	p2 = plot(-10:0.1:70,eeg_A, xlims=(-10, 70), ylims=(-5,5), legend=false, linecolor=:orange)
-	plot!(-10:0.1:70,eeg_B, xlims=(-10, 70), ylims=(-5,5), legend=false, linecolor=:green)
+	plot!(-10:0.1:70,eeg_B, xlims=(-10, 70), ylims=(-5,5), legend=false, linecolor=:deepskyblue)
 	vline!([0], linestyle=:dash, linecolor=:black)
 	vline!(event_onsets_A,linecolor=:orange,linestyle=:dash)
-	vline!(event_onsets_B,linecolor=:green,linestyle=:dash)
+	vline!(event_onsets_B,linecolor=:deepskyblue,linestyle=:dash)
 	plot(p2, p1,layout=@layout[a;b])
 	
 end
@@ -300,7 +362,7 @@ md"""
 
 # ╔═╡ fedf1525-042a-4e82-b152-c30d3385555b
 md"""
-From here on, lets assume we **measured** the **blue signal** from the above in our **eeg experiment**. From our experiment we additional know at which time each respective stimulus was presented (event onsets). Based on this we try to recover the underlying ERP for each stimulus. In our case stimuli A and stimuli B. This is the inverse operation of the above performed convolution. \
+From here on, lets assume we **measured** the **green signal** from the above in our **eeg experiment**. From our experiment we additional know at which time each respective stimulus was presented (event onsets). Based on this we try to recover the underlying ERP for each stimulus. In our case stimuli A and stimuli B. This is the inverse operation of the above performed convolution. \
 \
 For illustration purpose we introduce noise to the data. The level of noise is contolled by the \
 variable σ.
@@ -313,7 +375,7 @@ Feel free to adjust the noise, and see how the quality of the results change.
 
 # ╔═╡ 1ab44014-42de-4811-b5db-b62c9af8b393
 begin	
-	noise_slider = md"""Change noise: σ = $(@bind σ Slider(0:0.1:5, default=0, 
+	noise_slider = md"""Change noise: σ = $(@bind σ Slider(0:0.2:2, default=0, 
 		show_value=true))"""
 end
 
@@ -324,9 +386,9 @@ begin
 	data_noise = data .+ σ .* randn(size(data));
 end;
 
-# ╔═╡ a15d2791-9266-47e5-837d-0074395b98a4
-begin
-	plot(range, data_noise, xlims=(-10, 70), ylims=(-5,5), legend=false,  linecolor=:deepskyblue, size=(600,200))
+# ╔═╡ 9f8dfb28-a34d-410d-8268-23df13ec2538
+let
+	p1 = plot(range[1:801], data_noise[1:801], xlims=(-10, 70), ylims=(-5,5), legend=false,  linecolor=:green, size=(600, 200))
 	vline!([0], linestyle=:dash, linecolor=:black)
 end
 
@@ -349,7 +411,6 @@ To achieve this, **Linear Modeling** comes to our rescue! Why? We can use LMs be
 # ╔═╡ 37011d23-eeaa-47ed-9ff2-23b177324cfc
 md"""
 !!! tip \"Key Idea\"
-
     Each **timepoint / observed sample** of the EEG signal can be modelled as a **linear combination** of the (possibly) **overlapping responses / kernels**. 
 \
 This key idea is visualized in the following figure. \
@@ -424,6 +485,9 @@ begin
 		function_B_selection,
 		l_B,
 		md"""---""",
+		noise1_slider,
+		mean_slider,
+		md"""---""",
 		noise_slider,
 		window_slider,
 	], style=style)
@@ -466,7 +530,7 @@ begin
 
 	# condition B
 	condB = filter(row->row.coefname=="conditionB", results)
-	pₒ = plot!(condB.time, condB.estimate, ylims=(-5,5), linecolor=:green, 
+	pₒ = plot!(condB.time, condB.estimate, ylims=(-5,5), linecolor=:deepskyblue, 
 		label="conditionB")
 
 	vline!([0], linestyle=:dash, linecolor=:black, label="")
@@ -506,7 +570,7 @@ begin
 
 	# condition B
 	condB_ = filter(row->row.coefname=="conditionB", results_)
-	pₘ = plot!(condB_.time, condB_.estimate, ylims=(-5,5), linecolor=:green, 
+	pₘ = plot!(condB_.time, condB_.estimate, ylims=(-5,5), linecolor=:deepskyblue, 
 		label="conditionB")
 	
 	plot(pₒ, pₘ, layout=(1,2))
@@ -518,6 +582,7 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
@@ -530,6 +595,7 @@ Unfold = "181c99d8-e21b-4ff3-b70b-c233eddec679"
 [compat]
 DSP = "~0.7.3"
 DataFrames = "~1.2.2"
+Distributions = "~0.25.37"
 Images = "~0.25.0"
 Plots = "~1.23.5"
 PlutoUI = "~0.7.18"
@@ -663,9 +729,9 @@ version = "0.4.1"
 
 [[deps.Cairo_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
-git-tree-sha1 = "f2202b55d816427cd385a9a4f3ffb226bee80f99"
+git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
-version = "1.16.1+0"
+version = "1.16.1+1"
 
 [[deps.Calculus]]
 deps = ["LinearAlgebra"]
@@ -854,9 +920,9 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[deps.Distributions]]
 deps = ["ChainRulesCore", "DensityInterface", "FillArrays", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SparseArrays", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "Test"]
-git-tree-sha1 = "380dab663ca4234c4ec91340c3211c5e73374612"
+git-tree-sha1 = "6a8dc9f82e5ce28279b6e3e2cea9421154f5bd0d"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
-version = "0.25.32"
+version = "0.25.37"
 
 [[deps.DocStringExtensions]]
 deps = ["LibGit2"]
@@ -1017,9 +1083,9 @@ version = "0.21.0+0"
 
 [[deps.Glib_jll]]
 deps = ["Artifacts", "Gettext_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Libiconv_jll", "Libmount_jll", "PCRE_jll", "Pkg", "Zlib_jll"]
-git-tree-sha1 = "74ef6288d071f58033d54fd6708d4bc23a8b8972"
+git-tree-sha1 = "a32d672ac2c967f3deb8a81d828afc739c838a06"
 uuid = "7746bdde-850d-59dc-9ae8-88ece973131d"
-version = "2.68.3+1"
+version = "2.68.3+2"
 
 [[deps.Graphics]]
 deps = ["Colors", "LinearAlgebra", "NaNMath"]
@@ -1588,9 +1654,9 @@ version = "1.10.8"
 
 [[deps.Ogg_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "7937eda4681660b4d6aeeecc2f7e1c81c8ee4e2f"
+git-tree-sha1 = "887579a3eb005446d514ab7aeac5d1d027658b8f"
 uuid = "e7412a2a-1a6e-54c0-be00-318e2571c051"
-version = "1.3.5+0"
+version = "1.3.5+1"
 
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
@@ -2332,6 +2398,11 @@ version = "0.9.1+5"
 # ╟─32a4879a-7916-4b33-93cf-1e5a395c62b7
 # ╟─a9d99a1d-59f2-4c02-89dd-33c9a27db84a
 # ╟─86046132-f497-4573-aa48-52a3b7eb7193
+# ╟─18f302aa-35d5-441e-ad18-a107d4bf9cc4
+# ╟─df5a7318-de9f-487d-907b-9535620f95ba
+# ╟─9488f19b-0dab-4c46-8a1f-043946cf6b09
+# ╟─869b8045-794a-4d01-a030-5652a6d5bc13
+# ╟─c6d354e1-eb78-4285-8dbf-8d3a617900e4
 # ╟─dc8dd8d2-2a8a-42c8-b6b1-8a3111429e11
 # ╟─ecc0df31-a29b-4d62-8dbf-08b86c35a885
 # ╟─cfba1eb3-aeac-45ff-a563-817516011c3b
@@ -2345,6 +2416,9 @@ version = "0.9.1+5"
 # ╟─0bb4cf30-6e78-41d0-8fa5-bbef696ef9f6
 # ╟─43231e9d-c852-4f2f-8fe5-c44fbae20f8a
 # ╟─61e5f8bb-4c24-4eb6-a7d6-31c501a51f05
+# ╟─8300dc2f-8022-4ada-aade-fd3c8263be9d
+# ╟─ba43ef93-6d4a-4aee-962b-76e78a1e3188
+# ╟─f44a3659-d7ec-45de-abee-1c026eac4ce5
 # ╟─4cbafc47-71c7-4dfa-9deb-f1b9ca418426
 # ╟─5aaf25c7-cbcb-4a7a-ab31-c48ae2f8a9e1
 # ╟─4931b75b-28ab-4b65-b0ef-81ec575a3b20
@@ -2362,7 +2436,7 @@ version = "0.9.1+5"
 # ╟─fedf1525-042a-4e82-b152-c30d3385555b
 # ╟─1ab44014-42de-4811-b5db-b62c9af8b393
 # ╟─bd06e0c4-4728-4c6f-a1d0-a371c91750fd
-# ╟─a15d2791-9266-47e5-837d-0074395b98a4
+# ╟─9f8dfb28-a34d-410d-8268-23df13ec2538
 # ╟─b22e3a42-b652-4c83-a05c-0bd2b1b316ad
 # ╟─f02e783f-6793-4393-aa7f-8ab28cb879b5
 # ╟─37011d23-eeaa-47ed-9ff2-23b177324cfc
