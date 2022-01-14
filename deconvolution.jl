@@ -41,7 +41,7 @@ end
 md"""
 # Deconvolution (Overlap-Correction)
 
-Let's get right into it - you are probably asking yourself, what is this about? Do i need to know this? Here is a small motivatiton...
+Let's get right into it - you are probably asking yourself, what is this about? Do i need to know this? Here is a small motivation...
 
 In state-of-the-art EEG research the experiment setup is highly controlled and simplified in a way to avoid overlaps of stimuli responses. This means often only a single stimulation per trial is presented. But the more complex and realistic the research topic, the more complex gets the experiment design. Up to a point were it isn't anymore possible to avoid overlaps. Examples for this are experiments were eye tracking and EEG is combined or the tracking of EEG data in a free environment. However also classic EEG research experiments often contain overlapping responses as simple as a manual button presses or involuntary microsaccades. 
 
