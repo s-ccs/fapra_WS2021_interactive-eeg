@@ -23,63 +23,29 @@ begin
 	using PlutoUI
 	using PlutoUI.ExperimentalLayout: vbox, hbox, Div
 	using Random
+	PlutoUI.TableOfContents(aside=true, depth=2)
 end
 
 # ╔═╡ aea78e70-59d6-11ec-1c2d-933b50808bec
 md"""
 # Cluster Permutation Test
-
-Motivation
-- Multiple Comparison Problem
-- Example False Negative 
-
-Permutation Test
-- ?
-
-Cluster-based Permutation Test
-- ?
-
-Interactivity
-- Create stimulus for condition, vary the effect size
-- Change H0
-
-Animation
-- Step by Step build up of cluster mass diagramm
-
 """
-
-# ╔═╡ 2ae585f1-a4b5-4971-9ffc-4d52f69f2c33
-begin
-	x = [0,1,2,3,4,5,6,7,8,9,10]
-	
-	[a for (i, a) in enumerate(x) if i>5]
-	[i > 5 ? v : v for (i,v) in enumerate(x)]
-end
-
-# ╔═╡ f0c10860-fff6-4f16-b432-5a95adf9bae1
-[x * y for x in 1:10,  y in 1:10];
-
-# ╔═╡ f837f476-be34-4d16-be3d-a80cef7d3b47
-let
-	f(x) = (5-x)ℯ^-0.5(5-x)^2
-	g(x) = (5-x)ℯ^(-0.5(5.5-x)^2)
-	plot(1:0.1:50, f, xlims=(0,10))
-	plot!(1:0.1:50, g, xlims=(0,10))
-	vline!([5])
-end;
 
 # ╔═╡ dabdc9db-b163-48a4-a39e-0da32b8fc1a8
 begin
 	range = 0:0.1:12
 	n = size(range)[1]
 	pink_noise = PinkGaussian(n, 2.0)
-end
+end;
 
 # ╔═╡ 90e8c685-dbfb-4d15-880e-b5f39540a159
-md""" ## t-values and variance """
+md""" ## Variance and t-values"""
 
 # ╔═╡ 3375eca3-dd33-4715-ab1d-c61d37d7454a
-@bind a Slider(0:1:10, default=0, show_value=true)
+begin 
+	slider_tvalues = md"""Change the variance
+	$(@bind a Slider(0:1:10, default=0, show_value=true))"""
+end
 
 # ╔═╡ 01796f25-7ed2-4859-ae9b-aabdd3c41107
 begin
@@ -130,18 +96,33 @@ begin
 	plot(p3, p4,layout=@layout([a;b]), legend=false)
 end
 
+# ╔═╡ 1a69d310-aa85-4074-8ab5-a0691c827094
+md"""## Data, pinknoise & observed clustermass"""
+
+# ╔═╡ f50bc619-3024-455f-b288-c5348d55d540
+mat = Ref(zeros(Float64, 2, 3));
+
+# ╔═╡ cd5bc6a7-11f2-4abc-b66f-3857a263bae1
+begin 
+	slider_effect = md"""Change effect size
+	$(@bind e Slider(0:0.1:0.5, default=0.2, show_value=true))"""
+end
+
 # ╔═╡ 293b41ac-7731-496a-b1a6-6b9c73dfe57c
-@bind b Slider(0:0.005:0.1, default=0, show_value=true)
+begin 
+	slider_pinknoise = md"""Change the level of pink noise
+	$(@bind b Slider(0.01:0.01:0.2, default=0.05, show_value=true))"""
+end
 
 # ╔═╡ ade7a444-64dd-4784-a3bf-fac4a2fd24ab
 begin
-	f(x) = (5-x)ℯ^-0.5(5-x)^2
+	f(x) = (5-x)ℯ^(-(1-e)*(5-x)^2)
 	data_f = Array{Float64, 1}[]
 	
 	# add pink noise to the function and convolution with gaussian
 	for i in 0:10
 		s = f.(range) .+ b .* rand(MersenneTwister(1+i), pink_noise)
-		ker = ImageFiltering.Kernel.gaussian((10,))
+		ker = ImageFiltering.Kernel.gaussian((1,))
 		smooth_s = imfilter(s, ker)
 		println(typeof(smooth_s))
 		push!(data_f, smooth_s)
@@ -154,7 +135,7 @@ begin
 	# add pink noise to the function and convolution with gaussian
 	for i in 0:10
 		s = g.(range) + b .* rand(MersenneTwister(5+i), pink_noise)
-		ker = ImageFiltering.Kernel.gaussian((10,))
+		ker = ImageFiltering.Kernel.gaussian((1,))
 		smooth_s = imfilter(s, ker)
 		println(typeof(smooth_s))
 		push!(data_g, smooth_s)
@@ -168,11 +149,8 @@ begin
 	# some conversion for simplification
 	mat_f = hcat(data_f...)'
 	mat_g = hcat(data_g...)'
-	mat = cat(mat_f',mat_g',dims=2)'
+	mat[] = cat(mat_f',mat_g',dims=2)'
 end;
-
-# ╔═╡ 1a69d310-aa85-4074-8ab5-a0691c827094
-md"""## Step 4"""
 
 # ╔═╡ eb360848-69c7-4ca4-a889-1bf6b537e2bb
 begin
@@ -203,109 +181,325 @@ begin
 end
 
 # ╔═╡ d9dcc725-6ae0-47cc-8668-16769d095d36
-md""" ## Step 5 """
+md""" ## Permutation of data"""
 
-# ╔═╡ 377ef7ad-a6a5-41f9-a048-14bde874a4aa
+# ╔═╡ 8dacd8b0-e442-4960-9022-0eb37090e13b
 begin
-	b1 = @bind next Button("Next!");
-	b2 = @bind skip Button("Skip to end!");
-	b3 = @bind remove Button("Remove all!");
-	Div(hbox([b1, b2, b3]), style="display: flex;justify-content: center;")
+	b1 = @bind next CounterButton("Next");
+	b2 = @bind skip CounterButton("Skip to end!");
+	b3 = @bind remove Button("Remove all!")
+	buttons_permutation = Div(hbox([b1, b2, b3]), 
+		style="display: flex;justify-content: center;")
 end
+
+# ╔═╡ 46d1f09f-83e7-47ba-8849-2ce0b43ab28b
+begin
+	style = "
+		position: fixed;
+		right: 1rem;
+		top: 17rem;
+		width: 25%;
+		padding: 10px;
+		border: 3px solid rgba(0, 0, 0, 0.15);
+		border-radius: 10px;
+		box-shadow: 0 0 11px 0px #00000010;
+		max-height: calc(100vh - 5rem - 56px);
+		overflow: auto;
+		z-index: 10;
+		background: white;
+		color: grey;
+	";
+	sidebar = Div([
+		html"""<nav class="plutoui-toc">
+			<header style="color: hsl(0,0%,25%) !important">
+			Interactive Sliders
+			</header>
+			</nav>""",
+		md"""Here are all interactive bits of the notebook at one place.\
+		Feel free to change them!""",
+		md"""-----""",
+		md""" **Variance and t-values**""",
+		slider_tvalues,
+		md"""----""",
+		md""" **Data, pinknoise & observed clustermass**""",
+		slider_effect,
+		md"""""",
+		slider_pinknoise,
+		md"""----""",
+		md"""
+		**Permutation of data** \
+		Press the respective button and watch the plots!
+		""",
+		buttons_permutation
+	], style=style)
+end
+
+# ╔═╡ 0f7ef7a0-13e1-4083-bc0d-3513854b4dab
+begin
+	remove
+	c = Ref(1)
+	old_c = Ref(0)
+	clustermasses = Ref([])
+end;
+
+# ╔═╡ 0f04ebbc-af66-4bd5-8a22-2539ba506b6a
+begin
+	data = Ref(zeros(Float64, 2,2))
+	Aidx = Ref([1])
+	Bidx = Ref([1])
+	tvalues = Ref([0.3])
+	clustermass = Ref(0.1)
+	flag_skip = Ref(false)
+	flag_next = Ref(false)
+end;
+
+# ╔═╡ 5ad8dabc-cdab-400a-9fad-a35c077203d6
+begin
+	next
+	flag_next[] = true
+end;
+
+# ╔═╡ 8bdb1ffd-cc7f-49a6-8a6c-d9b10d306e95
+begin
+	skip
+	flag_skip[] = true
+end;
 
 # ╔═╡ 978218c9-2233-48ab-89aa-19d28301b7c7
 begin
-	next
-	n_ = size(mat)[1]
-	indices = collect(1:n_)
-	shuffled_indices = shuffle(indices)
+	next, e, b
+	n_ = size(mat[])[1]
+	data_a = mat[][Aidx[], :]
+	data_b = mat[][Bidx[], :]
+	data_ab = mat[][Aidx[], :]' - mat[][Bidx[], :]'
 	
-	h0A = shuffled_indices[1:floor(Int, n_/2)]
-	h0B = [i > 10 ? i-10 : i+10 for i in h0A]
-
-	data_pA = [mat[i,:] for i in h0A]
-	data_pB = [mat[i,:] for i in h0B]
 	
-	colors_h0A = [i < 11 ? :green : :red for i in h0A]
-	colors_h0B = [i < 11 ? :green : :red for i in h0B]
+	colors_h0A = [i < 11 ? :green : :red for i in Aidx[]]
+	colors_h0B = [i < 11 ? :green : :red for i in Bidx[]]
 	
 	pA = plot(legend=false)
 	for i in 1:floor(Int, n_/2)
-		plot!(range, data_pA[i,:], color=colors_h0A[i])
+		plot!(range, data_a[i,:], color=colors_h0A[i], title="H0: Condition A", 
+			titlefontsize=11)
 	end
 	
 	pB = plot(legend=false)
 	for i in 1:floor(Int, n_/2)
-		plot!(range, data_pB[i,:], color=colors_h0B[i])
+		plot!(range, data_b[i,:], color=colors_h0B[i], title="H0: Condition B", 
+			titlefontsize=11)
 	end
 
-	data_ab = []
-	for i in 1:size(data_pA)[1]
-		push!(data_ab, data_pA[i] - data_pB[i])
-	end
 
-	pab = plot(range, data_ab, color=:purple, ylims=(-2,2))
+	pab = plot(range, data_ab, color=:purple, ylims=(-2,2), title="H0: Cond A- Cond B", 
+			titlefontsize=11)
 
 	plot(pA, pB, pab,layout=(1,3), ylim=(-1,1), legend=false, size=(600,300))
 end
 
-# ╔═╡ d19a09ea-e2a9-4fe6-a910-f7d8199e2096
-begin
-	mat_a = hcat(data_ab...)'
-	# t-values
-	t_values_a = Vector{Float64}()
-	for i in 1:size(mat_a)[2]
-		x = mean(mat_a[:,i])
-		σ = std(mat_a[:,i])
-		n = size(mat_a)[1]
-		t_value_a = t(x, σ, n)
-		push!(t_values_a, t_value_a)
-	end
-end
-
-# ╔═╡ 57b00263-dd33-44c5-ab5e-fe17d51b91d1
-size(mat_a)[1]
-
 # ╔═╡ 27059d32-db65-4136-84f5-e9e5256f9727
 begin
-	#plot(range, t_values, fillrange = 2.14, fillalpha = 0.35, c = 1)
-	plot(range, t_values_a, ylims=(-5, 5), fillrange = [2.14], fillalpha = 0.35, 
-		c = :lightgrey, size=(600,200))
-	plot!(range, t_values_a, fillrange = [-2.14], fillalpha = 0.35, c = :lightgrey)
-	plot!(range, t_values_a, fillrange = (-2.14, 2.14), fillalpha = 1, c = :white)
-	plot!(range, t_values_a, color=:lightskyblue, legend=false, grids=:off)
-	hline!([2.14, -2.14])
+	next
+	blue_color = RGBA(0,0.6056031611752245,0.9786801175696073,1.0)
+	plot(range, tvalues[], ylims=(-5, 5), fillrange = [2.14], fillalpha = 0.35, 
+		c = :lightgrey, size=(600,300))
+	plot!(range, tvalues[], fillrange = [-2.14], fillalpha = 1, c = :green)
+	plot!(range, tvalues[], fillrange = (-2.14, 2.14), fillalpha = 1, c = :white)
+	plot!(range, tvalues[], color=blue_color, legend=false, grids=:off)
+	hline!([2.14, -2.14], c=:orange, title="T-Values", titlefontsize=11)
 end
 
-# ╔═╡ fa1f529c-2b07-4557-857c-eb200baa7a51
-begin
-	remove
-	clustermasses = []
-end;
+# ╔═╡ 90c28617-f892-4377-a816-c7331fd48a9d
+md"""
+## Check the tail !
+"""
 
-# ╔═╡ 20b4ec5b-3332-428c-924c-746b8adc53d2
-begin
-	# button connections
-	next
+# ╔═╡ b5fdf211-198b-4f9e-9d3c-6451b0d62eab
+md"""
+\
+\
+\
+\
+"""
+
+
+# ╔═╡ 8f4be77a-b006-4479-85e4-90d3ad5cc9da
+md""" ### Helper Functions"""
+
+# ╔═╡ 3626cd04-0b7a-4052-8d8a-0ba23ef9427c
+function shuffle_indices(mat)
+	n = size(mat)[1]
+	indices = collect(1:n)
+	shuffled_indices = shuffle(indices)
 	
-	# compute clustermass
+	h0A = shuffled_indices[1:floor(Int, n/2)]
+	h0B = [i > 10 ? i-10 : i+10 for i in h0A]
 
-	# choose max cluster
+	data_a = [mat[i,:] for i in h0A]
+	data_b = [mat[i,:] for i in h0B]
 
-	# add clustermass to list for histogramm
-	max_clustermass = rand(1:10)
-	push!(clustermasses, max_clustermass)
-end;
+	data_ab = []
+	for i in 1:size(data_a)[1]
+		push!(data_ab, data_a[i] - data_b[i])
+	end
 
-# ╔═╡ 14ac7b2f-31ef-4fbc-aa05-7e30cf9bb99d
+	return h0A, h0B
+end
+
+# ╔═╡ 2d6fb447-a8b2-4b8f-9889-d95df4623d31
+function compute_tvalues(mat)
+	tvalues = Vector{Float64}(undef, size(mat)[2])
+	x = mean(mat, dims=1)
+	σ = std(mat, dims=1)
+	n = size(mat, 1)
+	tvalues = t.(x, σ, n)
+	return tvalues
+end
+
+# ╔═╡ d4aae15f-54b3-4288-bc6b-3d192e7a7fd5
+function compute_clustermass(values, boundary)
+	d = diff(abs.(values) .> boundary, dims=1)
+	dcopy = copy(d)
+
+	# return 0 if no value above threshold
+	if !(true in (abs.(values) .> boundary))
+		return 0
+	end
+
+	f = findall(d.!==0)
+	fidx = isempty(f) ? missing : first(f)
+	lidx = isempty(f) ? missing : last(f)
+
+	r = 0
+	l = 1
+	# missing first left boundary
+	if fidx !== missing && d[fidx] == -1
+		prepend!(dcopy, 1)
+		r -= 1
+		l -= 1
+	end
+
+	# missing last right boundary
+	if lidx !== missing && d[lidx] == 1
+		append!(dcopy, -1)
+	end
+
+	# missing both
+	if lidx === missing && fidx === missing
+		dcopy[1] = 1
+		append!(dcopy, -1)
+		l -= 1
+		#r = 0
+	end
+
+	s = findall(dcopy .== 1)
+	e = findall(dcopy .== -1)
+	ci = tuple.(s.+l,e.+r)
+
+	clustermass = maximum([sum(abs.(values[si:ei])) for (si, ei) in ci])
+
+	return clustermass
+	
+end	
+
+# ╔═╡ 51413241-7916-43fb-81a7-0747ac01859c
+observed_clustermass = compute_clustermass(t_values_, 2.14)
+
+# ╔═╡ 0113bf4a-3567-4564-a455-a4a29d92532c
 begin
-	if isempty(clustermasses) 
-		histogram(xlims=(0,10))
+	next, skip
+	
+	bins = vcat(collect(0:5:observed_clustermass), 
+			collect(observed_clustermass:5:100))
+	
+	if isempty(clustermasses[]) 
+		histogram(xlims=(0,10), size=(600,300), title="Histogram", 
+			xlabel="cluster mass (summed t-values)", titlefontsize=11, 
+			ylims=(-1, :auto))
 	else
-		next
-		histogram(clustermasses, xlims=(0,10), ylims=(0,50), bins=10, legend=false, size=(600,200))
+		cm = pop!(clustermasses[])
+		
+		hist = histogram(vcat(clustermasses[], cm), xlims=(0,100), ylims=(0, :auto),
+			bins=bins, legend=false, size=(600,300), c=:green, title="Histogram",
+			xlabel="cluster mass (summed t-values)", titlefontsize=11)
+
+		histogram!(clustermasses[], xlims=(0,100), ylims=(0, :auto), bins=bins, 
+			legend=false, size=(600,300), c=blue_color)
+
+		push!(clustermasses[], cm)
+		
+		hist
 	end
 end
+
+# ╔═╡ 7cafc75d-3a5b-464d-bbc8-fedd920e7dbb
+begin
+	if !(length(clustermasses[]) >= 1000)
+		d1 = md"""
+		!!! info
+			Press the 'Skip to end!' button below to continue!
+		"""
+		d2 = Div(hbox([b2]), style="display: flex;justify-content: center;")
+		vbox([d1,d2])
+	else
+		before_observedcm = clustermasses[][clustermasses[] .< observed_clustermass]
+		after_observedcm = clustermasses[][clustermasses[] .>= observed_clustermass]
+		
+		h1 = histogram([before_observedcm, after_observedcm], xlims=(0,100), 
+			ylims=(0,:auto), bins=bins, legend=false, size=(600,300), 
+			c=[blue_color :red], xlabel="cluster mass (summed t-values)")
+
+		vline!([observed_clustermass], c=:red, linestyle=:dash, linewidth=1.5)
+		
+		h2 = histogram([before_observedcm, after_observedcm], bins=bins,
+			c=[blue_color :red], ylims=(0,10), legend=false, 
+			xlabel="cluster mass (summed t-values)", 
+			xlims=(observed_clustermass-(observed_clustermass*0.3),:auto))
+	
+		vline!([observed_clustermass], c=:red, linestyle=:dash, linewidth=1.5)
+	
+		fo = Plots.font("DejaVu Sans", 10)
+		max_val = maximum(x->isnan(x) ? -Inf : x, h1.series_list[1].plotattributes[:y])
+		#annotate!(observed_clustermass+2, max_val, 
+		#	text("Observed Clustermass", fo, :red, :left))
+		
+		plot(h1, h2,layout=@layout[a;b])
+	end
+end
+
+# ╔═╡ 432b70a3-e0c1-47da-9792-8247a00d726e
+begin
+	next
+	if flag_next[] == true
+		if old_c[] < c[]
+			Aidx[], Bidx[] = shuffle_indices(mat[])
+			data[] = mat[][Aidx[], :] - mat[][Bidx[], :]
+			tvalues[] = vec(compute_tvalues(data[]))
+			clustermass[] = compute_clustermass(tvalues[], 2.14)
+			push!(clustermasses[], clustermass[])
+		end
+		c[] += 1
+		flag_next[] = false
+		clustermasses[]
+	end
+end;
+
+# ╔═╡ 42208e0d-48c1-443c-afef-b7ef35bacffc
+begin
+	skip
+	if flag_skip[] == true
+		while length(clustermasses[]) < 1000
+			Aidx[], Bidx[] = shuffle_indices(mat[])
+			data[] = mat[][Aidx[], :] - mat[][Bidx[], :]
+			tvalues[] = vec(compute_tvalues(data[]))
+			clustermass[] = compute_clustermass(tvalues[], 2.14)
+			if true #clustermass[] > 0 # Include 0 Clusters?
+				push!(clustermasses[], clustermass[])
+			end
+		end
+		flag_skip[] = false
+	end
+end;
+
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -951,9 +1145,9 @@ version = "1.10.8"
 
 [[deps.Ogg_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "7937eda4681660b4d6aeeecc2f7e1c81c8ee4e2f"
+git-tree-sha1 = "887579a3eb005446d514ab7aeac5d1d027658b8f"
 uuid = "e7412a2a-1a6e-54c0-be00-318e2571c051"
-version = "1.3.5+0"
+version = "1.3.5+1"
 
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
@@ -1471,9 +1665,9 @@ version = "1.6.38+0"
 
 [[deps.libvorbis_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Ogg_jll", "Pkg"]
-git-tree-sha1 = "c45f4e40e7aafe9d086379e5578947ec8b95a8fb"
+git-tree-sha1 = "b910cb81ef3fe6e78bf6acee440bda86fd6ae00c"
 uuid = "f27f6e37-5d2b-51aa-960f-b287f2bc3b7a"
-version = "1.3.7+0"
+version = "1.3.7+1"
 
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -1503,29 +1697,39 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
-# ╠═aea78e70-59d6-11ec-1c2d-933b50808bec
-# ╠═0f39512d-9ec8-4756-8cb4-71de41bb661f
-# ╠═2ae585f1-a4b5-4971-9ffc-4d52f69f2c33
-# ╠═f0c10860-fff6-4f16-b432-5a95adf9bae1
-# ╠═f837f476-be34-4d16-be3d-a80cef7d3b47
-# ╠═dabdc9db-b163-48a4-a39e-0da32b8fc1a8
-# ╠═01796f25-7ed2-4859-ae9b-aabdd3c41107
+# ╟─aea78e70-59d6-11ec-1c2d-933b50808bec
+# ╟─0f39512d-9ec8-4756-8cb4-71de41bb661f
+# ╟─46d1f09f-83e7-47ba-8849-2ce0b43ab28b
+# ╟─dabdc9db-b163-48a4-a39e-0da32b8fc1a8
+# ╟─01796f25-7ed2-4859-ae9b-aabdd3c41107
 # ╟─90e8c685-dbfb-4d15-880e-b5f39540a159
-# ╠═3375eca3-dd33-4715-ab1d-c61d37d7454a
-# ╠═ece4644d-3ce9-499f-b37f-739c5f6fd43a
-# ╠═ade7a444-64dd-4784-a3bf-fac4a2fd24ab
-# ╠═293b41ac-7731-496a-b1a6-6b9c73dfe57c
-# ╠═1a69d310-aa85-4074-8ab5-a0691c827094
-# ╠═eb360848-69c7-4ca4-a889-1bf6b537e2bb
-# ╠═794ce507-698a-4c63-a447-cc0e9dcfc318
-# ╠═d9dcc725-6ae0-47cc-8668-16769d095d36
+# ╟─3375eca3-dd33-4715-ab1d-c61d37d7454a
+# ╟─ece4644d-3ce9-499f-b37f-739c5f6fd43a
+# ╟─1a69d310-aa85-4074-8ab5-a0691c827094
+# ╟─f50bc619-3024-455f-b288-c5348d55d540
+# ╟─ade7a444-64dd-4784-a3bf-fac4a2fd24ab
+# ╟─cd5bc6a7-11f2-4abc-b66f-3857a263bae1
+# ╟─293b41ac-7731-496a-b1a6-6b9c73dfe57c
+# ╟─eb360848-69c7-4ca4-a889-1bf6b537e2bb
+# ╟─794ce507-698a-4c63-a447-cc0e9dcfc318
+# ╟─51413241-7916-43fb-81a7-0747ac01859c
+# ╟─d9dcc725-6ae0-47cc-8668-16769d095d36
+# ╟─8dacd8b0-e442-4960-9022-0eb37090e13b
+# ╟─0f7ef7a0-13e1-4083-bc0d-3513854b4dab
+# ╟─0f04ebbc-af66-4bd5-8a22-2539ba506b6a
+# ╟─5ad8dabc-cdab-400a-9fad-a35c077203d6
+# ╟─432b70a3-e0c1-47da-9792-8247a00d726e
+# ╟─8bdb1ffd-cc7f-49a6-8a6c-d9b10d306e95
+# ╟─42208e0d-48c1-443c-afef-b7ef35bacffc
 # ╟─978218c9-2233-48ab-89aa-19d28301b7c7
-# ╟─377ef7ad-a6a5-41f9-a048-14bde874a4aa
-# ╠═57b00263-dd33-44c5-ab5e-fe17d51b91d1
-# ╠═d19a09ea-e2a9-4fe6-a910-f7d8199e2096
 # ╟─27059d32-db65-4136-84f5-e9e5256f9727
-# ╠═fa1f529c-2b07-4557-857c-eb200baa7a51
-# ╠═20b4ec5b-3332-428c-924c-746b8adc53d2
-# ╟─14ac7b2f-31ef-4fbc-aa05-7e30cf9bb99d
+# ╟─0113bf4a-3567-4564-a455-a4a29d92532c
+# ╟─90c28617-f892-4377-a816-c7331fd48a9d
+# ╟─7cafc75d-3a5b-464d-bbc8-fedd920e7dbb
+# ╟─b5fdf211-198b-4f9e-9d3c-6451b0d62eab
+# ╟─8f4be77a-b006-4479-85e4-90d3ad5cc9da
+# ╟─3626cd04-0b7a-4052-8d8a-0ba23ef9427c
+# ╟─2d6fb447-a8b2-4b8f-9889-d95df4623d31
+# ╟─d4aae15f-54b3-4288-bc6b-3d192e7a7fd5
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
