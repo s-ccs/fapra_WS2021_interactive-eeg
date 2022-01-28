@@ -41,6 +41,19 @@ end;
 # ╔═╡ 90e8c685-dbfb-4d15-880e-b5f39540a159
 md""" ## Variance and t-values"""
 
+# ╔═╡ cc36aa36-0a9a-45cd-bd44-fc426487f736
+md"""
+As a test statistic we have multiple options to choose from.
+
+
+
+"""
+
+# ╔═╡ e5f0409b-41d9-47f8-9445-ee895de66152
+md"""
+$t = \frac{\bar{x}}{\frac{\sigma}{\sqrt{n}}}$
+"""
+
 # ╔═╡ 3375eca3-dd33-4715-ab1d-c61d37d7454a
 begin 
 	slider_tvalues = md"""Change the variance
@@ -95,6 +108,13 @@ begin
 	p4 = plot(range, t_values_h, ylims=(-50,50))
 	plot(p3, p4,layout=@layout([a;b]), legend=false)
 end
+
+# ╔═╡ 2316f8fa-2001-45ee-9d9c-5224c4ed8439
+md""" 
+
+!!! hint \"Take Away !\"
+	The **greater** the variance, the **smaller** the t-value!
+"""
 
 # ╔═╡ 1a69d310-aa85-4074-8ab5-a0691c827094
 md"""## Data, pinknoise & observed clustermass"""
@@ -308,6 +328,15 @@ begin
 	hline!([2.14, -2.14], c=:orange, title="T-Values", titlefontsize=11)
 end
 
+# ╔═╡ 41a3513e-a089-4e0c-929b-c8d52d3405ab
+md"""
+\
+\
+\
+\
+\
+"""
+
 # ╔═╡ 90c28617-f892-4377-a816-c7331fd48a9d
 md"""
 ## Check the tail !
@@ -439,6 +468,7 @@ begin
 			Press the 'Skip to end!' button below to continue!
 		"""
 		d2 = Div(hbox([b2]), style="display: flex;justify-content: center;")
+		p = nothing
 		vbox([d1,d2])
 	else
 		before_observedcm = clustermasses[][clustermasses[] .< observed_clustermass]
@@ -458,11 +488,71 @@ begin
 		vline!([observed_clustermass], c=:red, linestyle=:dash, linewidth=1.5)
 	
 		fo = Plots.font("DejaVu Sans", 10)
-		max_val = maximum(x->isnan(x) ? -Inf : x, h1.series_list[1].plotattributes[:y])
+		max_val = maximum(x->isnan(x) ? -Inf : x,
+			h1.series_list[1].plotattributes[:y])
 		#annotate!(observed_clustermass+2, max_val, 
 		#	text("Observed Clustermass", fo, :red, :left))
-		
+		p = length(after_observedcm) / (length(before_observedcm) + 
+			length(after_observedcm))
 		plot(h1, h2,layout=@layout[a;b])
+	end
+end
+
+# ╔═╡ 5d60a143-13e9-4768-95aa-049214003c8b
+begin
+	if p !== nothing
+		Markdown.parse("\$p = $p\$")
+	end
+end
+
+# ╔═╡ f198c72f-89d5-47ae-8ef3-b62a3d2d812a
+begin
+	if p !== nothing
+		if p >= 0.05
+			md"""
+			!!! tip \"Accept H0!\"
+				Since **p > 0.05** we accept $H_0$. \
+				This means that the observed clustermass could have appeared by chance.
+			"""
+	
+		elseif p < 0.05
+			md"""
+			!!! danger \"Reject H0 !\"
+				Because **p < 0.05** we reject $H_0$. \
+				This means that the observed clustermass is **unlikely** to come from 
+				random chance alone.
+			"""
+		end
+	end
+end
+
+
+# ╔═╡ f18fb82d-714b-4c68-87dd-b51ec345f91c
+let
+	info(text) = Markdown.MD(Markdown.Admonition("info", "Important!", [text]))
+
+	t1 = html"""<s style="color: red">can not</s>"""
+	t2 = html"""<b><s>significant</s> cluster <s>(p=0.03)</s></b>"""
+
+	t3 = md"""The statement you can make (if p<0.05):
+			\
+			**There is a significant difference between condition A and condition B 		
+			(optional: in clustersize)**
+			\
+			\
+	
+			The statistical statement is about the cluster, not about the individual 
+			voxels comprising the cluster.
+			\
+			\
+			The statements you $t1 make:
+			\
+				- **We observed a significant difference between 118ms and 250ms** \
+				- **The first $t2 was found at occipital electrodes**
+		"""
+
+	if p !== nothing
+		info(t3)
 	end
 end
 
@@ -1703,8 +1793,11 @@ version = "0.9.1+5"
 # ╟─dabdc9db-b163-48a4-a39e-0da32b8fc1a8
 # ╟─01796f25-7ed2-4859-ae9b-aabdd3c41107
 # ╟─90e8c685-dbfb-4d15-880e-b5f39540a159
+# ╟─cc36aa36-0a9a-45cd-bd44-fc426487f736
+# ╟─e5f0409b-41d9-47f8-9445-ee895de66152
 # ╟─3375eca3-dd33-4715-ab1d-c61d37d7454a
 # ╟─ece4644d-3ce9-499f-b37f-739c5f6fd43a
+# ╟─2316f8fa-2001-45ee-9d9c-5224c4ed8439
 # ╟─1a69d310-aa85-4074-8ab5-a0691c827094
 # ╟─f50bc619-3024-455f-b288-c5348d55d540
 # ╟─ade7a444-64dd-4784-a3bf-fac4a2fd24ab
@@ -1724,8 +1817,12 @@ version = "0.9.1+5"
 # ╟─978218c9-2233-48ab-89aa-19d28301b7c7
 # ╟─27059d32-db65-4136-84f5-e9e5256f9727
 # ╟─0113bf4a-3567-4564-a455-a4a29d92532c
+# ╟─41a3513e-a089-4e0c-929b-c8d52d3405ab
 # ╟─90c28617-f892-4377-a816-c7331fd48a9d
 # ╟─7cafc75d-3a5b-464d-bbc8-fedd920e7dbb
+# ╟─5d60a143-13e9-4768-95aa-049214003c8b
+# ╟─f198c72f-89d5-47ae-8ef3-b62a3d2d812a
+# ╟─f18fb82d-714b-4c68-87dd-b51ec345f91c
 # ╟─b5fdf211-198b-4f9e-9d3c-6451b0d62eab
 # ╟─8f4be77a-b006-4479-85e4-90d3ad5cc9da
 # ╟─3626cd04-0b7a-4052-8d8a-0ba23ef9427c
