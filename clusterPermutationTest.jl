@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.1
+# v0.18.0
 
 using Markdown
 using InteractiveUtils
@@ -23,310 +23,164 @@ begin
 	using PlutoUI
 	using PlutoUI.ExperimentalLayout: vbox, hbox, Div
 	using Random
-	PlutoUI.TableOfContents(aside=true, depth=2)
+	using PlotThemes
+
+	# Setting theme of plots
+	theme(:juno)
+	
+	html"""
+	<style>
+		div.plutoui-sidebar.aside {
+			position: fixed;
+			right: 1rem;
+			top: 10rem;
+			width: min(80vw, 25%);
+			padding: 10px;
+			border: 3px solid rgba(0, 0, 0, 0.15);
+			border-radius: 10px;
+			box-shadow: 0 0 11px 0px #00000010;
+			max-height: calc(100vh - 5rem - 56px);
+			overflow: auto;
+			z-index: 40;
+			background: white;
+			transition: transform 300ms cubic-bezier(0.18, 0.89, 0.45, 1.12);
+			color: var(--pluto-output-color);
+			background-color: var(--main-bg-color);
+		}
+		
+		div.plutoui-sidebar.aside.hide {
+			transform: translateX(calc(100% - 28px));
+		}
+		
+		.plutoui-sidebar header {
+			display: block;
+			font-size: 1.5em;
+			margin-top: -0.1em;
+			margin-bottom: 0.4em;
+			padding-bottom: 0.4em;
+			margin-left: 0;
+			margin-right: 0;
+			font-weight: bold;
+			border-bottom: 2px solid rgba(0, 0, 0, 0.15);
+		}
+		
+		.plutoui-sidebar.aside.hide .open-sidebar, .plutoui-sidebar.aside:not(.hide) .closed-sidebar, .plutoui-sidebar:not(.aside) .closed-sidebar {
+			display: none;
+		}
+
+		.sidebar-toggle {
+			cursor: pointer;
+		}
+		
+	</style>
+	<script>
+		document.addEventListener('click', event => {
+			if (event.target.classList.contains("sidebar-toggle")) {
+				sidebar = document.querySelector('span.sidebar-toggle');
+				sidebar.closest(".plutoui-sidebar").classList.toggle("hide")
+			}
+		});
+	</script>
+"""
+end
+
+# ╔═╡ e8fee800-a796-42d4-a732-20fdc32ce69b
+begin
+	using HypertextLiteral
+	using AbstractPlutoDingetjes
+	import Base:get,show
 end
 
 # ╔═╡ aea78e70-59d6-11ec-1c2d-933b50808bec
 md"""
-# Cluster Permutation Test
+## Cluster Permutation Test
+
+No matter in which field you work, if you are in research, you can't avoid statistics. \
+Even if you would like. 
+
+This interactive tutorial has the goal to give you an insight into cluster permutation tests. Afterwards should be clear why cluster permutation is used and how it works! This journey is separated into five steps.
+
+Let's start of by specifying the setup we are in:
+Assume we have recorded EEG data. 
+
+
+Let's start with a small question as introduction:\
+
+Why do we need cluster permutation tests?	
+Isn't possible to use a simple t-test? To answer this question we need to know more about the setup / scenario we are in.\
+\
+Assume we have recorded EEG data.
+
+!!! info \"The Multiple Comparison Problem\"
+	L
+	
+
+
 """
 
 # ╔═╡ dabdc9db-b163-48a4-a39e-0da32b8fc1a8
 begin
 	range = 0:0.1:12
 	n = size(range)[1]
-	pink_noise = PinkGaussian(n, 2.0)
+	pink_noise = PinkGaussian(n, 5.0)
 end;
-
-# ╔═╡ 90e8c685-dbfb-4d15-880e-b5f39540a159
-md""" ## Variance and t-values"""
-
-# ╔═╡ cc36aa36-0a9a-45cd-bd44-fc426487f736
-md"""
-As a test statistic we have multiple options to choose from.
-
-
-
-"""
-
-# ╔═╡ e5f0409b-41d9-47f8-9445-ee895de66152
-md"""
-$t = \frac{\bar{x}}{\frac{\sigma}{\sqrt{n}}}$
-"""
-
-# ╔═╡ 3375eca3-dd33-4715-ab1d-c61d37d7454a
-begin 
-	slider_tvalues = md"""Change the variance
-	$(@bind a Slider(0:1:10, default=0, show_value=true))"""
-end
-
-# ╔═╡ 01796f25-7ed2-4859-ae9b-aabdd3c41107
-begin
-	# for t-value graph
-	h(x) = 10(5-x)ℯ^-0.5(5-x)^2
-	data_h = Array{Float64}[]
-	
-	# add pink noise to the function and convolution with gaussian
-	for i in 0:10
-		s = h.(range) .+ 0.2 * rand(MersenneTwister(1+i), pink_noise)
-		
-		#s = [10 > range[i] > 5 ? v .+ a * rand(MersenneTwister(1+i), 			#PinkGaussian(101))[1] : v for (i,v) in enumerate(s)]
-
-		ix = (range.<8) .& (range.>7)
-		s[(range.<8) .& (range.>7)] += a * rand(MersenneTwister(1+i), PinkGaussian(sum(ix)))
-		
-		ker = ImageFiltering.Kernel.gaussian((15,))
-		smooth_s = imfilter(s, ker)
-		println(typeof(smooth_s))
-		push!(data_h, smooth_s)
-	end
-
-	# t-value function
-	t(x, σ, n) = x/(σ/sqrt(n))
-
-	# some conversion for simplification
-	mat_h = hcat(data_h...)'
-
-	# TODO: T-values per timepoint? wrong? mean difference?
-	# t-values
-	t_values_h = Vector{Float64}()
-	for i in 1:size(mat_h)[2]
-		x = mean(mat_h[:,i])
-		σ = std(mat_h[:,i])
-		n = size(mat_h)[1]
-		t_value_h = t(x, σ, n)
-		push!(t_values_h, t_value_h)
-	end
-	
-end
-
-# ╔═╡ ece4644d-3ce9-499f-b37f-739c5f6fd43a
-begin
-	p3 = plot(range, mat_h', color=:lightgrey, ylims=(-5,5))
-	mean_h = [mean(mat_h[:,i]) for i in 1:size(mat_h)[2]]
-	plot!(range, mean_h, color=:black, legend=false)
-	p4 = plot(range, t_values_h, ylims=(-50,50))
-	plot(p3, p4,layout=@layout([a;b]), legend=false)
-end
-
-# ╔═╡ 2316f8fa-2001-45ee-9d9c-5224c4ed8439
-md""" 
-
-!!! hint \"Take Away !\"
-	The **greater** the variance, the **smaller** the t-value!
-"""
 
 # ╔═╡ 1a69d310-aa85-4074-8ab5-a0691c827094
-md"""## Data, pinknoise & observed clustermass"""
+md"""## Step 0: Data, pinknoise & clustermass"""
 
-# ╔═╡ f50bc619-3024-455f-b288-c5348d55d540
-mat = Ref(zeros(Float64, 2, 3));
+# ╔═╡ 31a165de-32fb-4fb8-b8de-21530404b555
+md"""
+In praxis the procedure would be the following:
+1. Collect EEG data (time x sensor) from multiple subjects (and for each condition).
+2. Multiply it with a mixing matrix (the component map we extracted through ICA).
 
-# ╔═╡ cd5bc6a7-11f2-4abc-b66f-3857a263bae1
-begin 
-	slider_effect = md"""Change effect size
-	$(@bind e Slider(0:0.1:0.5, default=0.2, show_value=true))"""
-end
+=> We receive a one dimensional IC activation profile over time. 
 
-# ╔═╡ 293b41ac-7731-496a-b1a6-6b9c73dfe57c
-begin 
-	slider_pinknoise = md"""Change the level of pink noise
-	$(@bind b Slider(0.01:0.01:0.2, default=0.05, show_value=true))"""
-end
+But since we are here on theoretical terrain, things are a bit tidier :) \
+Instead of going through hours of hours of EEG data collection, we simulate the EEG data or more specific the trials for the conditions.
 
-# ╔═╡ ade7a444-64dd-4784-a3bf-fac4a2fd24ab
-begin
-	f(x) = (5-x)ℯ^(-(1-e)*(5-x)^2)
-	data_f = Array{Float64, 1}[]
-	
-	# add pink noise to the function and convolution with gaussian
-	for i in 0:10
-		s = f.(range) .+ b .* rand(MersenneTwister(1+i), pink_noise)
-		ker = ImageFiltering.Kernel.gaussian((1,))
-		smooth_s = imfilter(s, ker)
-		println(typeof(smooth_s))
-		push!(data_f, smooth_s)
-	end
-	
-	g(x) = (5-x)ℯ^-(5-x)^2
-	#g(x) = (5-x)ℯ^(-0.5(5.5-x)^2)
-	data_g = Array{Float64, 1}[]
-	
-	# add pink noise to the function and convolution with gaussian
-	for i in 0:10
-		s = g.(range) + b .* rand(MersenneTwister(5+i), pink_noise)
-		ker = ImageFiltering.Kernel.gaussian((1,))
-		smooth_s = imfilter(s, ker)
-		println(typeof(smooth_s))
-		push!(data_g, smooth_s)
-	end
+In our case we have trials of two conditions (A and B). Feel free to change the effect size and noise with the sliders below!
+"""
 
-	data_ = []
-	for i in 1:size(data_f)[1]
-		push!(data_, data_f[i] - data_g[i])
-	end
+# ╔═╡ ec4aaa6b-91f4-4ff3-ae45-7b14b70da271
+md"""
+## Step 2: Clusters over time
+As briefly mentioned in the intro, we do not want to do a statistical test for each time-point individually, because we would need to correct for multiple comparison for all timepoints. 
 
-	# some conversion for simplification
-	mat_f = hcat(data_f...)'
-	mat_g = hcat(data_g...)'
-	mat[] = cat(mat_f',mat_g',dims=2)'
-end;
+**Instead we use a trick:** \
+Let’s define clusters by an arbitrary threshold and test whether these clusters are larger clusters that occur by chance.
+The arbirtrary threshold we use is at p=0.05 (which directly corresponds to two t-values when given the number of subjects, e.g. for 15 subjects the t-values corresponding to p=0.05 are 2.14 and -2.14).
+"""
 
-# ╔═╡ eb360848-69c7-4ca4-a889-1bf6b537e2bb
-begin
-	p1 = plot(range, data_f, color=:green, ylims=(-2,2))
-	p2 = plot(range, data_g, color=:red, ylims=(-2,2))
-	pd = plot(range, data_, color=:purple, ylims=(-2,2))
-	plot(p1, p2, pd, layout=(1,3), ylim=(-1,1), legend=false, size=(600,300))
-end
+# ╔═╡ 9931827d-704d-4fd8-8555-f3c4fcf8f93b
+md"""
+The light grey filled patch is a cluster (If no cluster is visible, increase the effect size.) The observed clustermass is the sum of the t-values over the interval of the grey filled patch. \
+\
+"""
 
-# ╔═╡ 794ce507-698a-4c63-a447-cc0e9dcfc318
-begin
-	mat_ = hcat(data_...)'
-	# t-values
-	t_values_ = Vector{Float64}()
-	for i in 1:size(mat_)[2]
-		x = mean(mat_[:,i])
-		σ = std(mat_[:,i])
-		n = size(mat_)[1]
-		t_value_ = t(x, σ, n)
-		push!(t_values_, t_value_)
-	end
-	
-	plot(range, t_values_, ylims=(-20, 20), fillrange = [2.14], fillalpha = 0.35, 
-		c = :lightgrey, size=(600,200))
-	plot!(range, t_values_, fillrange = [-2.14], fillalpha = 0.35, c = :lightgrey)
-	plot!(range, t_values_, fillrange = (-2.14, 2.14), fillalpha = 1, c = :white)
-	plot!(range, t_values_, color=:lightskyblue, legend=false, grids=:all)
-end
+# ╔═╡ cde28dbb-8d26-4a93-8758-c5ce16ac102e
+md"""
+**Note:** Depending on a the IC activation over time, it is possible that not only one but multiple cluster of different sizes could have formed. In this case we choose the biggest cluster to calculate the observed clustersize!
+\
+\
+**Note:** As a statistic we could use the number of samples the cluster extends, the summed t-value, or many other statistics. We use cluster-mass, which is as described above the sum of the t-values.
+"""
 
 # ╔═╡ d9dcc725-6ae0-47cc-8668-16769d095d36
-md""" ## Permutation of data"""
+md""" ## Step 3: Permutation of data"""
 
-# ╔═╡ 8dacd8b0-e442-4960-9022-0eb37090e13b
-begin
-	b1 = @bind next CounterButton("Next");
-	b2 = @bind skip CounterButton("Skip to end!");
-	b3 = @bind remove Button("Remove all!")
-	buttons_permutation = Div(hbox([b1, b2, b3]), 
-		style="display: flex;justify-content: center;")
-end
+# ╔═╡ 8a4c7eb8-61a8-4972-ae60-ff238dd4413d
+md"""**...and calculate the clustersize...**"""
 
-# ╔═╡ 46d1f09f-83e7-47ba-8849-2ce0b43ab28b
-begin
-	style = "
-		position: fixed;
-		right: 1rem;
-		top: 17rem;
-		width: 25%;
-		padding: 10px;
-		border: 3px solid rgba(0, 0, 0, 0.15);
-		border-radius: 10px;
-		box-shadow: 0 0 11px 0px #00000010;
-		max-height: calc(100vh - 5rem - 56px);
-		overflow: auto;
-		z-index: 10;
-		background: white;
-		color: grey;
-	";
-	sidebar = Div([
-		html"""<nav class="plutoui-toc">
-			<header style="color: hsl(0,0%,25%) !important">
-			Interactive Sliders
-			</header>
-			</nav>""",
-		md"""Here are all interactive bits of the notebook at one place.\
-		Feel free to change them!""",
-		md"""-----""",
-		md""" **Variance and t-values**""",
-		slider_tvalues,
-		md"""----""",
-		md""" **Data, pinknoise & observed clustermass**""",
-		slider_effect,
-		md"""""",
-		slider_pinknoise,
-		md"""----""",
-		md"""
-		**Permutation of data** \
-		Press the respective button and watch the plots!
-		""",
-		buttons_permutation
-	], style=style)
-end
+# ╔═╡ 5dfed8cd-56c5-43aa-8574-2a68a288e8c9
+md"""**...and add the clustersize to the histogram.**"""
 
-# ╔═╡ 0f7ef7a0-13e1-4083-bc0d-3513854b4dab
-begin
-	remove
-	c = Ref(1)
-	old_c = Ref(0)
-	clustermasses = Ref([])
-end;
-
-# ╔═╡ 0f04ebbc-af66-4bd5-8a22-2539ba506b6a
-begin
-	data = Ref(zeros(Float64, 2,2))
-	Aidx = Ref([1])
-	Bidx = Ref([1])
-	tvalues = Ref([0.3])
-	clustermass = Ref(0.1)
-	flag_skip = Ref(false)
-	flag_next = Ref(false)
-end;
-
-# ╔═╡ 5ad8dabc-cdab-400a-9fad-a35c077203d6
-begin
-	next
-	flag_next[] = true
-end;
-
-# ╔═╡ 8bdb1ffd-cc7f-49a6-8a6c-d9b10d306e95
-begin
-	skip
-	flag_skip[] = true
-end;
-
-# ╔═╡ 978218c9-2233-48ab-89aa-19d28301b7c7
-begin
-	next, e, b
-	n_ = size(mat[])[1]
-	data_a = mat[][Aidx[], :]
-	data_b = mat[][Bidx[], :]
-	data_ab = mat[][Aidx[], :]' - mat[][Bidx[], :]'
-	
-	
-	colors_h0A = [i < 11 ? :green : :red for i in Aidx[]]
-	colors_h0B = [i < 11 ? :green : :red for i in Bidx[]]
-	
-	pA = plot(legend=false)
-	for i in 1:floor(Int, n_/2)
-		plot!(range, data_a[i,:], color=colors_h0A[i], title="H0: Condition A", 
-			titlefontsize=11)
-	end
-	
-	pB = plot(legend=false)
-	for i in 1:floor(Int, n_/2)
-		plot!(range, data_b[i,:], color=colors_h0B[i], title="H0: Condition B", 
-			titlefontsize=11)
-	end
-
-
-	pab = plot(range, data_ab, color=:purple, ylims=(-2,2), title="H0: Cond A- Cond B", 
-			titlefontsize=11)
-
-	plot(pA, pB, pab,layout=(1,3), ylim=(-1,1), legend=false, size=(600,300))
-end
-
-# ╔═╡ 27059d32-db65-4136-84f5-e9e5256f9727
-begin
-	next
-	blue_color = RGBA(0,0.6056031611752245,0.9786801175696073,1.0)
-	plot(range, tvalues[], ylims=(-5, 5), fillrange = [2.14], fillalpha = 0.35, 
-		c = :lightgrey, size=(600,300))
-	plot!(range, tvalues[], fillrange = [-2.14], fillalpha = 1, c = :green)
-	plot!(range, tvalues[], fillrange = (-2.14, 2.14), fillalpha = 1, c = :white)
-	plot!(range, tvalues[], color=blue_color, legend=false, grids=:off)
-	hline!([2.14, -2.14], c=:orange, title="T-Values", titlefontsize=11)
-end
+# ╔═╡ 26a297f8-09cb-45b0-a82e-0cdca6876bd3
+md"""
+\
+\
+**Tip for the computation:** Note that we actually do not need to go back to the two conditions between each permutation, but we could just flip (multiply by -1) randomly every subject-difference curve (purple colored lines).
+"""
 
 # ╔═╡ 41a3513e-a089-4e0c-929b-c8d52d3405ab
 md"""
@@ -339,7 +193,24 @@ md"""
 
 # ╔═╡ 90c28617-f892-4377-a816-c7331fd48a9d
 md"""
-## Check the tail !
+## Step 4: Check the tail !
+
+We now check whether our observed cluster mass (Step 2) is greater than 95% of what we would expect by chance (Step 3). The exact value gives us the p-value of the cluster, the probability that cluster-mass with the observed (or more extreme) size would have occured when there was no actually difference between the conditions. 
+
+If we would have initially observed multiple clusters, we can check each against the same distribution.
+"""
+
+# ╔═╡ d5e69276-9271-40f1-b3c3-649146b6e2f8
+html"""
+<style>
+	div.admonition.info {
+		background: rgba(60,60,60,1) !important;
+		border-color: darkgrey !important
+	}
+	div.admonition.info .admonition-title {
+		background: darkgrey !important;
+	}
+</style>
 """
 
 # ╔═╡ b5fdf211-198b-4f9e-9d3c-6451b0d62eab
@@ -355,10 +226,10 @@ md"""
 md""" ### Helper Functions"""
 
 # ╔═╡ 3626cd04-0b7a-4052-8d8a-0ba23ef9427c
-function shuffle_indices(mat)
+function shuffle_indices(mat, seed)
 	n = size(mat)[1]
 	indices = collect(1:n)
-	shuffled_indices = shuffle(indices)
+	shuffled_indices = shuffle(MersenneTwister(seed), indices)
 	
 	h0A = shuffled_indices[1:floor(Int, n/2)]
 	h0B = [i > 10 ? i-10 : i+10 for i in h0A]
@@ -372,16 +243,6 @@ function shuffle_indices(mat)
 	end
 
 	return h0A, h0B
-end
-
-# ╔═╡ 2d6fb447-a8b2-4b8f-9889-d95df4623d31
-function compute_tvalues(mat)
-	tvalues = Vector{Float64}(undef, size(mat)[2])
-	x = mean(mat, dims=1)
-	σ = std(mat, dims=1)
-	n = size(mat, 1)
-	tvalues = t.(x, σ, n)
-	return tvalues
 end
 
 # ╔═╡ d4aae15f-54b3-4288-bc6b-3d192e7a7fd5
@@ -430,8 +291,382 @@ function compute_clustermass(values, boundary)
 	
 end	
 
+# ╔═╡ c99b650b-fcef-4404-9e4d-a6b06e909057
+begin
+	struct CounterButtonMax
+		label::AbstractString
+		max::Real
+	end
+	
+	CounterButtonMax() = CounterButtonMax("Click", 10)
+		
+	function Base.show(io::IO, m::MIME"text/html", button::CounterButtonMax)
+		show(io, m, @htl(
+			"""<span><input type="button" value=$(button.label)><script>
+		let count = 0
+		const span = currentScript.parentElement
+		const button = span.firstElementChild
+		
+		span.value = count
+		
+		button.addEventListener("click", (e) => {
+		
+		if (count < $(button.max)) {
+			count += 1;
+		}
+		span.value = count
+		span.dispatchEvent(new CustomEvent("input"))
+		e.stopPropagation()
+			
+		})
+		</script></span>"""))
+	end
+	
+	Base.get(button::CounterButtonMax) = 0
+	Bonds.initial_value(b::CounterButtonMax) = 0
+	Bonds.possible_values(b::CounterButtonMax) = 0:b.max
+	function Bonds.validate_value(b::CounterButtonMax, val)
+		val isa Integer && val >= 0 && val <=b.max
+	end
+end
+
+# ╔═╡ cd5bc6a7-11f2-4abc-b66f-3857a263bae1
+begin 
+	slider_effect = md"""Change effect size
+	$(@bind e Slider([0, 0.05, 0.1, 0.15, 0.2, 0.5], default=0.2, show_value=true))"""
+end
+
+# ╔═╡ 293b41ac-7731-496a-b1a6-6b9c73dfe57c
+begin 
+	slider_pinknoise = md"""Change the level of pink noise
+	$(@bind b Slider([0.01, 0.02, 0.04, 0.08, 0.16], default=0.05, show_value=true))"""
+end
+
+# ╔═╡ ade7a444-64dd-4784-a3bf-fac4a2fd24ab
+begin
+	f(x) = (5-x)ℯ^(-(1-e)*(5-x)^2)
+	
+	data_f = Array{Float64, 1}[]
+	
+	# add pink noise to the function and convolution with gaussian
+	for i in 0:10
+		s = f.(range) .+ b .* rand(MersenneTwister(1+i), pink_noise)
+		ker = ImageFiltering.Kernel.gaussian((1,))
+		smooth_s = imfilter(s, ker)
+		println(typeof(smooth_s))
+		push!(data_f, smooth_s)
+	end
+	
+	g(x) = (5-x)ℯ^-(5-x)^2
+	
+	data_g = Array{Float64, 1}[]
+	
+	# add pink noise to the function and convolution with gaussian
+	for i in 0:10
+		s = g.(range) + b .* rand(MersenneTwister(5+i), pink_noise)
+		ker = ImageFiltering.Kernel.gaussian((1,))
+		smooth_s = imfilter(s, ker)
+		println(typeof(smooth_s))
+		push!(data_g, smooth_s)
+	end
+
+	data_ = []
+	for i in 1:size(data_f)[1]
+		push!(data_, data_f[i] - data_g[i])
+	end
+
+	# some conversion for simplification
+	mat_f = hcat(data_f...)'
+	mat_g = hcat(data_g...)'
+	#mat[] = cat(mat_f',mat_g',dims=2)'
+	mat = cat(mat_f',mat_g',dims=2)'
+
+	md"""
+	## Step 1: Calculate the difference
+	We calculate the difference between the two conditions A and B (a within subject comparison). Thus, we get difference values for each subject over time (purple).
+	"""
+end
+
+# ╔═╡ eb360848-69c7-4ca4-a889-1bf6b537e2bb
+begin
+	p1 = plot(range, data_f, color=:green, ylims=(-2,2))
+	p2 = plot(range, data_g, color=:red, ylims=(-2,2))
+	pd = plot(range, data_, color=:purple, ylims=(-2,2))
+	plot(p1, p2, pd, layout=(1,3), ylim=(-1,1), legend=false, size=(600,300), background_color=:transparent)
+end
+
+# ╔═╡ 8dacd8b0-e442-4960-9022-0eb37090e13b
+begin
+	b3 = @bind remove Button("Back to the start!")
+end;
+
+# ╔═╡ 0f7ef7a0-13e1-4083-bc0d-3513854b4dab
+begin
+	remove, b, e
+	flag_skip = Ref(false)
+	count = Ref(0)
+	clustermasses = []
+	tvalues = []
+
+	md"""We now want to estimate how big clusters would be, if there would be no differences between the conditions A and B. This would mean that the clusters formed just by chance (this is our H0 distribution of cluster sizes). To do this, we shuffle the condition-label for each subject.
+	"""
+end
+
+# ╔═╡ 394d4dc4-e6f5-4cf4-9bcf-2d471d2d2233
+begin
+	remove
+	b1 = @bind next CounterButtonMax("Next", 1000)
+	b2 = @bind skip CounterButtonMax("Skip to end!", 1)
+
+	md"""
+	The next three plots visualize this procedure.
+	 - the first three subplots show the permutated trials of $H_0$ for both conditions and the difference
+	 - the second graph shows the t-values
+	 - the last plot is the histogram of clustermasses \
+	By interacting with the corresponding buttons below you can see how the histogram of the clustermasses is created. Try it out!
+	"""
+end
+
+# ╔═╡ fef53022-0ab4-4207-a756-522dab366e4c
+begin
+	next
+	if count[] < 1000
+		count[] += 1
+	end
+	
+	md"""
+	The idea is that if there is no difference between the conditions, the labels are meaningless and therefore shuffeling them would yield similar results as before.
+	"""
+end
+
+# ╔═╡ 208b261c-f58f-4d77-b2f4-b0f1ed545776
+begin
+	skip
+	if flag_skip[] === true
+		while count[] < 1000
+			count[] += 1
+		end
+	end
+	flag_skip[] = false
+	count[]
+
+	md"""
+	Note that they are similar, not identical. We thus try to estimate how big the variability of these similar results are, and whether our observed value falls into the variability, or whether i is special.
+	"""
+end
+
+# ╔═╡ 81819689-570d-4245-b3af-a44ac82634e3
+begin
+	skip
+	flag_skip[] = true
+end;
+
+# ╔═╡ 132335d2-e5bf-4e53-b9f6-a18dfd793a06
+begin
+	next, skip
+	n_ = size(mat)[1]
+	Aidx, Bidx = shuffle_indices(mat, count[])
+	
+	data_a = mat[Aidx, :]
+	data_b = mat[Bidx, :]
+	data_ab = mat[Aidx, :]' - mat[Bidx, :]'
+	
+	
+	colors_h0A = [i < 11 ? :green : :red for i in Aidx]
+	colors_h0B = [i < 11 ? :green : :red for i in Bidx]
+	
+	pA = plot(legend=false)
+	for i in 1:floor(Int, n_/2)
+		plot!(range, data_a[i,:], color=colors_h0A[i], title="H0: Condition A", 
+			titlefontsize=11)
+	end
+	
+	pB = plot(legend=false)
+	for i in 1:floor(Int, n_/2)
+		plot!(range, data_b[i,:], color=colors_h0B[i], title="H0: Condition B", 
+			titlefontsize=11)
+	end
+
+
+	pab = plot(range, data_ab, color=:purple, ylims=(-2,2), 
+		title="H0: Cond A- Cond B", titlefontsize=11)
+
+	plot(pA, pB, pab,layout=(1,3), ylim=(-1,1), legend=false, size=(600,300), background_color=:transparent)
+end
+
+# ╔═╡ 1b15b345-b3a0-40df-b66d-2df50591047e
+begin
+	buttons_permutation = Div(hbox([b1, b2, b3]), 
+			style="display: flex;justify-content: center;")
+	buttons_permutation
+end
+
+# ╔═╡ 2f9bf944-ed98-4820-9a38-923f1d404743
+begin
+	sidebar = Div([@htl("""<header>
+			<span class="sidebar-toggle open-sidebar">🕹</span>
+     		<span class="sidebar-toggle closed-sidebar">🕹</span>
+			Interactive Sliders
+			</header>"""),
+		md"""Here are all interactive bits of the notebook at one place.\
+		Feel free to change them!""",
+		md"""----""",
+		md""" **Data, pinknoise & observed clustermass**""",
+		slider_effect,
+		md"""""",
+		slider_pinknoise,
+		md"""----""",
+		md"""
+		**Permutation of data** \
+		Press the respective button and watch the plots!
+		""",
+		buttons_permutation
+	], class="plutoui-sidebar aside")
+end
+
+# ╔═╡ ec6348c2-6df1-4553-8de2-d1dac7edfc6e
+ToggleButton(text="Toggle", class=".test") = @htl("""
+<button>$(text)</button><script>
+	// Select elements relative to `currentScript`
+	var div = currentScript.parentElement
+	var button = div.querySelector("button")
+
+	button.addEventListener("click", (e) => {
+		var x = document.querySelector($(class));
+		if (x.style.display === "none") {
+			x.style.display = "block";
+			button.innerText = "Hide me!";
+		} else {
+		    x.style.display = "none";
+			button.innerText = "Show more...";
+		}
+	})
+</script>""")
+
+# ╔═╡ 7389fd24-2fb4-4dd3-ba17-a1afc7ec914d
+begin
+	intro = md"""First things first: t-values aren't the only possible choice. As a test statistic we have multiple options to choose from. One for example would be the mean. We prefer the t-statistic because of its characteristic that it punishes high variance between subjects. Try it out by changing the slider below!
+ 	\
+  	\
+ 	Definition of t-value:
+	""";
+	
+	formula = md"""
+	$t = \frac{\bar{x}}{\frac{\sigma}{\sqrt{n}}}$
+	""";
+
+	slider_tvalues = md"""
+	Change the variance on the right side $(@bind v Slider(0:1:10, default=0, show_value=true))
+	""";
+
+	outro = md""" 
+
+	!!! info \"Take Away !\"
+		The **greater** the variance, the **smaller** the t-value!
+	"""
+
+	toggle_button = ToggleButton("Show more...",".test")
+	
+	md""" #### Side note: t-values and variance 
+ 	Not familiar with t-values? *$(toggle_button)*
+	"""
+	
+end
+
+# ╔═╡ 01796f25-7ed2-4859-ae9b-aabdd3c41107
+begin
+	# for t-value graph
+	h(x) = 10(5-x)ℯ^-0.5(5-x)^2
+	data_h = Array{Float64}[]
+	
+	# add pink noise to the function and convolution with gaussian
+	for i in 0:10
+		s = h.(range) .+ 0.2 * rand(MersenneTwister(1+i), pink_noise)
+		ix = (range.<8) .& (range.>7)
+		s[(range.<8) .& (range.>7)] += v * rand(MersenneTwister(1+i), PinkGaussian(sum(ix)))
+		ker = ImageFiltering.Kernel.gaussian((15,))
+		smooth_s = imfilter(s, ker)
+		println(typeof(smooth_s))
+		push!(data_h, smooth_s)
+	end
+
+	# t-value function
+	t(x, σ, n) = x/(σ/sqrt(n))
+
+	# some conversion for simplification
+	mat_h = hcat(data_h...)'
+
+	# TODO: T-values per timepoint? wrong? mean difference?
+	# t-values
+	t_values_h = Vector{Float64}()
+	for i in 1:size(mat_h)[2]
+		x = mean(mat_h[:,i])
+		σ = std(mat_h[:,i])
+		n = size(mat_h)[1]
+		t_value_h = t(x, σ, n)
+		push!(t_values_h, t_value_h)
+	end
+	
+end
+
+# ╔═╡ 2d6fb447-a8b2-4b8f-9889-d95df4623d31
+function compute_tvalues(mat)
+	tvalues = Vector{Float64}(undef, size(mat)[2])
+	x = mean(mat, dims=1)
+	σ = std(mat, dims=1)
+	n = size(mat, 1)
+	tvalues = t.(x, σ, n)
+	return tvalues
+end
+
+# ╔═╡ 794ce507-698a-4c63-a447-cc0e9dcfc318
+begin
+	threshold = 2.14;
+	mat_ = hcat(data_...)'
+	t_values_ = vec(compute_tvalues(mat_))
+
+	
+	plot(range, t_values_, ylims=(-20, 20), fillrange = [threshold], 
+		fillalpha = 0.35, c = :lightgrey, size=(600,200))
+	
+	plot!(range, t_values_, fillrange = [-threshold], 
+		fillalpha = 0.35, c = "#101010")
+	
+	plot!(range, t_values_, fillrange = (-threshold, threshold), 
+		fillalpha = 1, c = "#21252B")
+	
+	plot!(range, t_values_, color=:lightskyblue, legend=false, grids=:all)
+	
+	hline!([threshold, -threshold], c=:black, linestyle=:dash, linewidth=1.2, 
+		title="T-Values", titlefontsize=11, background_color=:transparent)
+end
+
 # ╔═╡ 51413241-7916-43fb-81a7-0747ac01859c
-observed_clustermass = compute_clustermass(t_values_, 2.14)
+begin
+	observed_clustermass = compute_clustermass(t_values_, threshold)
+	k = 1
+	
+	t1 = md"""$\text{Observed Clustermass} = \text{ }$""" 
+	
+	t2 = Markdown.parse("\$$observed_clustermass\$")
+
+	Div(hbox([t1, t2]), style="display: flex;justify-content: center;")
+end
+
+# ╔═╡ 27059d32-db65-4136-84f5-e9e5256f9727
+begin
+	next, skip
+	blue_color = RGBA(0,0.6056031611752245,0.9786801175696073,1.0)
+	plot(range, tvalues[count[]], ylims=(-5, 5), fillrange = [threshold], 
+		fillalpha = 0.35, c = :lightgrey, size=(600,300))
+	plot!(range, tvalues[count[]], fillrange = [-threshold], 
+		fillalpha = 1, c = :orange)
+	plot!(range, tvalues[count[]], fillrange = (-threshold, threshold), 
+		fillalpha = 1, c = "#21252B")
+	plot!(range, tvalues[count[]], color=:black, legend=false, grids=:off,size=(600, 200))
+	hline!([threshold, -threshold], c=:black, linestyle=:dash, linewidth=1.5, 
+		title="T-Values", titlefontsize=11, background_color=:transparent)
+end
 
 # ╔═╡ 0113bf4a-3567-4564-a455-a4a29d92532c
 begin
@@ -439,63 +674,46 @@ begin
 	
 	bins = vcat(collect(0:5:observed_clustermass), 
 			collect(observed_clustermass:5:100))
+
+	cms = clustermasses[1:count[]]
+	cm = (isempty(cms) ? [] : pop!(cms))
 	
-	if isempty(clustermasses[]) 
-		histogram(xlims=(0,10), size=(600,300), title="Histogram", 
-			xlabel="cluster mass (summed t-values)", titlefontsize=11, 
-			ylims=(-1, :auto))
-	else
-		cm = pop!(clustermasses[])
-		
-		hist = histogram(vcat(clustermasses[], cm), xlims=(0,100), ylims=(0, :auto),
-			bins=bins, legend=false, size=(600,300), c=:green, title="Histogram",
-			xlabel="cluster mass (summed t-values)", titlefontsize=11)
+	hist = histogram(vcat(cms, cm),
+		xlims=(0,100), ylims=(0, :auto), bins=bins, legend=false, size=(600,200),
+		c=:orange, xlabel="cluster mass (summed t-values)")
 
-		histogram!(clustermasses[], xlims=(0,100), ylims=(0, :auto), bins=bins, 
-			legend=false, size=(600,300), c=blue_color)
-
-		push!(clustermasses[], cm)
-		
-		hist
-	end
+	histogram!(cms, xlims=(0,100), ylims=(0, :auto), bins=bins, 
+		legend=false, size=(600,300), c=blue_color, background_color=:transparent)
+	
+	hist
 end
 
 # ╔═╡ 7cafc75d-3a5b-464d-bbc8-fedd920e7dbb
 begin
-	if !(length(clustermasses[]) >= 1000)
-		d1 = md"""
-		!!! info
-			Press the 'Skip to end!' button below to continue!
-		"""
-		d2 = Div(hbox([b2]), style="display: flex;justify-content: center;")
-		p = nothing
-		vbox([d1,d2])
-	else
-		before_observedcm = clustermasses[][clustermasses[] .< observed_clustermass]
-		after_observedcm = clustermasses[][clustermasses[] .>= observed_clustermass]
-		
-		h1 = histogram([before_observedcm, after_observedcm], xlims=(0,100), 
-			ylims=(0,:auto), bins=bins, legend=false, size=(600,300), 
-			c=[blue_color :red], xlabel="cluster mass (summed t-values)")
+	before_observedcm = clustermasses[clustermasses .< observed_clustermass]
+	after_observedcm = clustermasses[clustermasses .>= observed_clustermass]
+	
+	h1 = histogram([before_observedcm, after_observedcm], xlims=(0,100), 
+		ylims=(0,:auto), bins=bins, legend=false, size=(600,300), 
+		c=[blue_color :red], xlabel="cluster mass (summed t-values)")
 
-		vline!([observed_clustermass], c=:red, linestyle=:dash, linewidth=1.5)
-		
-		h2 = histogram([before_observedcm, after_observedcm], bins=bins,
-			c=[blue_color :red], ylims=(0,10), legend=false, 
-			xlabel="cluster mass (summed t-values)", 
-			xlims=(observed_clustermass-(observed_clustermass*0.3),:auto))
+	vline!([observed_clustermass], c=:red, linestyle=:dash, linewidth=1.5)
 	
-		vline!([observed_clustermass], c=:red, linestyle=:dash, linewidth=1.5)
-	
-		fo = Plots.font("DejaVu Sans", 10)
-		max_val = maximum(x->isnan(x) ? -Inf : x,
-			h1.series_list[1].plotattributes[:y])
-		#annotate!(observed_clustermass+2, max_val, 
-		#	text("Observed Clustermass", fo, :red, :left))
-		p = length(after_observedcm) / (length(before_observedcm) + 
-			length(after_observedcm))
-		plot(h1, h2,layout=@layout[a;b])
-	end
+	h2 = histogram([before_observedcm, after_observedcm], bins=bins,
+		c=[blue_color :red], ylims=(0,10), legend=false, 
+		xlabel="cluster mass (summed t-values) (zoomed in)", 
+		xlims=(0,100))
+
+	vline!([observed_clustermass], c=:red, linestyle=:dash, linewidth=1.5)
+
+	fo = Plots.font("DejaVu Sans", 10)
+	max_val = maximum(x->isnan(x) ? -Inf : x,
+		h1.series_list[1].plotattributes[:y])
+	#annotate!(observed_clustermass+2, max_val, 
+	#	text("Observed Clustermass", fo, :red, :left))
+	p = length(after_observedcm) / (length(before_observedcm) + 
+		length(after_observedcm))
+	plot(h1, h2,layout=@layout[a;b], background_color=:transparent)
 end
 
 # ╔═╡ 5d60a143-13e9-4768-95aa-049214003c8b
@@ -510,17 +728,22 @@ begin
 	if p !== nothing
 		if p >= 0.05
 			md"""
+			Change the effect size and noise and see how it affects our decision on the $H_0$
 			!!! tip \"Accept H0!\"
 				Since **p > 0.05** we accept $H_0$. \
 				This means that the observed clustermass could have appeared by chance.
+			\
+			\
 			"""
 	
 		elseif p < 0.05
 			md"""
+			Change the effect size and noise and see how it affects our decision on the $H_0$
 			!!! danger \"Reject H0 !\"
 				Because **p < 0.05** we reject $H_0$. \
-				This means that the observed clustermass is **unlikely** to come from 
-				random chance alone.
+				This means that the observed clustermass is **unlikely** to come from random chance alone.
+			\
+			\
 			"""
 		end
 	end
@@ -531,8 +754,8 @@ end
 let
 	info(text) = Markdown.MD(Markdown.Admonition("info", "Important!", [text]))
 
-	t1 = html"""<s style="color: red">can not</s>"""
-	t2 = html"""<b><s>significant</s> cluster <s>(p=0.03)</s></b>"""
+	t1 = html"""<span style="color: red">can not</span>"""
+	t2 = html"""<b style="color: red">significant cluster (p=0.03)</b>"""
 
 	t3 = md"""The statement you can make (if p<0.05):
 			\
@@ -552,49 +775,45 @@ let
 		"""
 
 	if p !== nothing
-		info(t3)
+		md"""### Some more notes...
+		$(info(t3))
+		"""
 	end
 end
 
-# ╔═╡ 432b70a3-e0c1-47da-9792-8247a00d726e
+# ╔═╡ f83a9ff5-1efb-4590-8ef2-b407291ea8d1
 begin
-	next
-	if flag_next[] == true
-		if old_c[] < c[]
-			Aidx[], Bidx[] = shuffle_indices(mat[])
-			data[] = mat[][Aidx[], :] - mat[][Bidx[], :]
-			tvalues[] = vec(compute_tvalues(data[]))
-			clustermass[] = compute_clustermass(tvalues[], 2.14)
-			push!(clustermasses[], clustermass[])
-		end
-		c[] += 1
-		flag_next[] = false
-		clustermasses[]
+	for i in 1:1000
+		Aidx, Bidx = shuffle_indices(mat, i)
+		data = mat[Aidx, :] - mat[Bidx, :]
+		tvalues_i = vec(compute_tvalues(data))
+		clustermass_i = compute_clustermass(tvalues_i, threshold)
+		
+		push!(tvalues, tvalues_i)
+		push!(clustermasses, clustermass_i)
 	end
-end;
+	
+	md"""**So we shuffle...**"""
+end
 
-# ╔═╡ 42208e0d-48c1-443c-afef-b7ef35bacffc
+# ╔═╡ 39a99d6b-c8ce-485b-bd07-0de493041ce8
 begin
-	skip
-	if flag_skip[] == true
-		while length(clustermasses[]) < 1000
-			Aidx[], Bidx[] = shuffle_indices(mat[])
-			data[] = mat[][Aidx[], :] - mat[][Bidx[], :]
-			tvalues[] = vec(compute_tvalues(data[]))
-			clustermass[] = compute_clustermass(tvalues[], 2.14)
-			if true #clustermass[] > 0 # Include 0 Clusters?
-				push!(clustermasses[], clustermass[])
-			end
-		end
-		flag_skip[] = false
-	end
-end;
+	p3 = plot(range, mat_h', color=:lightgrey, ylims=(-5,5))
+	mean_h = [mean(mat_h[:,i]) for i in 1:size(mat_h)[2]]
+	plot!(range, mean_h, color=:black, legend=false)
+	p4 = plot(range, t_values_h, ylims=(-50,50))
+	p5 = plot(p3, p4,layout=@layout([a;b]), legend=false, background_color=:transparent)
 
+	Div([intro, formula, slider_tvalues, p5, outro], class="test", style="border: 4px solid gray; border-radius: 10px; padding: 10px; display: none")
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
+AbstractPlutoDingetjes = "6e696c72-6542-2067-7265-42206c756150"
+HypertextLiteral = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
 ImageFiltering = "6a3955dd-da59-5b1f-98d4-e7296123deb5"
+PlotThemes = "ccf2f8ad-2431-5c83-bf29-c5338b663b6a"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
@@ -602,9 +821,12 @@ SignalAnalysis = "df1fea92-c066-49dd-8b36-eace3378ea47"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
+AbstractPlutoDingetjes = "~1.1.4"
+HypertextLiteral = "~0.9.3"
 ImageFiltering = "~0.7.1"
-Plots = "~1.25.3"
-PlutoUI = "~0.7.27"
+PlotThemes = "~2.0.1"
+Plots = "~1.25.9"
+PlutoUI = "~0.7.34"
 SignalAnalysis = "~0.4.1"
 """
 
@@ -612,26 +834,26 @@ SignalAnalysis = "~0.4.1"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.7.0-rc2"
+julia_version = "1.7.2"
 manifest_format = "2.0"
 
 [[deps.AbstractFFTs]]
-deps = ["LinearAlgebra"]
-git-tree-sha1 = "485ee0867925449198280d4af84bdb46a2a404d0"
+deps = ["ChainRulesCore", "LinearAlgebra"]
+git-tree-sha1 = "6f1d9bc1c08f9f4a8fa92e3ea3cb50153a1b40d4"
 uuid = "621f4979-c628-5d54-868e-fcf4e3e8185c"
-version = "1.0.1"
+version = "1.1.0"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
-git-tree-sha1 = "37b730f25b5662ac452f7bb2c50a0567cbb748d4"
+git-tree-sha1 = "8eaf9f1b4921132a4cff3f36a1d9ba923b14a481"
 uuid = "6e696c72-6542-2067-7265-42206c756150"
-version = "1.1.3"
+version = "1.1.4"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra"]
-git-tree-sha1 = "84918055d15b3114ede17ac6a7182f68870c16f7"
+git-tree-sha1 = "af92965fb30777147966f58acb05da51c5616b5f"
 uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
-version = "3.3.1"
+version = "3.3.3"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -662,9 +884,9 @@ version = "0.2.2"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra", "SparseArrays"]
-git-tree-sha1 = "4c26b4e9e91ca528ea212927326ece5918a04b47"
+git-tree-sha1 = "f9982ef575e19b0e5c7a98c6e75ee496c0f73a93"
 uuid = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-version = "1.11.2"
+version = "1.12.0"
 
 [[deps.ChangesOfVariables]]
 deps = ["ChainRulesCore", "LinearAlgebra", "Test"]
@@ -674,9 +896,9 @@ version = "0.1.2"
 
 [[deps.ColorSchemes]]
 deps = ["ColorTypes", "Colors", "FixedPointNumbers", "Random"]
-git-tree-sha1 = "a851fec56cb73cfdf43762999ec72eff5b86882a"
+git-tree-sha1 = "12fc73e5e0af68ad3137b886e3f7c1eacfca2640"
 uuid = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
-version = "3.15.0"
+version = "3.17.1"
 
 [[deps.ColorTypes]]
 deps = ["FixedPointNumbers", "Random"]
@@ -770,9 +992,9 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[deps.Distributions]]
 deps = ["ChainRulesCore", "DensityInterface", "FillArrays", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SparseArrays", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "Test"]
-git-tree-sha1 = "6a8dc9f82e5ce28279b6e3e2cea9421154f5bd0d"
+git-tree-sha1 = "38012bf3553d01255e83928eec9c998e19adfddf"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
-version = "0.25.37"
+version = "0.25.48"
 
 [[deps.DocStringExtensions]]
 deps = ["LibGit2"]
@@ -792,14 +1014,14 @@ version = "2.2.3+0"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "b3bfd02e98aedfa5cf885665493c5598c350cd2f"
+git-tree-sha1 = "ae13fcbc7ab8f16b0856729b050ef0c446aa3492"
 uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
-version = "2.2.10+0"
+version = "2.4.4+0"
 
 [[deps.ExprTools]]
-git-tree-sha1 = "b7e3d17636b348f005f11040025ae8c6f645fe92"
+git-tree-sha1 = "56559bbef6ca5ea0c0818fa5c90320398a6fbf8d"
 uuid = "e2ba6199-217a-4e67-a87a-7c52f15ade04"
-version = "0.1.6"
+version = "0.1.8"
 
 [[deps.FFMPEG]]
 deps = ["FFMPEG_jll"]
@@ -833,15 +1055,15 @@ version = "3.3.10+0"
 
 [[deps.FileIO]]
 deps = ["Pkg", "Requires", "UUIDs"]
-git-tree-sha1 = "2db648b6712831ecb333eae76dbfd1c156ca13bb"
+git-tree-sha1 = "80ced645013a5dbdc52cf70329399c35ce007fae"
 uuid = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
-version = "1.11.2"
+version = "1.13.0"
 
 [[deps.FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
-git-tree-sha1 = "8756f9935b7ccc9064c6eef0bff0ad643df733a3"
+git-tree-sha1 = "deed294cde3de20ae0b2e0355a6c4e1c6a5ceffc"
 uuid = "1a297f60-69ca-5386-bcde-b61e274b549b"
-version = "0.12.7"
+version = "0.12.8"
 
 [[deps.FixedPointNumbers]]
 deps = ["Statistics"]
@@ -875,21 +1097,21 @@ version = "1.0.10+0"
 
 [[deps.GLFW_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libglvnd_jll", "Pkg", "Xorg_libXcursor_jll", "Xorg_libXi_jll", "Xorg_libXinerama_jll", "Xorg_libXrandr_jll"]
-git-tree-sha1 = "0c603255764a1fa0b61752d2bec14cfbd18f7fe8"
+git-tree-sha1 = "51d2dfe8e590fbd74e7a842cf6d13d8a2f45dc01"
 uuid = "0656b61e-2033-5cc2-a64a-77c0f6c09b89"
-version = "3.3.5+1"
+version = "3.3.6+0"
 
 [[deps.GR]]
-deps = ["Base64", "DelimitedFiles", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Pkg", "Printf", "Random", "Serialization", "Sockets", "Test", "UUIDs"]
-git-tree-sha1 = "30f2b340c2fff8410d89bfcdc9c0a6dd661ac5f7"
+deps = ["Base64", "DelimitedFiles", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Pkg", "Printf", "Random", "RelocatableFolders", "Serialization", "Sockets", "Test", "UUIDs"]
+git-tree-sha1 = "4a740db447aae0fbeb3ee730de1afbb14ac798a1"
 uuid = "28b8d3ca-fb5f-59d9-8090-bfdbd6d07a71"
-version = "0.62.1"
+version = "0.63.1"
 
 [[deps.GR_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Cairo_jll", "FFMPEG_jll", "Fontconfig_jll", "GLFW_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pixman_jll", "Pkg", "Qt5Base_jll", "Zlib_jll", "libpng_jll"]
-git-tree-sha1 = "fd75fa3a2080109a2c0ec9864a6e14c60cca3866"
+git-tree-sha1 = "a6c850d77ad5118ad3be4bd188919ce97fffac47"
 uuid = "d2c73de3-f751-5644-a686-071e5b155ba9"
-version = "0.62.0+0"
+version = "0.64.0+0"
 
 [[deps.GeometryBasics]]
 deps = ["EarCut_jll", "IterTools", "LinearAlgebra", "StaticArrays", "StructArrays", "Tables"]
@@ -981,9 +1203,9 @@ version = "0.5.0"
 
 [[deps.InlineStrings]]
 deps = ["Parsers"]
-git-tree-sha1 = "8d70835a3759cdd75881426fced1508bb7b7e1b6"
+git-tree-sha1 = "61feba885fac3a407465726d0c330b3055df897f"
 uuid = "842dd82b-1e85-43dc-bf29-5d0ee9dffc48"
-version = "1.1.1"
+version = "1.1.2"
 
 [[deps.IntelOpenMP_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1024,21 +1246,21 @@ version = "1.0.0"
 
 [[deps.JLLWrappers]]
 deps = ["Preferences"]
-git-tree-sha1 = "642a199af8b68253517b80bd3bfd17eb4e84df6e"
+git-tree-sha1 = "abc9885a7ca2052a736a600f7fa66209f96506e1"
 uuid = "692b3bcd-3c85-4b1f-b108-f13ce0eb3210"
-version = "1.3.0"
+version = "1.4.1"
 
 [[deps.JSON]]
 deps = ["Dates", "Mmap", "Parsers", "Unicode"]
-git-tree-sha1 = "8076680b162ada2a031f707ac7b4953e30667a37"
+git-tree-sha1 = "3c837543ddb02250ef42f4738347454f95079d4e"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
-version = "0.21.2"
+version = "0.21.3"
 
 [[deps.JpegTurbo_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "d735490ac75c5cb9f1b00d8b5509c11984dc6943"
+git-tree-sha1 = "b53380851c6e6664204efb2e62cd24fa5c47e4ba"
 uuid = "aacddb02-875f-59d6-b918-886e6ef4fbf8"
-version = "2.1.0+0"
+version = "2.1.2+0"
 
 [[deps.LAME_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1215,14 +1437,14 @@ uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
 
 [[deps.MutableArithmetics]]
 deps = ["LinearAlgebra", "SparseArrays", "Test"]
-git-tree-sha1 = "7bb6853d9afec54019c1397c6eb610b9b9a19525"
+git-tree-sha1 = "842b5ccd156e432f369b204bb704fd4020e383ac"
 uuid = "d8a4904e-b15c-11e9-3269-09a3773c0cb0"
-version = "0.3.1"
+version = "0.3.3"
 
 [[deps.NaNMath]]
-git-tree-sha1 = "f755f36b19a5116bb580de457cda0c140153f283"
+git-tree-sha1 = "b086b7ea07f8e38cf122f5016af580881ac914fe"
 uuid = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
-version = "0.3.6"
+version = "0.3.7"
 
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
@@ -1249,9 +1471,9 @@ uuid = "05823500-19ac-5b8b-9628-191a04bc5112"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "15003dcb7d8db3c6c857fda14891a539a8f2705a"
+git-tree-sha1 = "648107615c15d4e09f7eca16307bc821c1f718d8"
 uuid = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
-version = "1.1.10+0"
+version = "1.1.13+0"
 
 [[deps.OpenSpecFun_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pkg"]
@@ -1284,15 +1506,15 @@ version = "0.11.5"
 
 [[deps.PaddedViews]]
 deps = ["OffsetArrays"]
-git-tree-sha1 = "646eed6f6a5d8df6708f15ea7e02a7a2c4fe4800"
+git-tree-sha1 = "03a7a85b76381a3d04c7a1656039197e70eda03d"
 uuid = "5432bcbf-9aad-5242-b902-cca2824c8663"
-version = "0.5.10"
+version = "0.5.11"
 
 [[deps.Parsers]]
 deps = ["Dates"]
-git-tree-sha1 = "d7fa6237da8004be601e19bd6666083056649918"
+git-tree-sha1 = "13468f237353112a01b2d6b32f3d0f80219944aa"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
-version = "2.1.3"
+version = "2.2.2"
 
 [[deps.Pixman_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1312,33 +1534,33 @@ version = "2.0.1"
 
 [[deps.PlotUtils]]
 deps = ["ColorSchemes", "Colors", "Dates", "Printf", "Random", "Reexport", "Statistics"]
-git-tree-sha1 = "e4fe0b50af3130ddd25e793b471cb43d5279e3e6"
+git-tree-sha1 = "6f1b25e8ea06279b5689263cc538f51331d7ca17"
 uuid = "995b91a9-d308-5afd-9ec6-746e21dbc043"
-version = "1.1.1"
+version = "1.1.3"
 
 [[deps.Plots]]
 deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "GeometryBasics", "JSON", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "PlotThemes", "PlotUtils", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "Requires", "Scratch", "Showoff", "SparseArrays", "Statistics", "StatsBase", "UUIDs", "UnicodeFun", "Unzip"]
-git-tree-sha1 = "7eda8e2a61e35b7f553172ef3d9eaa5e4e76d92e"
+git-tree-sha1 = "1d0a11654dbde41dc437d6733b68ce4b28fbe866"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-version = "1.25.3"
+version = "1.25.9"
 
 [[deps.PlutoUI]]
 deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "Markdown", "Random", "Reexport", "UUIDs"]
-git-tree-sha1 = "fed057115644d04fba7f4d768faeeeff6ad11a60"
+git-tree-sha1 = "8979e9802b4ac3d58c503a20f2824ad67f9074dd"
 uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-version = "0.7.27"
+version = "0.7.34"
 
 [[deps.Polynomials]]
 deps = ["Intervals", "LinearAlgebra", "MutableArithmetics", "RecipesBase"]
-git-tree-sha1 = "78a0f89d2713872206ded16fd0d062baa92d9be9"
+git-tree-sha1 = "f184bc53e9add8c737e50fa82885bc3f7d70f628"
 uuid = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
-version = "2.0.19"
+version = "2.0.24"
 
 [[deps.Preferences]]
 deps = ["TOML"]
-git-tree-sha1 = "00cfd92944ca9c760982747e9a1d0d5d86ab1e5a"
+git-tree-sha1 = "2cf929d64681236a2e074ffafb8d568733d2e6af"
 uuid = "21216c6a-2e73-6563-6e65-726566657250"
-version = "1.2.2"
+version = "1.2.3"
 
 [[deps.Printf]]
 deps = ["Unicode"]
@@ -1371,20 +1593,26 @@ version = "1.2.1"
 
 [[deps.RecipesPipeline]]
 deps = ["Dates", "NaNMath", "PlotUtils", "RecipesBase"]
-git-tree-sha1 = "7ad0dfa8d03b7bcf8c597f59f5292801730c55b8"
+git-tree-sha1 = "37c1631cb3cc36a535105e6d5557864c82cd8c2b"
 uuid = "01d81517-befc-4cb6-b9ec-a95719d0359c"
-version = "0.4.1"
+version = "0.5.0"
 
 [[deps.Reexport]]
 git-tree-sha1 = "45e428421666073eab6f2da5c9d310d99bb12f9b"
 uuid = "189a3867-3050-52da-a836-e630ba90ab69"
 version = "1.2.2"
 
+[[deps.RelocatableFolders]]
+deps = ["SHA", "Scratch"]
+git-tree-sha1 = "cdbd3b1338c72ce29d9584fdbe9e9b70eeb5adca"
+uuid = "05181044-ff0b-4ac5-8273-598c1e38db00"
+version = "0.1.3"
+
 [[deps.Requires]]
 deps = ["UUIDs"]
-git-tree-sha1 = "8f82019e525f4d5c669692772a6f4b0a58b06a6a"
+git-tree-sha1 = "838a3a4188e2ded87a4f9f184b4b0d78a1e91cb7"
 uuid = "ae029012-a4dd-5104-9daa-d747884805df"
-version = "1.2.0"
+version = "1.3.0"
 
 [[deps.Rmath]]
 deps = ["Random", "Rmath_jll"]
@@ -1447,9 +1675,9 @@ uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [[deps.SpecialFunctions]]
 deps = ["ChainRulesCore", "IrrationalConstants", "LogExpFunctions", "OpenLibm_jll", "OpenSpecFun_jll"]
-git-tree-sha1 = "e08890d19787ec25029113e88c34ec20cac1c91e"
+git-tree-sha1 = "8d0c8e3d0ff211d9ff4a0c2307d876c99d10bdf1"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
-version = "2.0.0"
+version = "2.1.2"
 
 [[deps.StackViews]]
 deps = ["OffsetArrays"]
@@ -1459,36 +1687,36 @@ version = "0.1.1"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "Random", "Statistics"]
-git-tree-sha1 = "3c76dde64d03699e074ac02eb2e8ba8254d428da"
+git-tree-sha1 = "95c6a5d0e8c69555842fc4a927fc485040ccc31c"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.2.13"
+version = "1.3.5"
 
 [[deps.Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [[deps.StatsAPI]]
-git-tree-sha1 = "0f2aa8e32d511f758a2ce49208181f7733a0936a"
+git-tree-sha1 = "d88665adc9bcf45903013af0982e2fd05ae3d0a6"
 uuid = "82ae8749-77ed-4fe6-ae5f-f523153014b0"
-version = "1.1.0"
+version = "1.2.0"
 
 [[deps.StatsBase]]
 deps = ["DataAPI", "DataStructures", "LinearAlgebra", "LogExpFunctions", "Missings", "Printf", "Random", "SortingAlgorithms", "SparseArrays", "Statistics", "StatsAPI"]
-git-tree-sha1 = "2bb0cb32026a66037360606510fca5984ccc6b75"
+git-tree-sha1 = "118e8411d506d583fbbcf4f3a0e3c5a9e83370b8"
 uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-version = "0.33.13"
+version = "0.33.15"
 
 [[deps.StatsFuns]]
 deps = ["ChainRulesCore", "InverseFunctions", "IrrationalConstants", "LogExpFunctions", "Reexport", "Rmath", "SpecialFunctions"]
-git-tree-sha1 = "bedb3e17cc1d94ce0e6e66d3afa47157978ba404"
+git-tree-sha1 = "f35e1879a71cca95f4826a14cdbf0b9e253ed918"
 uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
-version = "0.9.14"
+version = "0.9.15"
 
 [[deps.StructArrays]]
 deps = ["Adapt", "DataAPI", "StaticArrays", "Tables"]
-git-tree-sha1 = "2ce41e0d042c60ecd131e9fb7154a3bfadbf50d3"
+git-tree-sha1 = "d21f2c564b21a202f4677c0fba5b5ee431058544"
 uuid = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
-version = "0.6.3"
+version = "0.6.4"
 
 [[deps.SuiteSparse]]
 deps = ["Libdl", "LinearAlgebra", "Serialization", "SparseArrays"]
@@ -1532,9 +1760,9 @@ version = "0.3.1"
 
 [[deps.TimeZones]]
 deps = ["Dates", "Downloads", "InlineStrings", "LazyArtifacts", "Mocking", "Printf", "RecipesBase", "Serialization", "Unicode"]
-git-tree-sha1 = "ce5aab0b0146b81efefae52f13002e19c2af57ac"
+git-tree-sha1 = "0f1017f68dc25f1a0cb99f4988f78fe4f2e7955f"
 uuid = "f269a46b-ccf7-5d73-abea-4c690281aa53"
-version = "1.7.0"
+version = "1.7.1"
 
 [[deps.URIs]]
 git-tree-sha1 = "97bbe755a53fe859669cd907f2d96aee8d2c1355"
@@ -1556,9 +1784,9 @@ version = "0.4.1"
 
 [[deps.Unitful]]
 deps = ["ConstructionBase", "Dates", "LinearAlgebra", "Random"]
-git-tree-sha1 = "0992ed0c3ef66b0390e5752fe60054e5ff93b908"
+git-tree-sha1 = "b649200e887a487468b71821e2644382699f1b0f"
 uuid = "1986cc42-f94f-5a68-af5c-568840ba703d"
-version = "1.9.2"
+version = "1.11.0"
 
 [[deps.Unzip]]
 git-tree-sha1 = "34db80951901073501137bdbc3d5a8e7bbd06670"
@@ -1727,9 +1955,9 @@ uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
 
 [[deps.Zstd_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "cc4bf3fdde8b7e3e9fa0351bdeedba1cf3b7f6e6"
+git-tree-sha1 = "e45044cd873ded54b6a5bac0eb5c971392cf1927"
 uuid = "3161d3a3-bdf6-5164-811a-617609db77b4"
-version = "1.5.0+0"
+version = "1.5.2+0"
 
 [[deps.libass_jll]]
 deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "HarfBuzz_jll", "JLLWrappers", "Libdl", "Pkg", "Zlib_jll"]
@@ -1789,44 +2017,51 @@ version = "0.9.1+5"
 # ╔═╡ Cell order:
 # ╟─aea78e70-59d6-11ec-1c2d-933b50808bec
 # ╟─0f39512d-9ec8-4756-8cb4-71de41bb661f
-# ╟─46d1f09f-83e7-47ba-8849-2ce0b43ab28b
+# ╟─2f9bf944-ed98-4820-9a38-923f1d404743
 # ╟─dabdc9db-b163-48a4-a39e-0da32b8fc1a8
 # ╟─01796f25-7ed2-4859-ae9b-aabdd3c41107
-# ╟─90e8c685-dbfb-4d15-880e-b5f39540a159
-# ╟─cc36aa36-0a9a-45cd-bd44-fc426487f736
-# ╟─e5f0409b-41d9-47f8-9445-ee895de66152
-# ╟─3375eca3-dd33-4715-ab1d-c61d37d7454a
-# ╟─ece4644d-3ce9-499f-b37f-739c5f6fd43a
-# ╟─2316f8fa-2001-45ee-9d9c-5224c4ed8439
 # ╟─1a69d310-aa85-4074-8ab5-a0691c827094
-# ╟─f50bc619-3024-455f-b288-c5348d55d540
-# ╟─ade7a444-64dd-4784-a3bf-fac4a2fd24ab
+# ╟─31a165de-32fb-4fb8-b8de-21530404b555
 # ╟─cd5bc6a7-11f2-4abc-b66f-3857a263bae1
 # ╟─293b41ac-7731-496a-b1a6-6b9c73dfe57c
+# ╟─ade7a444-64dd-4784-a3bf-fac4a2fd24ab
 # ╟─eb360848-69c7-4ca4-a889-1bf6b537e2bb
+# ╟─ec4aaa6b-91f4-4ff3-ae45-7b14b70da271
 # ╟─794ce507-698a-4c63-a447-cc0e9dcfc318
 # ╟─51413241-7916-43fb-81a7-0747ac01859c
+# ╟─9931827d-704d-4fd8-8555-f3c4fcf8f93b
+# ╟─7389fd24-2fb4-4dd3-ba17-a1afc7ec914d
+# ╟─39a99d6b-c8ce-485b-bd07-0de493041ce8
+# ╟─cde28dbb-8d26-4a93-8758-c5ce16ac102e
 # ╟─d9dcc725-6ae0-47cc-8668-16769d095d36
-# ╟─8dacd8b0-e442-4960-9022-0eb37090e13b
 # ╟─0f7ef7a0-13e1-4083-bc0d-3513854b4dab
-# ╟─0f04ebbc-af66-4bd5-8a22-2539ba506b6a
-# ╟─5ad8dabc-cdab-400a-9fad-a35c077203d6
-# ╟─432b70a3-e0c1-47da-9792-8247a00d726e
-# ╟─8bdb1ffd-cc7f-49a6-8a6c-d9b10d306e95
-# ╟─42208e0d-48c1-443c-afef-b7ef35bacffc
-# ╟─978218c9-2233-48ab-89aa-19d28301b7c7
+# ╟─fef53022-0ab4-4207-a756-522dab366e4c
+# ╟─208b261c-f58f-4d77-b2f4-b0f1ed545776
+# ╟─81819689-570d-4245-b3af-a44ac82634e3
+# ╟─394d4dc4-e6f5-4cf4-9bcf-2d471d2d2233
+# ╟─1b15b345-b3a0-40df-b66d-2df50591047e
+# ╟─8dacd8b0-e442-4960-9022-0eb37090e13b
+# ╟─f83a9ff5-1efb-4590-8ef2-b407291ea8d1
+# ╟─132335d2-e5bf-4e53-b9f6-a18dfd793a06
+# ╟─8a4c7eb8-61a8-4972-ae60-ff238dd4413d
 # ╟─27059d32-db65-4136-84f5-e9e5256f9727
+# ╟─5dfed8cd-56c5-43aa-8574-2a68a288e8c9
 # ╟─0113bf4a-3567-4564-a455-a4a29d92532c
+# ╟─26a297f8-09cb-45b0-a82e-0cdca6876bd3
 # ╟─41a3513e-a089-4e0c-929b-c8d52d3405ab
 # ╟─90c28617-f892-4377-a816-c7331fd48a9d
 # ╟─7cafc75d-3a5b-464d-bbc8-fedd920e7dbb
 # ╟─5d60a143-13e9-4768-95aa-049214003c8b
 # ╟─f198c72f-89d5-47ae-8ef3-b62a3d2d812a
 # ╟─f18fb82d-714b-4c68-87dd-b51ec345f91c
+# ╟─d5e69276-9271-40f1-b3c3-649146b6e2f8
 # ╟─b5fdf211-198b-4f9e-9d3c-6451b0d62eab
 # ╟─8f4be77a-b006-4479-85e4-90d3ad5cc9da
 # ╟─3626cd04-0b7a-4052-8d8a-0ba23ef9427c
 # ╟─2d6fb447-a8b2-4b8f-9889-d95df4623d31
 # ╟─d4aae15f-54b3-4288-bc6b-3d192e7a7fd5
+# ╟─e8fee800-a796-42d4-a732-20fdc32ce69b
+# ╟─c99b650b-fcef-4404-9e4d-a6b06e909057
+# ╟─ec6348c2-6df1-4553-8de2-d1dac7edfc6e
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
