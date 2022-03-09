@@ -29,12 +29,11 @@ begin
 	using PlutoUI.ExperimentalLayout: vbox, hbox, Div
 	using HypertextLiteral
 	using PlotThemes
-
+	using Distributions
+	
 	# Setting theme of plots
 	theme(:juno)
 	
-	# Table of contents
-	# PlutoUI.TableOfContents(aside=true, depth=2)
 	html"""
 	<style>
 		div.plutoui-sidebar.aside {
@@ -53,6 +52,14 @@ begin
 			transition: transform 300ms cubic-bezier(0.18, 0.89, 0.45, 1.12);
 			color: var(--pluto-output-color);
 			background-color: var(--main-bg-color);
+		}
+
+		.second {
+			top: 18rem !important;
+		}
+
+		.third {
+			top: 24.5rem !important;
 		}
 		
 		div.plutoui-sidebar.aside.hide {
@@ -83,17 +90,13 @@ begin
 	<script>
 		document.addEventListener('click', event => {
 			if (event.target.classList.contains("sidebar-toggle")) {
-				sidebar = document.querySelector('span.sidebar-toggle');
-				sidebar.closest(".plutoui-sidebar").classList.toggle("hide")
+				document.querySelectorAll('.plutoui-sidebar').forEach(function(el) {
+   					el.classList.toggle("hide");
+				});
 			}
 		});
 	</script>
-	"""	
-end
-
-# ╔═╡ f44a3659-d7ec-45de-abee-1c026eac4ce5
-begin
-	using Distributions
+	"""
 end
 
 # ╔═╡ 8b39f28e-d889-4f98-9601-380e015b7d35
@@ -117,12 +120,20 @@ let
 	url = "https://dfzljdn9uc3pi.cloudfront.net/2019/7838/1/fig-10-2x.jpg"
 	img = download(url)
 	load(img)
-	#im1 = imresize(load(img)[50:150, 940:1200], ratio=1)
-	#im2 = imresize(load(img)[170:270, 940:1200], ratio=1)
-	
-	#Div([im1, im2], style="display: flex;justify-content: center;")
 	img_path = "comparison.png"
 	load(img_path)
+end
+
+# ╔═╡ 32a4879a-7916-4b33-93cf-1e5a395c62b7
+begin
+	sidebar = Div([@htl("""<header>
+			<span class="sidebar-toggle open-sidebar">🕹</span>
+     		<span class="sidebar-toggle closed-sidebar">🕹</span>
+			Interactive Sliders
+			</header>"""),
+		md"""Here are all interactive bits of the notebook at one place.\
+		Feel free to change them!"""
+	], class="plutoui-sidebar aside")
 end
 
 # ╔═╡ a9d99a1d-59f2-4c02-89dd-33c9a27db84a
@@ -141,60 +152,63 @@ Convolving two functions is often described as sliding one function over another
 Try sliding the orange function over the blue by changing the value of the slider below.
 """
 
-
 # ╔═╡ 18f302aa-35d5-441e-ad18-a107d4bf9cc4
 # define heaviside function for ploxplot
 H(t) = 0.5 * (sign(t) + 1);
 
 # ╔═╡ df5a7318-de9f-487d-907b-9535620f95ba
 let 
-	md"""Change the position of the orange function
-	$(@bind s Slider(-1:0.5:5, default=-1, show_value=true))"""
+	md"""Change the position of the orange function $(@bind s Slider(-1:0.5:5, default=-1, show_value=true))"""
 end
 
 # ╔═╡ 9488f19b-0dab-4c46-8a1f-043946cf6b09
 let
-	fₐ(t) = H(t-2) - H(t-4)
-	fₛ(t) = H(t-s) - H(t-(s+2))
-
+	# range
 	range = 0:0.01:10
-	conv = DSP.conv(fₐ.(range), fₐ.(range))[1:floor(Int64, length(range))] ./ 100
+	
+	# red boxplot
+	f(t) = H(t-2) - H(t-4) 
 
+	# orange boxplot
+	g(t) = H(t-s) - H(t-(s+2)) 
+
+	# compute convolution of f with itself
+	conv = DSP.conv(f.(range), f.(range))[1:floor(Int64, length(range))] ./ 100
+
+	# useful points for area shading
 	orange_left = s
 	orange_right = s + 2
-	blue_left = 2
-	blue_right = 4
-	
+	red_left = 2
+	red_right = 4
+
+	# define the shaded area (shared area of orange & red)
 	area = Shape([0,0,0,0],[0,0,0,0])
 	diff = 0
-	if (orange_left <= blue_left) & (blue_left <= orange_right)
-		diff = orange_right - blue_left
-		area = Shape(blue_left .+ [0,diff,diff,0], 0 .+ [0,0,1,1])
-	elseif (blue_left < orange_left) & (orange_left < blue_right)
-		diff = blue_right - orange_left
+	
+	if (orange_left <= red_left) & (red_left <= orange_right)
+		diff = orange_right - red_left
+		area = Shape(red_left .+ [0,diff,diff,0], 0 .+ [0,0,1,1])
+	elseif (red_left < orange_left) & (orange_left < red_right)
+		diff = red_right - orange_left
 		area = Shape(orange_left .+ [0,diff,diff,0], 0 .+ [0,0,1,1])
 	end
-	
-	plot([fₐ, fₛ], ylim=(0,3), xlim=(-1.5,7.5), size=(600,200), background_color=:transparent)
+
+	# plotting
+	plot([f, g], ylim=(0,3), xlim=(-1.5,7.5), size=(600,200), 	
+		background_color=:transparent)
 	plot!(0:0.01:5.01, conv[500-200:end-200], color=:green)
 	plot!(area, opacity=.2, color="grey")
 	vline!([s+1], linecolor=:black, linestyle=:dash)
 	scatter!([(s+1, diff)], color="grey", legend=:none)
-	
 end
-
-# ╔═╡ 869b8045-794a-4d01-a030-5652a6d5bc13
-;
 
 # ╔═╡ c6d354e1-eb78-4285-8dbf-8d3a617900e4
 md"""
+\
 **Consider the following setup:** \
 We want to simulate the measured EEG signal of an experiment. In this experiment we have two different stimuli. Each stimuli evokes a different response. Assume we already know this specific response to each stimuli. 
 Additonal we know from the experiment setup at which timepoint each stimulus occurred.
 """
-
-# ╔═╡ dc8dd8d2-2a8a-42c8-b6b1-8a3111429e11
-
 
 # ╔═╡ ecc0df31-a29b-4d62-8dbf-08b86c35a885
 md"""
@@ -230,17 +244,17 @@ begin
 		l_A = Markdown.parse("\$ERP_A(t) = 2.5ℯ^{-(t-$b)^2}\$")
 	elseif selection₁ == 3
 		erp_A(t) = H(t-1) - H(t-b)
-		l_A = Markdown.parse("\$ERP_A(t) = H(t-1)-H(t-$b)\$ \
-		with \$H(X)\$ := Heaviside Step Function")
+		l_A = Markdown.parse("\$ERP_A(t) = H(t-1)-H(t-$b)\$")
 	elseif selection₁ ==4
-		erp_A(t) = (1/(abs(1/8)*sqrt(π)))ℯ^-((t-b)/(1/8))^2
-		l_A = Markdown.parse("")
+		erp_A(t) = (1/((1/8)*sqrt(π)))ℯ^-((t-b)/(1/8))^2
+		l_A = Markdown.parse("\$ERP_A(t) = \\frac{1}{\\frac{1}{8}\\sqrt{\\pi}} 			\\cdot ℯ^{-(\\frac{t - $(b)}{\\frac{1}{8}})^{2}}\$")
 	end		
 end
 
 # ╔═╡ 6bcb8960-cf0d-47d0-ab10-57bdf0aeb037
 begin
-	kernelA = plot(erp_A, xlims=(-2, 10), ylims=(-5,5), legend=false, linecolor=:orange, size=(600,200))
+	plot(erp_A, xlims=(-2, 10), ylims=(-5,5), legend=false, linecolor=:orange, 
+		size=(600,200))
 	vline!([0], linestyle=:dash, linecolor=:black, background_color=:transparent)
 end
 
@@ -271,21 +285,19 @@ elseif selection₂ == 2
 	l_B = Markdown.parse("\$ERP_B(t) = 2.5ℯ^{-(t-$d)^2}\$")
 elseif selection₂ == 3
 	erp_B(t) = H(t-1) - H(t-d)
-	l_B = Markdown.parse("\$ERP_B(t) = H(t-1)-H(t-$d)\$ \
-	with \$H(X)\$ := Heaviside Step Function")
+	l_B = Markdown.parse("\$ERP_B(t) = H(t-1)-H(t-$d)\$")
 elseif selection₂ ==4
-	erp_B(t) = (1/(abs(1/8)*sqrt(π)))ℯ^-((t-d)/(1/8))^2
-	l_B = Markdown.parse("")
+	erp_B(t) = (1/((1/8)*sqrt(π)))ℯ^-((t-d)/(1/8))^2
+	l_B = Markdown.parse("\$ERP_B(t) = \\frac{1}{\\frac{1}{8}\\sqrt{\\pi}} 
+		\\cdot ℯ^{-(\\frac{t - $(d)}{\\frac{1}{8}})^{2}}\$")
 end
 
 # ╔═╡ 0bb4cf30-6e78-41d0-8fa5-bbef696ef9f6
 begin
-	plot(erp_B, xlims=(-2, 10), ylims=(-5,5), linecolor=:deepskyblue, legend=false, size=(600,200))
+	plot(erp_B, xlims=(-2, 10), ylims=(-5,5), linecolor=:deepskyblue, legend=false, 
+		size=(600,200))
 	vline!([0], linestyle=:dash, linecolor=:black, background_color=:transparent)
 end
-
-# ╔═╡ 43231e9d-c852-4f2f-8fe5-c44fbae20f8a
-
 
 # ╔═╡ 61e5f8bb-4c24-4eb6-a7d6-31c501a51f05
 md"""
@@ -301,14 +313,23 @@ Since we want to create a simulated EEG signal we simply choose 300 random value
 
 # ╔═╡ 8300dc2f-8022-4ada-aade-fd3c8263be9d
 begin	
-	noise1_slider = md"""Change noise: σ\_1 = $(@bind σ₁ Slider([0, 0.1, 0.2, 0.4, 0.8, 1.6, 3.2, 6.4], default=0.1, show_value=true))"""
+	slider_deviation = md"""Change deviation: σ\_1 = $(@bind σ₁ Slider([0, 0.1, 0.2, 0.4, 0.8, 1.6, 3.2, 6.4], default=0.1, show_value=true))"""
 end
 
 # ╔═╡ ba43ef93-6d4a-4aee-962b-76e78a1e3188
 begin	
-	# 0:0.01:5
-	mean_slider = md"""Change mean:μ\_1 = $(@bind μ Slider(0:0.2:2, default=0, 
+	slider_mean = md"""Change mean:μ\_1 = $(@bind μ Slider(0:0.2:2, default=0, 
 		show_value=true))"""
+end
+
+# ╔═╡ ff745930-696a-4700-a084-5130b2895da4
+begin
+	sidebar2 = Div([
+		md""" **Event onsets**""",
+		slider_deviation,
+		md"""""",
+		slider_mean,
+	], class="plutoui-sidebar aside second")
 end
 
 # ╔═╡ 4cbafc47-71c7-4dfa-9deb-f1b9ca418426
@@ -316,8 +337,6 @@ begin
 	# sample event onsets
 	event_onsets_A = sort(sample(MersenneTwister(8),1:6000, 300, replace = false))
 	event_onsets_B = event_onsets_A + rand(LogNormal(μ, σ₁),300)
-	#event_onsets_B = sort(sample(MersenneTwister(1),1:6000, 300, replace = false))
-	[event_onsets_A event_onsets_B]' # for display
 	
 	# graph of event onsets for stimuli A
 	e1 = vline(event_onsets_A, xlims=(0,100), ylims=(0,1), 	
@@ -330,9 +349,6 @@ begin
 	# plotting
 	plot(e2, size=(600,200), background_color=:transparent)
 end
-
-# ╔═╡ 5aaf25c7-cbcb-4a7a-ab31-c48ae2f8a9e1
-
 
 # ╔═╡ 4931b75b-28ab-4b65-b0ef-81ec575a3b20
 md"""
@@ -451,7 +467,7 @@ Feel free to adjust the noise, and see how the quality of the results change.
 
 # ╔═╡ 1ab44014-42de-4811-b5db-b62c9af8b393
 begin	
-	noise_slider = md"""Change noise: σ = $(@bind σ Slider(0:0.2:2, default=0, 
+	slider_noise = md"""Change noise: σ = $(@bind σ Slider(0:0.2:2, default=0, 
 		show_value=true))"""
 end
 
@@ -527,32 +543,16 @@ As additional variable we introduce the window size. Feel free to change the upp
 
 # ╔═╡ fa965472-c3f3-40c4-83a7-eb76bec93c80
 begin
-	window_slider = md"""Change window size τ = (-2.0, $(@bind τ2 Slider(-2:1:20,default=12,show_value=true)))"""
+	slider_window = md"""Change window size τ = (-2.0, $(@bind τ2 Slider(-2:1:20,default=12,show_value=true)))"""
 end
 
-# ╔═╡ 32a4879a-7916-4b33-93cf-1e5a395c62b7
+# ╔═╡ 14df787b-01bb-441b-8a59-658b185bc415
 begin
-	sidebar = Div([
-		@htl("""<header>
-			<span class="sidebar-toggle open-sidebar">🕹</span>
-     		<span class="sidebar-toggle closed-sidebar">🕹</span>
-			Interactive Sliders
-			</header>"""),
-		md"""Here are all interactive bits of the notebook at one place.\
-		Feel free to change them!""",
-		md"""-----""",
-		function_A_selection,
-		l_A,
-		md"""-----""",
-		function_B_selection,
-		l_B,
-		md"""---""",
-		noise1_slider,
-		mean_slider,
-		md"""---""",
-		noise_slider,
-		window_slider,
-	],class="plutoui-sidebar aside")
+	sidebar3 = Div([
+		md""" **Linear Deconvolution**""",
+		slider_noise,
+		slider_window
+	], class="plutoui-sidebar aside third")
 end
 
 # ╔═╡ 60e739ff-a8d4-42b8-8b6e-d73e398f8c80
@@ -659,7 +659,7 @@ Unfold = "181c99d8-e21b-4ff3-b70b-c233eddec679"
 [compat]
 DSP = "~0.7.4"
 DataFrames = "~1.3.2"
-Distributions = "~0.25.48"
+Distributions = "~0.25.49"
 HypertextLiteral = "~0.9.3"
 Images = "~0.25.1"
 PlotThemes = "~2.0.1"
@@ -986,9 +986,9 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[deps.Distributions]]
 deps = ["ChainRulesCore", "DensityInterface", "FillArrays", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SparseArrays", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "Test"]
-git-tree-sha1 = "38012bf3553d01255e83928eec9c998e19adfddf"
+git-tree-sha1 = "9d3c0c762d4666db9187f363a76b47f7346e673b"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
-version = "0.25.48"
+version = "0.25.49"
 
 [[deps.DocStringExtensions]]
 deps = ["LibGit2"]
@@ -1466,6 +1466,12 @@ git-tree-sha1 = "f6250b16881adf048549549fba48b1161acdac8c"
 uuid = "c1c5ebd0-6772-5130-a774-d5fcae4a789d"
 version = "3.100.1+0"
 
+[[deps.LERC_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "bf36f528eec6634efc60d7ec062008f171071434"
+uuid = "88015f11-f218-50d7-93a8-a6af411a945d"
+version = "3.0.0+1"
+
 [[deps.LZO_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "e5b909bcf985c5e2605737d2ce278ed791b89be6"
@@ -1549,10 +1555,10 @@ uuid = "4b2f31a3-9ecc-558c-b454-b3730dcb73e9"
 version = "2.35.0+0"
 
 [[deps.Libtiff_jll]]
-deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Pkg", "Zlib_jll", "Zstd_jll"]
-git-tree-sha1 = "340e257aada13f95f98ee352d316c3bed37c8ab9"
+deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "LERC_jll", "Libdl", "Pkg", "Zlib_jll", "Zstd_jll"]
+git-tree-sha1 = "c9551dd26e31ab17b86cbd00c2ede019c08758eb"
 uuid = "89763e89-9b03-5906-acba-b20f662cd828"
-version = "4.3.0+0"
+version = "4.3.0+1"
 
 [[deps.Libuuid_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -2508,17 +2514,17 @@ version = "0.9.1+5"
 # ╔═╡ Cell order:
 # ╟─8b39f28e-d889-4f98-9601-380e015b7d35
 # ╟─fbed300c-0778-480c-bd88-8e8b06f4fc20
-# ╠═34e215c5-9278-4906-890a-2563c8a87b08
+# ╟─34e215c5-9278-4906-890a-2563c8a87b08
 # ╟─fa539a20-447e-11ec-0a13-71fa39527f8f
-# ╠═32a4879a-7916-4b33-93cf-1e5a395c62b7
+# ╟─32a4879a-7916-4b33-93cf-1e5a395c62b7
+# ╟─ff745930-696a-4700-a084-5130b2895da4
+# ╟─14df787b-01bb-441b-8a59-658b185bc415
 # ╟─a9d99a1d-59f2-4c02-89dd-33c9a27db84a
 # ╟─86046132-f497-4573-aa48-52a3b7eb7193
 # ╟─18f302aa-35d5-441e-ad18-a107d4bf9cc4
 # ╟─df5a7318-de9f-487d-907b-9535620f95ba
 # ╟─9488f19b-0dab-4c46-8a1f-043946cf6b09
-# ╟─869b8045-794a-4d01-a030-5652a6d5bc13
 # ╟─c6d354e1-eb78-4285-8dbf-8d3a617900e4
-# ╟─dc8dd8d2-2a8a-42c8-b6b1-8a3111429e11
 # ╟─ecc0df31-a29b-4d62-8dbf-08b86c35a885
 # ╟─cfba1eb3-aeac-45ff-a563-817516011c3b
 # ╟─5d62c314-804c-4cf0-a3fe-fbf9328a3ee1
@@ -2529,13 +2535,10 @@ version = "0.9.1+5"
 # ╟─a53b8fd0-e061-4147-9dc1-d6313f392ece
 # ╟─63887aaf-0aeb-44eb-8349-13d47ce6b873
 # ╟─0bb4cf30-6e78-41d0-8fa5-bbef696ef9f6
-# ╟─43231e9d-c852-4f2f-8fe5-c44fbae20f8a
 # ╟─61e5f8bb-4c24-4eb6-a7d6-31c501a51f05
 # ╟─8300dc2f-8022-4ada-aade-fd3c8263be9d
 # ╟─ba43ef93-6d4a-4aee-962b-76e78a1e3188
-# ╟─f44a3659-d7ec-45de-abee-1c026eac4ce5
 # ╟─4cbafc47-71c7-4dfa-9deb-f1b9ca418426
-# ╟─5aaf25c7-cbcb-4a7a-ab31-c48ae2f8a9e1
 # ╟─4931b75b-28ab-4b65-b0ef-81ec575a3b20
 # ╟─2d8e3bce-1120-4eae-871e-508844f08a8b
 # ╟─36d354d4-ffa8-4ce3-9b97-e2cf623c656e
