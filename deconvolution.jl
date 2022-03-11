@@ -59,7 +59,11 @@ begin
 		}
 
 		.third {
-			top: 24.5rem !important;
+			top: 31.25rem !important;
+		}
+
+		.fourth {
+			top: 37.75rem !important;
 		}
 		
 		div.plutoui-sidebar.aside.hide {
@@ -224,13 +228,13 @@ The **response to stimuli A** is modelled by the function $ERP_A(t)$
 begin
 	function_A_selection = md"""Choose the response function for stimulus A: $(
 		@bind selection₁ Select(
-			[1=>"Function1", 2=> "Function2", 3=> "Function3", 4=> "Function4"],
+			[1=>"Function1", 2=> "Function2"],
 		default=1))"""
 end
 
 # ╔═╡ 5d62c314-804c-4cf0-a3fe-fbf9328a3ee1
 let 
-	md"""Change the value of b $(@bind b Slider(1:1:10, default=5, show_value=true))"""
+	md"""Change the value of b $(@bind b Slider([5], default=5, show_value=true))"""
 end
 
 # ╔═╡ 5c941851-09e8-4cc3-8503-92bcd4dce2ec
@@ -267,13 +271,13 @@ Analogous to this the **response to stimuli B** is modelled by $ERP_B(t)$.
 begin
 function_B_selection = md"""Choose the response function for stimulus B: $(
 	@bind selection₂ Select(
-		[1=>"Function1", 2=>"Function2", 3=> "Function3", 4=> "Function4"],
+		[1=>"Function1", 2=>"Function2"],
 		default=2))"""
 end
 
 # ╔═╡ a53b8fd0-e061-4147-9dc1-d6313f392ece
 let
-	md"""Change the value of d $(@bind d Slider(1:1:10, default=5, show_value=true))"""
+	md"""Change the value of d $(@bind d Slider([5], default=5, show_value=true))"""
 end
 
 # ╔═╡ 63887aaf-0aeb-44eb-8349-13d47ce6b873
@@ -290,6 +294,18 @@ elseif selection₂ ==4
 	erp_B(t) = (1/((1/8)*sqrt(π)))ℯ^-((t-d)/(1/8))^2
 	l_B = Markdown.parse("\$ERP_B(t) = \\frac{1}{\\frac{1}{8}\\sqrt{\\pi}} 
 		\\cdot ℯ^{-(\\frac{t - $(d)}{\\frac{1}{8}})^{2}}\$")
+end
+
+# ╔═╡ ffa5a4be-f4c2-434b-badb-053c7d0b2672
+begin
+	sidebar2 = Div([
+		md""" **Stimuli Response**""",
+		function_A_selection,
+		l_A,
+		md"""""",
+		function_B_selection,
+		l_B,
+	], class="plutoui-sidebar aside second")
 end
 
 # ╔═╡ 0bb4cf30-6e78-41d0-8fa5-bbef696ef9f6
@@ -318,25 +334,25 @@ end
 
 # ╔═╡ ba43ef93-6d4a-4aee-962b-76e78a1e3188
 begin	
-	slider_mean = md"""Change mean:μ\_1 = $(@bind μ Slider(0:0.2:2, default=0, 
+	slider_mean = md"""Change mean:μ\_1 = $(@bind μ Slider(0:0.4:2, default=0, 
 		show_value=true))"""
 end
 
 # ╔═╡ ff745930-696a-4700-a084-5130b2895da4
 begin
-	sidebar2 = Div([
+	sidebar3 = Div([
 		md""" **Event onsets**""",
 		slider_deviation,
 		md"""""",
 		slider_mean,
-	], class="plutoui-sidebar aside second")
+	], class="plutoui-sidebar aside third")
 end
 
 # ╔═╡ 4cbafc47-71c7-4dfa-9deb-f1b9ca418426
 begin
 	# sample event onsets
-	event_onsets_A = sort(sample(MersenneTwister(8),1:6000, 300, replace = false))
-	event_onsets_B = event_onsets_A + rand(LogNormal(μ, σ₁),300)
+	event_onsets_A = sort(sample(MersenneTwister(6),1:2000, 100, replace = false))
+	event_onsets_B = event_onsets_A + rand(LogNormal(μ, σ₁),100)
 	
 	# graph of event onsets for stimuli A
 	e1 = vline(event_onsets_A, xlims=(0,100), ylims=(0,1), 	
@@ -467,7 +483,7 @@ Feel free to adjust the noise, and see how the quality of the results change.
 
 # ╔═╡ 1ab44014-42de-4811-b5db-b62c9af8b393
 begin	
-	slider_noise = md"""Change noise: σ = $(@bind σ Slider(0:0.2:2, default=0, 
+	slider_noise = md"""Change noise: σ = $(@bind σ Slider([0, 0.4, 0.8, 1.6], default=0, 
 		show_value=true))"""
 end
 
@@ -543,16 +559,16 @@ As additional variable we introduce the window size. Feel free to change the upp
 
 # ╔═╡ fa965472-c3f3-40c4-83a7-eb76bec93c80
 begin
-	slider_window = md"""Change window size τ = (-2.0, $(@bind τ2 Slider(-2:1:20,default=12,show_value=true)))"""
+	slider_window = md"""Change window size τ = (-2.0, $(@bind τ2 Slider([6,12,20],default=12,show_value=true)))"""
 end
 
 # ╔═╡ 14df787b-01bb-441b-8a59-658b185bc415
 begin
-	sidebar3 = Div([
+	sidebar4 = Div([
 		md""" **Linear Deconvolution**""",
 		slider_noise,
 		slider_window
-	], class="plutoui-sidebar aside third")
+	], class="plutoui-sidebar aside fourth")
 end
 
 # ╔═╡ 60e739ff-a8d4-42b8-8b6e-d73e398f8c80
@@ -2517,6 +2533,7 @@ version = "0.9.1+5"
 # ╟─34e215c5-9278-4906-890a-2563c8a87b08
 # ╟─fa539a20-447e-11ec-0a13-71fa39527f8f
 # ╟─32a4879a-7916-4b33-93cf-1e5a395c62b7
+# ╟─ffa5a4be-f4c2-434b-badb-053c7d0b2672
 # ╟─ff745930-696a-4700-a084-5130b2895da4
 # ╟─14df787b-01bb-441b-8a59-658b185bc415
 # ╟─a9d99a1d-59f2-4c02-89dd-33c9a27db84a
@@ -2552,7 +2569,7 @@ version = "0.9.1+5"
 # ╟─c5b3773a-bdd8-4c1a-b496-da4f555cb97f
 # ╟─62f251b7-6aaf-457a-b777-99e1576e81ba
 # ╟─fedf1525-042a-4e82-b152-c30d3385555b
-# ╟─1ab44014-42de-4811-b5db-b62c9af8b393
+# ╠═1ab44014-42de-4811-b5db-b62c9af8b393
 # ╟─bd06e0c4-4728-4c6f-a1d0-a371c91750fd
 # ╟─9f8dfb28-a34d-410d-8268-23df13ec2538
 # ╟─b22e3a42-b652-4c83-a05c-0bd2b1b316ad
