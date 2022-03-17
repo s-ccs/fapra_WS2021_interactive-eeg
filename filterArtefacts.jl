@@ -23,38 +23,157 @@ begin
 	using SignalAnalysis
 	using DSP
 	using FFTW
+	using HypertextLiteral
 	using Random
+	using Plots
+	using Plots.PlotMeasures
+    plotly()
 	
 	# Setting theme of plots
-	#theme(:juno)
-end
+	theme(:juno)
 
-# ╔═╡ bb3b4195-38fd-4783-905b-54bc5a91516e
-begin
-    using Plots
-    plotly()
+	html"""
+	<style>
+		div.plutoui-sidebar.aside {
+			position: fixed;
+			right: 1rem;
+			top: 10rem;
+			width: min(80vw, 25%);
+			padding: 10px;
+			border: 3px solid rgba(0, 0, 0, 0.15);
+			border-radius: 10px;
+			box-shadow: 0 0 11px 0px #00000010;
+			max-height: calc(100vh - 5rem - 56px);
+			overflow: auto;
+			z-index: 40;
+			background: white;
+			transition: transform 300ms cubic-bezier(0.18, 0.89, 0.45, 1.12);
+			color: var(--pluto-output-color);
+			background-color: var(--main-bg-color);
+		}
+
+		.second {
+			top: 18rem !important;
+		}
+
+		.third {
+			top: 29.5rem !important;
+		}
+
+		.fourth {
+			top: 37.75rem !important;
+		}
+		
+		div.plutoui-sidebar.aside.hide {
+			transform: translateX(calc(100% - 28px));
+		}
+		
+		.plutoui-sidebar header {
+			display: block;
+			font-size: 1.5em;
+			margin-top: -0.1em;
+			margin-bottom: 0.4em;
+			padding-bottom: 0.4em;
+			margin-left: 0;
+			margin-right: 0;
+			font-weight: bold;
+			border-bottom: 2px solid rgba(0, 0, 0, 0.15);
+		}
+		
+		.plutoui-sidebar.aside.hide .open-sidebar, .plutoui-sidebar.aside:not(.hide) .closed-sidebar, .plutoui-sidebar:not(.aside) .closed-sidebar {
+			display: none;
+		}
+
+		.sidebar-toggle {
+			cursor: pointer;
+		}
+		
+	</style>
+	<script>
+		document.addEventListener('click', event => {
+			if (event.target.classList.contains("sidebar-toggle")) {
+				document.querySelectorAll('.plutoui-sidebar').forEach(function(el) {
+   					el.classList.toggle("hide");
+				});
+			}
+		});
+	</script>
+	"""
 end
 
 # ╔═╡ 90966406-941e-11ec-213c-ef9ebe29ca85
 md""" # Filter Artefacts"""
 
-# ╔═╡ a566c3a7-6e12-4849-8b33-9deec0ecd6f5
+# ╔═╡ 46da10e1-d8fc-4200-a860-737535b12a16
+md"""
+## Signal and its Fourier Spectrum
+"""
 
+# ╔═╡ 5d1d4a57-6aec-42bf-ac28-f866b3c57752
+md"""
+## Filtered Signal and its Fourier Spectrum
+"""
 
-# ╔═╡ 762d71e8-0b38-44ee-8c8d-271947786453
-
-
-# ╔═╡ 33f3f44e-4fe5-4bcf-92f3-6e670238ffcf
+# ╔═╡ e0a8a22d-9131-48db-9817-e12dc5edf638
 begin
-	function_impulse_response_bond = md"""Choose the impulse response function: $(
-		@bind selection_function Select(
-			[1=>"Boxplot", 2=> "Function2", 3=> "Function3", 
-   			4=> "Function4", 5=> "Sinusoidal"],
-		default=5))"""
+	sidebar = Div([@htl("""<header>
+			<span class="sidebar-toggle open-sidebar">🕹</span>
+     		<span class="sidebar-toggle closed-sidebar">🕹</span>
+			Interactive Sliders
+			</header>"""),
+		md"""Here are all interactive bits of the notebook at one place.\
+		Feel free to change them!"""
+	], class="plutoui-sidebar aside")
 end
 
-# ╔═╡ cf4c06be-7963-4e31-b889-47e51081cfe7
-slider_freq = @bind freq Slider([1, 2, 4, 8, 16], default=5, show_value=true)
+# ╔═╡ 8f8cc0bb-d54e-42d6-94b5-dbfb8126504c
+function_impulse_response_bond = @bind selection_function Radio(["1" => "ERP", "2" => "Boxplot", "3" => "Sinussoidal"], default="1");
+
+# ╔═╡ 04ea0e0e-ceca-42bf-ad08-d0c558b14484
+slider_noise = md"""Noise $(@bind noise Slider([0, 0.1, 0.2, 0.4, 0.8], 		
+	default=0, show_value=true))""";
+
+# ╔═╡ 00ceec9c-83de-4990-b28b-2550c649de94
+extra_artifacts = vbox([
+	hbox([md"$(@bind line_noise CheckBox())", md"Line noise (50 Hz)"]),
+	hbox([md"$(@bind shift CheckBox())", md"Shift at t=3"])
+]);
+
+# ╔═╡ e3caab76-c034-4966-94f8-3b9b6e4201de
+begin
+	###
+	# Definition of sliders of functions
+	###
+
+	if selection_function == "1"
+		# ERP look a like
+		sliders_impulse_response = vbox([slider_noise])
+
+	elseif selection_function == "2"
+		# Boxplot
+		sliders_impulse_response = vbox([slider_noise])
+		
+	elseif selection_function == "3"
+		# Sinusoidal Pulse
+		slider_freq = md"""Frequency $(@bind freq Slider([1, 2, 4, 8, 16], 		
+  			default=5, show_value=true))"""
+		sliders_impulse_response = vbox([slider_freq, slider_noise])
+	end
+end;
+
+# ╔═╡ 6974a88f-0d7f-43e3-a74d-53c8d0f98652
+begin
+	sidebar2 = Div([
+		md""" **Impulse Response**""",
+		md"---",
+		hbox([function_impulse_response_bond, 
+			md"``\hspace{30mm}``", 
+			extra_artifacts
+		]),
+		md"---",
+		sliders_impulse_response
+	], class="plutoui-sidebar aside second")
+end
 
 # ╔═╡ 047b33a6-6cf0-4670-8452-b7f76a2c2dcb
 begin
@@ -64,56 +183,44 @@ begin
 	
 	center_style = "display: flex;justify-content: center;"
 	H(x) = 0.5 * (sign.(x) + 1);
+
+	if selection_function == "1"
+		# ERP
+		σ = 0.5
+		σ2 = 0.25
+		σ3 = 1.5
 	
-	if selection_function == 1
+		g(x, σ) = - 1 / σ√2π * ℯ^(-(x-2)^2 / 2σ^2)
+	
+		g2(x, σ2) = 1 / σ2√2π * 0.9ℯ^(-(x-2)^2 / 2σ2^2)
+	
+		g3(x, σ3) = -2 / σ3√2π * 1.5ℯ^(-(x-5)^2 / 2σ3^2)
+	
+		f(x) = 5g(x, σ) + 5g2(x, σ2) + 5g3(x, σ3)
+		function_text = Markdown.parse("\$f(x)= ERP\$")
+
+	elseif selection_function == "2"
 		# Step Function
 		f(x) = H(x-1) - H(x-2)
 		t1 = Markdown.parse("\$f(x)=H(x-1)-H(x-2)\$")
 		t2 = md"""$\hspace{10mm}\text{with}\hspace{2mm}$"""
 		t3 = Markdown.parse("\$H(x)=0.5* (sign(x) +1)\$")
 		function_text = Div([t1, t2, t3], style=center_style)
-		
-	elseif selection_function == 2
-		# Dirac Delta
-		#f(x) = 1 / (ℯ^(10x) + 1)
-		f(x) = x-5 == 0
-		function_text = Markdown.parse("\$f(x)=2\$")
-		
-	elseif selection_function == 3
-		# Gaussian Derivative / Pulse
-		f(x) = 3
-		function_text = Markdown.parse("\$f(x)=3\$")
-		
-	elseif selection_function == 4
-		# Boxcar / Heaviside Step function
-		f(x) = 0
-		function_text = Markdown.parse("\$f(x)=4\$")
-		
-	elseif selection_function == 5
+
+	elseif selection_function == "3"
 		# Sinusoidal Pulse
-		#f(x) = sin.(2π * freq .* x)
-		f(x) = ((x > 1 && x < 1.75π) ? sin.(2π * freq .* x) : 0) 
+		f(x) = ((x > 1 && x < 1.75π) ? 1.5sin.(2π * freq .* x) : 0)		
 		function_text = Markdown.parse("\$f(x)=sin(2π*$(freq)*x)\$")
 	end
-end
-
-# ╔═╡ e3caab76-c034-4966-94f8-3b9b6e4201de
-slider_noise = @bind noise Slider([0, 0.1, 0.2, 0.4, 0.8], default=0, 
-	show_value=true)
+end;
 
 # ╔═╡ 352c8ed9-2070-485b-8d12-4370c2850cf9
-rng = MersenneTwister(freq);
-
-# ╔═╡ 70011fb3-eb0c-4020-918b-c4dc67894cdc
-md"Line noise (50 Hz) $(@bind line_noise CheckBox())"
-
-# ╔═╡ 10e4ba32-30a1-4821-a5c7-bf2ae0cb8fef
-md"Add shift at t=3 $(@bind shift CheckBox())"
+rng = MersenneTwister(parse(Int64, selection_function));
 
 # ╔═╡ fd7b297b-29ec-488c-a866-a2128f9224bf
 begin
 	ts = 0.001
-	tmax = 10
+	tmax = 10 
 	t = 0:ts:tmax
 	
 	# signal 
@@ -124,48 +231,58 @@ begin
 	freqs = fftfreq(length(t), 1/ts) |> fftshift
 	
 	# plots 
-	
-	time_domain = plot(t, signal, title = "Signal", xlims=(0, tmax), ylims=(-3, 3))
-	freq_domain = plot(freqs[freqs.>0], abs.(F[5002:10001]), title = "Spectrum", 		xscale=:log10, xticks=[1, 10, 100])
-	
-	plot(time_domain, freq_domain, layout = @layout[a;b], background_color=:transparent)
+	time_domain = plot(t, signal, title = "Signal", xlims=(0, tmax), ylims=(-3, 3), color=5)
 
-	# add ticks at positons
-	# methoden 
-end
+	max_idx = round(freqs[freqs.>0][argmax(abs.(F[5002:10001]))], digits=2)
+	freq_domain = plot(freqs[freqs.>0], abs.(F[5002:10001]), title = "Spectrum", 		xscale=:log10, xticks=([1, 10, 100, max_idx], [1, 10, 100, max_idx]), 		
+		color=8)
+end;
 
-# ╔═╡ 2d1aff2f-1a9f-45f8-8300-cc38830ed900
-plot(1:10)
+# ╔═╡ a312348c-fab3-4f94-87db-82212ddf2a48
+plot(time_domain, freq_domain, layout = @layout[a;b], background_color=:transparent, legend=false)
 
 # ╔═╡ c41393dd-0593-4f63-91ee-2fddd3d5a751
 begin
 	filter_bond = md"""Choose the filter: $(
 		@bind selection_filter Select(
-			[1=>"Lowpass", 2=> "Highpass", 3=> "Bandpass", 
-   			4=> "Notch", 5=> "Filter5"],
-		default=3))"""
-end
+			[1=>"Lowpass", 2=> "Highpass", 3=> "Bandpass"],
+		default=1))"""
+end;
 
 # ╔═╡ 901f7bfd-9098-4f47-b67d-530c64ec74c8
 begin
 	method_bond = md"""Choose the filter method: $(
 		@bind selection_method Select(
-			[1=>"Butterworth", 2=> "FIR"],
-		default=3))"""
-end
+			[1=>"Butterworth", 2=> "FIR", 3=>"Chebyshev1"],
+		default=2))"""
+end;
 
 # ╔═╡ f1df47fb-880d-4512-9049-656f943ea070
 begin
+	slider_range = [0.1:0.2:8;[10,15];20:10:80]
 	if selection_filter == 1
 		# Slider for lowpass
-		@bind low Slider(0.5:0.1:10, default=5, show_value=true)	
+		filter = md"Change the cutoff $(@bind low Slider(slider_range, default=5, show_value=true))"	
 	elseif selection_filter == 2
 		# Slider for highpass
-		@bind high Slider(0.5:1:80, default=5, show_value=true)		
+		filter = md"Change the cutoff $(@bind high Slider(slider_range, default=5, show_value=true))"		
 	elseif selection_filter == 3
 		# slider for bandpass
-		@bind band RangeSlider(1:5:80, show_value=true)
+		filter = md"Change the cutoff $(@bind band RangeSlider(0.1:0.5:80, show_value=true))"
+		
 	end
+end;
+
+# ╔═╡ 3a3fc8a3-788e-471d-b7f4-7e6fe8be42e7
+begin
+	sidebar3 = Div([
+		md""" **Filter**""",
+		md"---",
+		filter_bond,
+		method_bond,
+		md"---",
+		filter
+	], class="plutoui-sidebar aside third")
 end
 
 # ╔═╡ df332112-2ab2-414e-ad06-12e3cc300152
@@ -199,48 +316,78 @@ begin
 	if selection_method == 1
 		designmethod = Butterworth(4)
 	elseif selection_method == 2
-		#designmethod = FIRWindow(hanning(50)) 
-		designmethod = FIRWindow(hamming(50), scale=true)
+		designmethod = FIRWindow(hamming(51), scale=true)
+	elseif selection_method == 3
+		designmethod = Chebyshev1(10, 1)
 	end
 end;
 
 # ╔═╡ 6204deba-8bab-4eff-807f-884c6d05fbd1
 begin
-
+	# filtering
 	signal_filt = filt(digitalfilter(responsetype, designmethod), signal)
 
+	# filter response
+	signal_base = zeros(size(t))
+	signal_base[end÷2] = 1
+	signal_base_filt = filt(digitalfilter(responsetype, designmethod), signal_base)
+	F_base_filt = fft(signal_base_filt) |> fftshift
+	freqs_base_filt = fftfreq(length(t), 1/ts) |> fftshift
+	
 	# fourier transformation
 	F_filt = fft(signal_filt) |> fftshift
 	freqs_filt = fftfreq(length(t), 1/ts) |> fftshift
-	
-	time_domain_filt = plot(t, signal_filt, xlims=(0, tmax), ylims=(-2, 2), 		
-		background_color=:transparent, title="Signal (filtered)")
 
-	freq_domain_filt = plot(freqs_filt[freqs_filt.>0], abs.(F_filt[5002:10001]), 		title="Spectrum (filtered)", xscale=:log10, xticks=[1, 10, 100]) 
+	plot(t, signal, color=RGBA(0,0,0, 0.5))
 	
+	time_domain_filt = plot!(t, signal_filt, xlims=(0, tmax), ylims=(-3, 3), 		
+		background_color=:transparent, title="Signal (filtered)", color=5)
+
+	
+	local max_idx = round(freqs_filt[freqs_filt.>0][argmax(abs.(F_filt[5002:10001]))], digits=1)
+	
+	plot(freqs[freqs.>0], abs.(F[5002:10001]), color=RGBA(0,0,0, 0.5))
+
+	max = maximum(abs.(F[5002:10001]))
+	plot!(freqs_base_filt[freqs_base_filt.>0], abs.(F_base_filt[5002:10001]).*max, color=:red)
+	
+	freq_domain_filt = plot!(freqs_filt[freqs_filt.>0], abs.(F_filt[5002:10001]), 		title="Spectrum (filtered)", xscale=:log10, 
+		xticks=([1, 10, 100, max_idx], [1, 10, 100, max_idx]), color=8) 
+end;
+
+# ╔═╡ 3df2238a-47f1-449a-8c68-33b3eb83af68
+begin
 	plot(time_domain_filt, freq_domain_filt, layout = @layout[a;b], 			
-		background_color=:transparent)
+			background_color=:transparent, legend=false)
+	#plot(time_domain_filt, background_color=:transparent, legend=false)
 end
 
 # ╔═╡ 4fdbf32c-0b75-4e7d-9751-63ce35fbe0a1
-impresp(digitalfilter(responsetype, designmethod), n=100)
+#impresp(digitalfilter(responsetype, designmethod), n=100)
 
 # ╔═╡ fde0643b-306d-4013-a984-f542b17d3bdd
-plot(digitalfilter(responsetype, designmethod))
+#plot(digitalfilter(responsetype, designmethod))
 
 # ╔═╡ 2056e9f8-9886-485e-a571-0f5e5103d454
-plot(abs.(fft(digitalfilter(responsetype, designmethod))))
+#plot(abs.(fft(digitalfilter(responsetype, designmethod))))
 
 # ╔═╡ 9b044be5-a827-4e8c-b6af-bd0b5f856a3d
 begin
 	z = iirnotch(60/(300/2), 60/(300/2)/35)
 end
 
+# ╔═╡ a0962510-b8ee-454b-8660-598e4dba55dc
+
+
+# ╔═╡ 3848b2b0-34bd-4677-ade5-a4b263e32453
+
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+HypertextLiteral = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
 PlotThemes = "ccf2f8ad-2431-5c83-bf29-c5338b663b6a"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
@@ -250,8 +397,9 @@ SignalAnalysis = "df1fea92-c066-49dd-8b36-eace3378ea47"
 [compat]
 DSP = "~0.7.4"
 FFTW = "~1.4.6"
+HypertextLiteral = "~0.9.3"
 PlotThemes = "~2.0.1"
-Plots = "~1.26.0"
+Plots = "~1.27.0"
 PlutoUI = "~0.7.34"
 SignalAnalysis = "~0.4.1"
 """
@@ -525,9 +673,9 @@ version = "0.64.0+0"
 
 [[deps.GeometryBasics]]
 deps = ["EarCut_jll", "IterTools", "LinearAlgebra", "StaticArrays", "StructArrays", "Tables"]
-git-tree-sha1 = "58bcdf5ebc057b085e58d95c138725628dd7453c"
+git-tree-sha1 = "83ea630384a13fc4f002b77690bc0afeb4255ac9"
 uuid = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
-version = "0.4.1"
+version = "0.4.2"
 
 [[deps.Gettext_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Libiconv_jll", "Pkg", "XML2_jll"]
@@ -678,9 +826,9 @@ version = "1.3.0"
 
 [[deps.Latexify]]
 deps = ["Formatting", "InteractiveUtils", "LaTeXStrings", "MacroTools", "Markdown", "Printf", "Requires"]
-git-tree-sha1 = "a6552bfeab40de157a297d84e03ade4b8177677f"
+git-tree-sha1 = "4f00cc36fede3c04b8acf9b2e2763decfdcecfa6"
 uuid = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
-version = "0.15.12"
+version = "0.15.13"
 
 [[deps.LazyArtifacts]]
 deps = ["Artifacts", "Pkg"]
@@ -925,10 +1073,10 @@ uuid = "995b91a9-d308-5afd-9ec6-746e21dbc043"
 version = "1.1.3"
 
 [[deps.Plots]]
-deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "GeometryBasics", "JSON", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "PlotThemes", "PlotUtils", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "Requires", "Scratch", "Showoff", "SparseArrays", "Statistics", "StatsBase", "UUIDs", "UnicodeFun", "Unzip"]
-git-tree-sha1 = "23d109aad5d225e945c813c6ebef79104beda955"
+deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "GeometryBasics", "JSON", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "Pkg", "PlotThemes", "PlotUtils", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "Requires", "Scratch", "Showoff", "SparseArrays", "Statistics", "StatsBase", "UUIDs", "UnicodeFun", "Unzip"]
+git-tree-sha1 = "9213b4c18b57b7020ee20f33a4ba49eb7bef85e0"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-version = "1.26.0"
+version = "1.27.0"
 
 [[deps.PlutoUI]]
 deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "Markdown", "Random", "Reexport", "UUIDs"]
@@ -1114,10 +1262,10 @@ uuid = "3783bdb8-4a98-5b6b-af9a-565f29a5fe9c"
 version = "1.0.1"
 
 [[deps.Tables]]
-deps = ["DataAPI", "DataValueInterfaces", "IteratorInterfaceExtensions", "LinearAlgebra", "TableTraits", "Test"]
-git-tree-sha1 = "bb1064c9a84c52e277f1096cf41434b675cd368b"
+deps = ["DataAPI", "DataValueInterfaces", "IteratorInterfaceExtensions", "LinearAlgebra", "OrderedCollections", "TableTraits", "Test"]
+git-tree-sha1 = "5ce79ce186cc678bbb5c5681ca3379d1ddae11a1"
 uuid = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
-version = "1.6.1"
+version = "1.7.0"
 
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]
@@ -1385,28 +1533,32 @@ version = "0.9.1+5"
 
 # ╔═╡ Cell order:
 # ╟─90966406-941e-11ec-213c-ef9ebe29ca85
-# ╠═a566c3a7-6e12-4849-8b33-9deec0ecd6f5
-# ╠═46687a8d-32dc-4806-bf11-c8ce2273c598
-# ╠═bb3b4195-38fd-4783-905b-54bc5a91516e
-# ╟─762d71e8-0b38-44ee-8c8d-271947786453
-# ╟─33f3f44e-4fe5-4bcf-92f3-6e670238ffcf
+# ╟─46da10e1-d8fc-4200-a860-737535b12a16
+# ╟─a312348c-fab3-4f94-87db-82212ddf2a48
+# ╟─5d1d4a57-6aec-42bf-ac28-f866b3c57752
+# ╟─3df2238a-47f1-449a-8c68-33b3eb83af68
+# ╟─46687a8d-32dc-4806-bf11-c8ce2273c598
+# ╟─e0a8a22d-9131-48db-9817-e12dc5edf638
+# ╟─6974a88f-0d7f-43e3-a74d-53c8d0f98652
+# ╟─3a3fc8a3-788e-471d-b7f4-7e6fe8be42e7
+# ╟─8f8cc0bb-d54e-42d6-94b5-dbfb8126504c
+# ╟─04ea0e0e-ceca-42bf-ad08-d0c558b14484
+# ╟─00ceec9c-83de-4990-b28b-2550c649de94
 # ╟─047b33a6-6cf0-4670-8452-b7f76a2c2dcb
-# ╟─cf4c06be-7963-4e31-b889-47e51081cfe7
 # ╟─e3caab76-c034-4966-94f8-3b9b6e4201de
 # ╟─352c8ed9-2070-485b-8d12-4370c2850cf9
-# ╟─70011fb3-eb0c-4020-918b-c4dc67894cdc
-# ╟─10e4ba32-30a1-4821-a5c7-bf2ae0cb8fef
 # ╟─fd7b297b-29ec-488c-a866-a2128f9224bf
-# ╠═2d1aff2f-1a9f-45f8-8300-cc38830ed900
 # ╟─c41393dd-0593-4f63-91ee-2fddd3d5a751
 # ╟─901f7bfd-9098-4f47-b67d-530c64ec74c8
 # ╟─f1df47fb-880d-4512-9049-656f943ea070
 # ╟─df332112-2ab2-414e-ad06-12e3cc300152
 # ╟─c518cbd0-60ca-4d1a-81f7-91ef6711bbf4
 # ╟─6204deba-8bab-4eff-807f-884c6d05fbd1
-# ╠═4fdbf32c-0b75-4e7d-9751-63ce35fbe0a1
-# ╠═fde0643b-306d-4013-a984-f542b17d3bdd
-# ╠═2056e9f8-9886-485e-a571-0f5e5103d454
-# ╠═9b044be5-a827-4e8c-b6af-bd0b5f856a3d
+# ╟─4fdbf32c-0b75-4e7d-9751-63ce35fbe0a1
+# ╟─fde0643b-306d-4013-a984-f542b17d3bdd
+# ╟─2056e9f8-9886-485e-a571-0f5e5103d454
+# ╟─9b044be5-a827-4e8c-b6af-bd0b5f856a3d
+# ╠═a0962510-b8ee-454b-8660-598e4dba55dc
+# ╠═3848b2b0-34bd-4677-ade5-a4b263e32453
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
