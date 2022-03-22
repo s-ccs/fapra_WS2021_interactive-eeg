@@ -351,7 +351,7 @@ end
 # ╔═╡ 4cbafc47-71c7-4dfa-9deb-f1b9ca418426
 begin
 	# sample event onsets
-	event_onsets_A = sort(sample(MersenneTwister(6),1:2000, 100, replace = false))
+	event_onsets_A = sort(sample(MersenneTwister(4),1:1000, 100, replace = false))
 	event_onsets_B = event_onsets_A + rand(LogNormal(μ, σ₁),100)
 	
 	# graph of event onsets for stimuli A
@@ -489,7 +489,7 @@ end
 
 # ╔═╡ bd06e0c4-4728-4c6f-a1d0-a371c91750fd
 begin
-	range = 0:0.1:6000;
+	range = 0:0.1:600;
 	data = eeg.(range);
 	data_noise = data .+ σ .* randn(size(data));
 end;
@@ -2555,10 +2555,10 @@ version = "0.9.1+5"
 # ╟─61e5f8bb-4c24-4eb6-a7d6-31c501a51f05
 # ╟─8300dc2f-8022-4ada-aade-fd3c8263be9d
 # ╟─ba43ef93-6d4a-4aee-962b-76e78a1e3188
-# ╟─4cbafc47-71c7-4dfa-9deb-f1b9ca418426
+# ╠═4cbafc47-71c7-4dfa-9deb-f1b9ca418426
 # ╟─4931b75b-28ab-4b65-b0ef-81ec575a3b20
 # ╟─2d8e3bce-1120-4eae-871e-508844f08a8b
-# ╟─36d354d4-ffa8-4ce3-9b97-e2cf623c656e
+# ╠═36d354d4-ffa8-4ce3-9b97-e2cf623c656e
 # ╟─b5546f79-3629-4acd-a7c3-c893f4b56e94
 # ╟─4fc50f5a-e798-4337-8df6-508af0709b71
 # ╟─a13a0023-55cd-4987-95ba-5802d01512de
@@ -2569,7 +2569,7 @@ version = "0.9.1+5"
 # ╟─c5b3773a-bdd8-4c1a-b496-da4f555cb97f
 # ╟─62f251b7-6aaf-457a-b777-99e1576e81ba
 # ╟─fedf1525-042a-4e82-b152-c30d3385555b
-# ╠═1ab44014-42de-4811-b5db-b62c9af8b393
+# ╟─1ab44014-42de-4811-b5db-b62c9af8b393
 # ╟─bd06e0c4-4728-4c6f-a1d0-a371c91750fd
 # ╟─9f8dfb28-a34d-410d-8268-23df13ec2538
 # ╟─b22e3a42-b652-4c83-a05c-0bd2b1b316ad
