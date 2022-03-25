@@ -16,8 +16,6 @@ end
 
 # ╔═╡ 46687a8d-32dc-4806-bf11-c8ce2273c598
 begin
-	#using Plots
-	using PlotThemes
 	using PlutoUI
 	using PlutoUI.ExperimentalLayout: vbox, hbox, Div
 	using SignalAnalysis
@@ -28,12 +26,160 @@ begin
 	using Plots
 	using Plots.PlotMeasures
     plotly()
-	
-	# Setting theme of plots
-	theme(:juno)
 
 	html"""
 	<style>
+		:root {
+			--image-filters: invert(1) hue-rotate(180deg) contrast(0.8);
+			--out-of-focus-opacity: 0.5;
+			--main-bg-color: hsl(0deg 0% 12%);
+			--rule-color: rgba(255, 255, 255, 0.15);
+			--kbd-border-color: #222222;
+			--header-bg-color: hsl(30deg 3% 16%);
+			--header-border-color: transparent;
+			--ui-button-color: rgb(255, 255, 255);
+			--cursor-color: white;
+			--normal-cell: 100, 100, 100;
+			--error-color: 255, 125, 125;
+			--normal-cell-color: rgba(var(--normal-cell), 0.2);
+			--dark-normal-cell-color: rgba(var(--normal-cell), 0.4);
+			--selected-cell-color: rgb(40 147 189 / 65%);
+			--code-differs-cell-color: #9b906c;
+			--error-cell-color: rgba(var(--error-color), 0.6);
+			--bright-error-cell-color: rgba(var(--error-color), 0.9);
+			--light-error-cell-color: rgba(var(--error-color), 0);
+			--export-bg-color: hsl(225deg 17% 18%);
+			--export-color: rgb(255 255 255 / 84%);
+			--export-card-bg-color: rgb(73 73 73);
+			--export-card-title-color: rgba(255, 255, 255, 0.85);
+			--export-card-text-color: rgb(255 255 255 / 70%);
+			--export-card-shadow-color: #0000001c;
+			--pluto-schema-types-color: rgba(255, 255, 255, 0.6);
+			--pluto-schema-types-border-color: rgba(255, 255, 255, 0.2);
+			--pluto-dim-output-color: hsl(0, 0, 70%);
+			--pluto-output-color: hsl(0deg 0% 77%);
+			--pluto-output-h-color: hsl(0, 0%, 90%);
+			--pluto-output-bg-color: var(--main-bg-color);
+			--a-underline: #ffffff69;
+			--blockquote-color: inherit;
+			--blockquote-bg: #2e2e2e;
+			--admonition-title-color: black;
+			--jl-message-color: rgb(38 90 32);
+			--jl-message-accent-color: rgb(131 191 138);
+			--jl-info-color: rgb(42 73 115);
+			--jl-info-accent-color: rgb(92 140 205);
+			--jl-warn-color: rgb(96 90 34);
+			--jl-warn-accent-color: rgb(221 212 100);
+			--jl-danger-color: rgb(100 47 39);
+			--jl-danger-accent-color: rgb(255, 117, 98);
+			--jl-debug-color: hsl(288deg 33% 27%);
+			--jl-debug-accent-color: hsl(283deg 59% 69%);
+			--table-border-color: rgba(255, 255, 255, 0.2);
+			--table-bg-hover-color: rgba(193, 192, 235, 0.15);
+			--pluto-tree-color: rgb(209 207 207 / 61%);
+			--disabled-cell-bg-color: rgba(139, 139, 139, 0.25);
+			--selected-cell-bg-color: rgb(42 115 205 / 78%);
+			--hover-scrollbar-color-1: rgba(0, 0, 0, 0.15);
+			--hover-scrollbar-color-2: rgba(0, 0, 0, 0.05);
+			--shoulder-hover-bg-color: rgba(255, 255, 255, 0.05);
+			--pluto-logs-bg-color: hsl(240deg 10% 29%);
+			--pluto-logs-progress-fill: #5f7f5b;
+			--pluto-logs-progress-border: hsl(210deg 35% 72%);
+			--nav-h1-text-color: white;
+			--nav-filepicker-color: #b6b6b6;
+			--nav-filepicker-border-color: #c7c7c7;
+			--nav-process-status-bg-color: rgb(82, 82, 82);
+			--nav-process-status-color: var(--pluto-output-h-color);
+			--restart-recc-header-color: rgb(44 106 157 / 56%);
+			--restart-req-header-color: rgb(145 66 60 / 56%);
+			--dead-process-header-color: rgba(250, 75, 21, 0.473);
+			--loading-header-color: hsl(0deg 0% 20% / 50%);
+			--disconnected-header-color: rgba(255, 169, 114, 0.56);
+			--binder-loading-header-color: hsl(51deg 64% 90% / 50%);
+			--loading-grad-color-1: #a9d4f1;
+			--loading-grad-color-2: #d0d4d7;
+			--overlay-button-bg: #2c2c2c;
+			--overlay-button-border: #c7a74670;
+			--overlay-button-color: white;
+			--input-context-menu-border-color: rgba(255, 255, 255, 0.1);
+			--input-context-menu-bg-color: rgb(39, 40, 47);
+			--input-context-menu-soon-color: #b1b1b144;
+			--input-context-menu-hover-bg-color: rgba(255, 255, 255, 0.1);
+			--input-context-menu-li-color: #c7c7c7;
+			--pkg-popup-bg: #3d2f44;
+			--pkg-popup-border-color: #574f56;
+			--pkg-popup-buttons-bg-color: var(--input-context-menu-bg-color);
+			--black: white;
+			--white: black;
+			--pkg-terminal-bg-color: #252627;
+			--pkg-terminal-border-color: #c3c3c388;
+			--pluto-runarea-bg-color: rgb(43, 43, 43);
+			--pluto-runarea-span-color: hsl(353, 5%, 64%);
+			--dropruler-bg-color: rgba(255, 255, 255, 0.1);
+			--jlerror-header-color: #d9baba;
+			--jlerror-mark-bg-color: rgb(0 0 0 / 18%);
+			--jlerror-a-bg-color: rgba(82, 58, 58, 0.5);
+			--jlerror-a-border-left-color: #704141;
+			--jlerror-mark-color: #b1a9a9;
+			--helpbox-bg-color: rgb(30 34 31);
+			--helpbox-box-shadow-color: #00000017;
+			--helpbox-header-bg-color: #2c3e36;
+			--helpbox-header-color: rgb(255 248 235);
+			--helpbox-notfound-header-color: rgb(139, 139, 139);
+			--helpbox-text-color: rgb(230, 230, 230);
+			--code-section-bg-color: rgb(44, 44, 44);
+			--code-section-border-color: #555a64;
+			--footer-color: #cacaca;
+			--footer-bg-color: rgb(38, 39, 44);
+			--footer-atag-color: rgb(114, 161, 223);
+			--footer-input-border-color: #6c6c6c;
+			--footer-filepicker-button-color: black;
+			--footer-filepicker-focus-color: #9d9d9d;
+			--footnote-border-color: rgba(114, 225, 231, 0.15);
+			--undo-delete-box-shadow-color: rgba(213, 213, 214, 0.2);
+			--cm-editor-tooltip-border-color: rgba(0, 0, 0, 0.2);
+			--cm-editor-li-aria-selected-bg-color: #3271e7;
+			--cm-editor-li-aria-selected-color: white;
+			--cm-editor-li-notexported-color: rgba(255, 255, 255, 0.5);
+			--code-background: hsl(222deg 16% 19%);
+			--cm-code-differs-gutters-color: rgb(235 213 28 / 11%);
+			--cm-line-numbers-color: #8d86875e;
+			--cm-selection-background: hsl(215deg 64% 59% / 48%);
+			--cm-selection-background-blurred: hsl(215deg 0% 59% / 48%);
+			--cm-editor-text-color: #ffe9fc;
+			--cm-comment-color: #e96ba8;
+			--cm-atom-color: hsl(8deg 72% 62%);
+			--cm-number-color: hsl(271deg 45% 64%);
+			--cm-property-color: #f99b15;
+			--cm-keyword-color: #ff7a6f;
+			--cm-string-color: hsl(20deg 69% 59%);
+			--cm-var-color: #afb7d3;
+			--cm-var2-color: #06b6ef;
+			--cm-macro-color: #82b38b;
+			--cm-builtin-color: #5e7ad3;
+			--cm-function-color: #f99b15;
+			--cm-type-color: hsl(51deg 32% 44%);
+			--cm-bracket-color: #a2a273;
+			--cm-tag-color: #ef6155;
+			--cm-link-color: #815ba4;
+			--cm-error-bg-color: #ef6155;
+			--cm-error-color: #f7f7f7;
+			--cm-matchingBracket-color: white;
+			--cm-matchingBracket-bg-color: #c58c237a;
+			--cm-placeholder-text-color: rgb(255 255 255 / 20%);
+			--autocomplete-menu-bg-color: var(--input-context-menu-bg-color);
+			--index-text-color: rgb(199, 199, 199);
+			--index-clickable-text-color: rgb(235, 235, 235);
+			--docs-binding-bg: #323431;
+			--cm-html-color: #00ab85;
+			--cm-html-accent-color: #00e7b4;
+			--cm-css-color: #ebd073;
+			--cm-css-accent-color: #fffed2;
+			--cm-css-why-doesnt-codemirror-highlight-all-the-text-aaa: #ffffea;
+			--cm-md-color: #a2c9d5;
+			--cm-md-accent-color: #00a9d1;
+		}
+		
 		div.plutoui-sidebar.aside {
 			position: fixed;
 			right: 1rem;
@@ -57,11 +203,11 @@ begin
 		}
 
 		.third {
-			top: 30rem !important;
+			top: 26.25rem !important;
 		}
 
 		.fourth {
-			top: 37.75rem !important;
+			top: 35.75rem !important;
 		}
 		
 		div.plutoui-sidebar.aside.hide {
@@ -104,29 +250,30 @@ end
 # ╔═╡ 90966406-941e-11ec-213c-ef9ebe29ca85
 md""" # Filter Artefacts"""
 
-# ╔═╡ 46da10e1-d8fc-4200-a860-737535b12a16
+# ╔═╡ a1e143e5-8af7-4297-96ad-a57553ebefc2
 md"""
-## Signal and its Fourier Spectrum
-"""
+# TODO
+- Filterorder:
+  - Butterworth (currently fixed to 4)
+  - Chebychev1
+ 
+- Text
+  - Filter (Lowpass, Highpass, Bandpass, Bandstop)
+  - Methods (FIR, Butterworth, Chebychev, ...)
+    - causal vs. acausal
+  - Artefacts
+    - Examples
+""";
 
-# ╔═╡ 5d1d4a57-6aec-42bf-ac28-f866b3c57752
-md"""
-## Filtered Signal and its Fourier Spectrum
-"""
-
-# ╔═╡ f1f4d0bb-c8c0-478d-b1c1-312e63478108
-md"""
-## Questions?
-- FIR Filter Kurve
-- Normalizing Fourier Spectrum
-- More focus on the artefacts via selection of specific combinations (Which?)
-- Separate plots => Zoom/Pan effects both subplots
-
-## Todo
-- Notch Filter
-- Responsive Position and with of sidebar instead of absolute positions
-- Force Dark mode or make everything compatible with both modes
-"""
+# ╔═╡ d7972009-03aa-4c3a-903a-751c2fd01424
+Plots.default(
+	linewidth=2, 
+	background_color=:transparent, 
+	foreground_color=:white,
+	xlims=(0,5),
+	formatter = :plain, 
+	legend=true
+)
 
 # ╔═╡ e0a8a22d-9131-48db-9817-e12dc5edf638
 begin
@@ -144,36 +291,14 @@ end
 function_impulse_response_bond = @bind selection_function Radio(["1" => "ERP", "2" => "Boxplot", "3" => "Sinussoidal"], default="1");
 
 # ╔═╡ 04ea0e0e-ceca-42bf-ad08-d0c558b14484
-slider_noise = md"""Noise $(@bind noise Slider([0, 0.1, 0.2, 0.4, 0.8], 		
-	default=0, show_value=true))""";
+#slider_noise = md"""Noise $(@bind noise Slider([0, 0.4], 		
+#	default=0, show_value=true))""";
 
 # ╔═╡ 00ceec9c-83de-4990-b28b-2550c649de94
 extra_artifacts = vbox([
 	hbox([md"$(@bind line_noise CheckBox())", md"Line noise (50 Hz)"]),
-	hbox([md"$(@bind shift CheckBox())", md"Shift at t=3"])
+	hbox([md"$(@bind shift CheckBox())", md"Shift at t=2"])
 ]);
-
-# ╔═╡ e3caab76-c034-4966-94f8-3b9b6e4201de
-begin
-	###
-	# Definition of sliders of functions
-	###
-
-	if selection_function == "1"
-		# ERP look a like
-		sliders_impulse_response = vbox([slider_noise])
-
-	elseif selection_function == "2"
-		# Boxplot
-		sliders_impulse_response = vbox([slider_noise])
-		
-	elseif selection_function == "3"
-		# Sinusoidal Pulse
-		slider_freq = md"""Frequency $(@bind freq Slider([1, 2, 4, 8, 16], 		
-  			default=5, show_value=true))"""
-		sliders_impulse_response = vbox([slider_freq, slider_noise])
-	end
-end;
 
 # ╔═╡ 6974a88f-0d7f-43e3-a74d-53c8d0f98652
 begin
@@ -184,8 +309,8 @@ begin
 			md"``\hspace{30mm}``", 
 			extra_artifacts
 		]),
-		md"---",
-		sliders_impulse_response
+		#md"---",
+		#sliders_impulse_response
 	], class="plutoui-sidebar aside second")
 end
 
@@ -200,9 +325,7 @@ begin
 
 	if selection_function == "1"
 		# ERP
-		σ = 0.5
-		σ2 = 0.25
-		σ3 = 1.5
+		σ = 0.5; σ2 = 0.25; σ3 = 1.5
 	
 		g(x, σ) = - 1 / σ√2π * ℯ^(-(x-2)^2 / 2σ^2)
 	
@@ -210,7 +333,7 @@ begin
 	
 		g3(x, σ3) = -2 / σ3√2π * 1.5ℯ^(-(x-5)^2 / 2σ3^2)
 	
-		f(x) = 5g(x, σ) + 5g2(x, σ2) + 5g3(x, σ3)
+		f(x) = 5g(2x, σ) + 5g2(2x, σ2) + 5g3(2x, σ3)
 		function_text = Markdown.parse("\$f(x)= ERP\$")
 
 	elseif selection_function == "2"
@@ -223,9 +346,31 @@ begin
 
 	elseif selection_function == "3"
 		# Sinusoidal Pulse
-		f(x) = ((x > 1 && x < 1.75π) ? 1.5sin.(2π * freq .* x) : 0)		
+		f(x) = ((x > 1 && x < 1+2π/1π) ? 1.5sin.(2π * 4 .* x) : 0)		
 		function_text = Markdown.parse("\$f(x)=sin(2π*$(freq)*x)\$")
 	end
+end;
+
+# ╔═╡ e3caab76-c034-4966-94f8-3b9b6e4201de
+begin
+	###
+	# Definition of sliders of functions
+	###
+
+	#if selection_function == "1"
+		# ERP look-a-like
+		#sliders_impulse_response = vbox([slider_noise])
+
+	#elseif selection_function == "2"
+		# Boxplot
+		#sliders_impulse_response = vbox([slider_noise])
+		
+	#elseif selection_function == "3"
+		# Sinusoidal Pulse
+		#slider_freq = md"""Frequency $(@bind freq Slider([1, 2, 4, 8, 16], 		
+  		#	default=4, show_value=true))"""
+		#sliders_impulse_response = vbox([slider_noise])
+	#end
 end;
 
 # ╔═╡ 352c8ed9-2070-485b-8d12-4370c2850cf9
@@ -233,58 +378,34 @@ rng = MersenneTwister(parse(Int64, selection_function));
 
 # ╔═╡ fd7b297b-29ec-488c-a866-a2128f9224bf
 begin
-	ts = 0.001
-	tmax = 10 
+	ts = 0.004
+	tmax = 7
 	t = 0:ts:tmax
+	n = length(t)
 	
 	# signal 
-	signal = f.(t) + noise .* randn(rng, size(t)) + line_noise * cos.(2π*50*t) + shift * H.(t.-3)
+	signal = f.(t) + 0 .* randn(rng, size(t)) + line_noise * 0.5cos.(2π*50*t) + shift * H.(t.-2)
 	
 	# fourier transformation
 	F = fft(signal) |> fftshift
 	freqs = fftfreq(length(t), 1/ts) |> fftshift
 	
-	# plots 
-	time_domain = plot(t, signal, title = "Signal", xlims=(0, tmax), ylims=(-3, 3), color=5)
+	# plot original signal in time domain 
+	time_domain = plot(t, signal, title = "Signal", ylims=(-3, 3), color=1)
 
-	max_idx = round(freqs[freqs.>0][argmax(abs.(F[5002:10001]))], digits=2)
-	freq_domain = plot(freqs[freqs.>0], abs.(F[5002:10001]), title = "Spectrum", 		xscale=:log10, xticks=([1, 10, 100, max_idx], [1, 10, 100, max_idx]), 		
-		color=8)
+	# get max index to mark it
+	max_idx = round(freqs[freqs.>=0][argmax(abs.(F[n÷2+1:n]))], digits=2)
+
+	# plot original signal in frequency domain
+	freq_domain = plot(freqs[freqs.>=0], abs.(F[n÷2+1:n]), title = "Spectrum", 		xscale=:log10, xticks=([1, 10, 100, max_idx], [1, 10, 100, max_idx]), 		
+		color=2)
 end;
-
-# ╔═╡ a312348c-fab3-4f94-87db-82212ddf2a48
-plot(time_domain, freq_domain, layout = @layout[a;b], background_color=:transparent, legend=false)
 
 # ╔═╡ c41393dd-0593-4f63-91ee-2fddd3d5a751
 begin
-	filter_bond = md"""Choose the filter: $(
-		@bind selection_filter Select(
-			[1=>"Lowpass", 2=> "Highpass", 3=> "Bandpass"],
-		default=1))"""
-end;
-
-# ╔═╡ 901f7bfd-9098-4f47-b67d-530c64ec74c8
-begin
-	method_bond = md"""Choose the filter method: $(
-		@bind selection_method Select(
-			[1=>"Butterworth", 2=> "FIR", 3=>"Chebyshev1"],
-		default=2))"""
-end;
-
-# ╔═╡ f1df47fb-880d-4512-9049-656f943ea070
-begin
-	slider_range = [0.1:0.2:8;[10,15];20:10:80]
-	if selection_filter == 1
-		# Slider for lowpass
-		filter = md"Change the cutoff $(@bind low Slider(slider_range, default=5, show_value=true))"	
-	elseif selection_filter == 2
-		# Slider for highpass
-		filter = md"Change the cutoff $(@bind high Slider(slider_range, default=5, show_value=true))"		
-	elseif selection_filter == 3
-		# slider for bandpass
-		filter = md"Change the cutoff $(@bind band RangeSlider(0.1:0.5:80, show_value=true))"
-		
-	end
+	filter_bond = @bind selection_filter Radio(
+			["1"=>"Lowpass", "2"=> "Highpass", "3"=> "Bandpass", "4"=> "Bandstop"],
+		default="3")
 end;
 
 # ╔═╡ 3a3fc8a3-788e-471d-b7f4-7e6fe8be42e7
@@ -293,58 +414,243 @@ begin
 		md""" **Filter**""",
 		md"---",
 		filter_bond,
-		method_bond,
+		#method_bond,
+		#md"---",
+		#filter
+	], class="plutoui-sidebar aside third")
+end
+
+# ╔═╡ 901f7bfd-9098-4f47-b67d-530c64ec74c8
+begin
+	#method_bond = md"""Choose the filter method: $(
+	#	@bind selection_method Select(
+	#		[2=> "FIR"],
+	#	default=2))"""
+	selection_method = 2
+end;
+
+# ╔═╡ 6d4b0e02-3829-4b28-9040-fb7c8f88edcb
+begin
+	slider_range = [0.5, 1, 3.5, 5, 10, 20, 40, 60]
+end;
+
+# ╔═╡ ce4a1ad6-1db6-4cb7-bbd6-872111ee3b91
+slider_cutoff_low = md"Change the low cutoff $(@bind low Slider(slider_range, default=0.1, show_value=true))";
+
+# ╔═╡ 3f8e3872-c7d3-4005-89f9-575ff571371d
+slider_cutoff_high = md"Change the high cutoff $(@bind high Slider(slider_range, default=80, show_value=true))";
+
+# ╔═╡ f1df47fb-880d-4512-9049-656f943ea070
+begin	
+	if selection_filter == "1"
+		# Slider for lowpass
+		filter = slider_cutoff_low
+		
+	elseif selection_filter == "2"
+		# Slider for highpass
+		filter = slider_cutoff_high
+		
+	elseif selection_filter == "3" || selection_filter == "4"
+		# Slider for bandpass
+		filter = vbox([
+			slider_cutoff_low,
+			slider_cutoff_high
+		])		
+	end
+end;
+
+# ╔═╡ b0430c29-453e-4b77-bf74-84a8b349102d
+begin
+	sidebar4 = Div([
+		md""" **Filter**""",
 		md"---",
 		filter
-	], class="plutoui-sidebar aside third")
+	], class="plutoui-sidebar aside fourth")
 end
 
 # ╔═╡ df332112-2ab2-414e-ad06-12e3cc300152
 begin
-		###
+	###
 	# Definition of filters to choose from
 	###
-	if selection_filter == 1
+	
+	if selection_filter == "1"
 		# Lowpass
 		responsetype = Lowpass(low; fs=1/ts)
 		
-	elseif selection_filter == 2
+	elseif selection_filter == "2"
 		# Highpass
 		responsetype = Highpass(high; fs=1/ts)
 		
-	elseif selection_filter == 3
+	elseif selection_filter == "3"
 		# Bandpass
-		low_cutoff = first(band)
-		high_cutoff = last(band)
+		# set responsetype 
+		if selection_method == 2
+			responsetype_bpass_low = Lowpass(high; fs=1/ts)
+			responsetype_bpass_high = Highpass(low; fs=1/ts)
+		else
+			responsetype = Bandpass(low, high, fs=1/ts)
+		end
 		
-		responsetype = Bandpass(low_cutoff, high_cutoff; fs=1/ts)
-
-	#elseif selection_filter == 4
+	elseif selection_filter == "4"
 		# Notch
-	#	responsetype = iirnotch(60/(300/2), 60/(300/2)/35)
+		# set responsetype (switch high an low cutoff)
+		if selection_method == 2
+			responsetype_bpass_low = Lowpass(low; fs=1/ts)
+			responsetype_bpass_high = Highpass(high; fs=1/ts)
+		else
+			responsetype = Bandstop(low, high, fs=1/ts)
+		end
 	end
 end;
+
+# ╔═╡ a0962510-b8ee-454b-8660-598e4dba55dc
+"""
+Compute FIR filterorder
+"""
+function default_fir_filterorder(responsetype::FilterType, samplingrate::Number)
+    # filter settings are the same as firfilt eeglab plugin (Andreas Widmann) and MNE Python. 
+    # filter order is set to 3.3 times the reciprocal of the shortest transition band 
+    # transition band is set to either
+    # min(max(l_freq * 0.25, 2), l_freq)
+    # or 
+    # min(max(h_freq * 0.25, 2.), nyquist - h_freq)
+    # 
+    # That is, 0.25 times the frequency, but maximally 2Hz
+    %
+
+    transwidthratio = 0.25 # magic number from firfilt eeglab plugin
+    fNyquist = samplingrate ./ 2
+    cutOff = responsetype.w * samplingrate
+    # what is the maximal filter width we can have
+    if typeof(responsetype) <: Highpass
+        maxDf = cutOff
+
+        df = minimum([maximum([maxDf * transwidthratio, 2]), maxDf])
+
+    elseif typeof(responsetype) <: Lowpass
+        #for lowpass we have to look back from nyquist
+        maxDf = fNyquist - cutOff
+        df = minimum([maximum([cutOff * transwidthratio, 2]), maxDf])
+
+    end
+
+    filterorder = 3.3 ./ (df ./ samplingrate)
+    filterorder = Int(filterorder ÷ 2 * 2) # we need even filter order
+
+	if typeof(responsetype) <: Highpass
+		filterorder += 1 # we need odd filter order
+	end
+    return filterorder
+end
+
+# ╔═╡ 3848b2b0-34bd-4677-ade5-a4b263e32453
+"""
+Compute filter delay
+"""
+function filterdelay(fobj::Vector)
+    return (length(fobj) - 1) ÷ 2
+end
 
 # ╔═╡ c518cbd0-60ca-4d1a-81f7-91ef6711bbf4
 begin
 	if selection_method == 1
+		# Butterworth
+		# set designmethod
 		designmethod = Butterworth(4)
+		
+		# set delay to zero
+		delay = 0
+	
 	elseif selection_method == 2
-		designmethod = FIRWindow(hamming(51), scale=true)
+		# FIR Hamming
+		if selection_filter == "3" || selection_filter == "4"
+			# compute the filter order for FIR
+			order_bpass_low = default_fir_filterorder(responsetype_bpass_low, 1/ts)
+			order_bpass_high = default_fir_filterorder(responsetype_bpass_high, 1/ts)
+		
+			# set designmethod based on filterorder
+			designmethod_bpass_low = FIRWindow(hamming(order_bpass_low), scale=true)
+			designmethod_bpass_high = FIRWindow(hamming(order_bpass_high), scale=true)
+		
+			# compute delay
+			delay_bpass_low = filterdelay(digitalfilter(responsetype_bpass_low, 
+				designmethod_bpass_low))
+			delay_bpass_high = filterdelay(digitalfilter(responsetype_bpass_high, 
+				designmethod_bpass_high))	
+			delay = delay_bpass_low + delay_bpass_high
+		else
+			order = default_fir_filterorder(responsetype, 1/ts)
+			designmethod = FIRWindow(hamming(abs.(order)), scale=true)
+			delay = filterdelay(digitalfilter(responsetype, designmethod))
+		end
+			
 	elseif selection_method == 3
+		# Chebyshev1
+		# set designmethod
 		designmethod = Chebyshev1(10, 1)
+		
+		# set delay to zero
+		delay = 0
 	end
 end;
 
 # ╔═╡ 6204deba-8bab-4eff-807f-884c6d05fbd1
 begin
-	# filtering
-	signal_filt = filt(digitalfilter(responsetype, designmethod), signal)
-
 	# filter response
 	signal_base = zeros(size(t))
 	signal_base[end÷2] = 1
-	signal_base_filt = filt(digitalfilter(responsetype, designmethod), signal_base)
+	
+	# filtering
+	if selection_method == 2 && selection_filter == "3"
+		# filtering if bandpass
+		# apply low and higpasss filter sequentially after each other
+		signal_filt_temp = filt(
+			digitalfilter(responsetype_bpass_low, designmethod_bpass_low), signal)
+		
+		signal_filt = filt(
+			digitalfilter(responsetype_bpass_high, designmethod_bpass_high), signal_filt_temp)
+
+		# same for filter response
+		signal_base_filt_temp = filt(digitalfilter(responsetype_bpass_low, 
+			designmethod_bpass_low), signal_base)
+
+		signal_base_filt = filt(digitalfilter(responsetype_bpass_high, 
+			designmethod_bpass_high), signal_base_filt_temp)
+		
+	elseif selection_method == 2 && selection_filter == "4"
+		# filtering if bandstop 
+		
+		# apply low and highpass filter each separate to signal and then combine
+		sginal_filt_low = filt(digitalfilter(responsetype_bpass_low, 
+			designmethod_bpass_low), signal)
+		
+		sginal_filt_high = filt(digitalfilter(responsetype_bpass_high, 
+			designmethod_bpass_high), signal)
+		
+		signal_filt = sginal_filt_low .+ sginal_filt_high
+
+		# same for filter response
+		signal_base_filt_low = filt(digitalfilter(responsetype_bpass_low, 
+			designmethod_bpass_low), signal_base)
+
+		signal_base_filt_high = filt(digitalfilter(responsetype_bpass_high, 
+			designmethod_bpass_high), signal_base)
+
+		signal_base_filt = signal_base_filt_low .+ signal_base_filt_high
+
+	else
+		# if low or highpass
+		
+		# filtered signal 
+		signal_filt = filt(digitalfilter(responsetype, designmethod), signal)
+		
+		# filter in time domain
+		signal_base_filt = filt(digitalfilter(responsetype, designmethod), signal_base)
+	end
+	
+		
+	# filter in frequency domain
 	F_base_filt = fft(signal_base_filt) |> fftshift
 	freqs_base_filt = fftfreq(length(t), 1/ts) |> fftshift
 	
@@ -352,45 +658,37 @@ begin
 	F_filt = fft(signal_filt) |> fftshift
 	freqs_filt = fftfreq(length(t), 1/ts) |> fftshift
 
-	plot(t, signal, color=RGBA(0,0,0, 0.5))
+	# plotting 
 	
-	time_domain_filt = plot!(t, signal_filt, xlims=(0, tmax), ylims=(-3, 3), 		
-		background_color=:transparent, title="Signal (filtered)", color=5)
+	# plot original signal
+	plot(t, signal, color=1, alpha=0.3)
 
-	
-	local max_idx = round(freqs_filt[freqs_filt.>0][argmax(abs.(F_filt[5002:10001]))], digits=1)
-	
-	plot(freqs[freqs.>0], abs.(F[5002:10001]), color=RGBA(0,0,0, 0.5))
+	# plot filtered signal in time domain
+	time_domain_filt = plot!(t, circshift(signal_filt, -delay), 
+		ylims=(-3, 3), title="Signal (filtered)", color=1)
 
-	max = maximum(abs.(F[5002:10001]))
-	plot!(freqs_base_filt[freqs_base_filt.>0], abs.(F_base_filt[5002:10001]).*max, color=:white)
+	# plot the original frequency spectrum
+	plot(freqs[freqs.>=0], abs.(F[n÷2+1:n]), color=2, alpha=0.3)
 	
-	freq_domain_filt = plot!(freqs_filt[freqs_filt.>0], abs.(F_filt[5002:10001]), 		title="Spectrum (filtered)", xscale=:log10, 
-		xticks=([1, 10, 100, max_idx], [1, 10, 100, max_idx]), color=8) 
+	# get the max index to mark it
+	local max_idx = round(freqs_filt[freqs_filt.>=0][argmax(abs.(F_filt[n÷2+1:n]))], digits=1)
+
+	# get the max value for upscaling
+	max = maximum(abs.(F[n÷2+1:n]))
+
+	# plot the filter response
+	plot!(freqs_base_filt[freqs_base_filt.>=0], abs.(F_base_filt[n÷2+1:n]).*max, color=:white, linestyle=:dot)
+
+	# plot the frequency spectrum of the filtered signal
+	freq_domain_filt = plot!(freqs_filt[freqs_filt.>=0], abs.(F_filt[n÷2+1:n]), 		title="Spectrum (filtered)", xscale=:log10, color=2, 
+		xticks=([1, 10, 100, max_idx], [1, 10, 100, max_idx])) 
 end;
 
-# ╔═╡ 3df2238a-47f1-449a-8c68-33b3eb83af68
-begin
-	plot(time_domain_filt, freq_domain_filt, layout = @layout[a;b], 			
-			background_color=:transparent, legend=false)
-	#plot(time_domain_filt, background_color=:transparent, legend=false)
-end
-
 # ╔═╡ 89d523bd-0a4b-4eec-ad17-2ed48c346630
-begin
-	plot(time_domain_filt, background_color=:transparent, legend=false)
-end
+plot(time_domain_filt)
 
 # ╔═╡ e802afe4-1e15-4228-921e-9f3ca98b3ab9
-begin
-	plot(freq_domain_filt, background_color=:transparent, legend=false)
-end
-
-# ╔═╡ a0962510-b8ee-454b-8660-598e4dba55dc
-
-
-# ╔═╡ 3848b2b0-34bd-4677-ade5-a4b263e32453
-
+plot(freq_domain_filt)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -398,7 +696,6 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 HypertextLiteral = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
-PlotThemes = "ccf2f8ad-2431-5c83-bf29-c5338b663b6a"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
@@ -408,7 +705,6 @@ SignalAnalysis = "df1fea92-c066-49dd-8b36-eace3378ea47"
 DSP = "~0.7.5"
 FFTW = "~1.4.6"
 HypertextLiteral = "~0.9.3"
-PlotThemes = "~2.0.1"
 Plots = "~1.27.1"
 PlutoUI = "~0.7.37"
 SignalAnalysis = "~0.4.1"
@@ -1514,31 +1810,32 @@ version = "0.9.1+5"
 
 # ╔═╡ Cell order:
 # ╟─90966406-941e-11ec-213c-ef9ebe29ca85
-# ╟─46da10e1-d8fc-4200-a860-737535b12a16
-# ╟─a312348c-fab3-4f94-87db-82212ddf2a48
-# ╟─5d1d4a57-6aec-42bf-ac28-f866b3c57752
-# ╟─3df2238a-47f1-449a-8c68-33b3eb83af68
 # ╟─89d523bd-0a4b-4eec-ad17-2ed48c346630
 # ╟─e802afe4-1e15-4228-921e-9f3ca98b3ab9
-# ╠═f1f4d0bb-c8c0-478d-b1c1-312e63478108
+# ╟─a1e143e5-8af7-4297-96ad-a57553ebefc2
 # ╟─46687a8d-32dc-4806-bf11-c8ce2273c598
-# ╠═e0a8a22d-9131-48db-9817-e12dc5edf638
-# ╠═6974a88f-0d7f-43e3-a74d-53c8d0f98652
-# ╠═3a3fc8a3-788e-471d-b7f4-7e6fe8be42e7
+# ╟─d7972009-03aa-4c3a-903a-751c2fd01424
+# ╟─e0a8a22d-9131-48db-9817-e12dc5edf638
+# ╟─6974a88f-0d7f-43e3-a74d-53c8d0f98652
+# ╟─3a3fc8a3-788e-471d-b7f4-7e6fe8be42e7
+# ╟─b0430c29-453e-4b77-bf74-84a8b349102d
 # ╠═8f8cc0bb-d54e-42d6-94b5-dbfb8126504c
-# ╠═04ea0e0e-ceca-42bf-ad08-d0c558b14484
+# ╟─04ea0e0e-ceca-42bf-ad08-d0c558b14484
 # ╠═00ceec9c-83de-4990-b28b-2550c649de94
-# ╠═047b33a6-6cf0-4670-8452-b7f76a2c2dcb
-# ╠═e3caab76-c034-4966-94f8-3b9b6e4201de
-# ╠═352c8ed9-2070-485b-8d12-4370c2850cf9
+# ╟─047b33a6-6cf0-4670-8452-b7f76a2c2dcb
+# ╟─e3caab76-c034-4966-94f8-3b9b6e4201de
+# ╟─352c8ed9-2070-485b-8d12-4370c2850cf9
 # ╠═fd7b297b-29ec-488c-a866-a2128f9224bf
-# ╠═c41393dd-0593-4f63-91ee-2fddd3d5a751
-# ╠═901f7bfd-9098-4f47-b67d-530c64ec74c8
-# ╠═f1df47fb-880d-4512-9049-656f943ea070
-# ╠═df332112-2ab2-414e-ad06-12e3cc300152
-# ╠═c518cbd0-60ca-4d1a-81f7-91ef6711bbf4
+# ╟─c41393dd-0593-4f63-91ee-2fddd3d5a751
+# ╟─901f7bfd-9098-4f47-b67d-530c64ec74c8
+# ╟─6d4b0e02-3829-4b28-9040-fb7c8f88edcb
+# ╟─ce4a1ad6-1db6-4cb7-bbd6-872111ee3b91
+# ╟─3f8e3872-c7d3-4005-89f9-575ff571371d
+# ╟─f1df47fb-880d-4512-9049-656f943ea070
+# ╟─df332112-2ab2-414e-ad06-12e3cc300152
+# ╟─c518cbd0-60ca-4d1a-81f7-91ef6711bbf4
 # ╠═6204deba-8bab-4eff-807f-884c6d05fbd1
-# ╠═a0962510-b8ee-454b-8660-598e4dba55dc
-# ╠═3848b2b0-34bd-4677-ade5-a4b263e32453
+# ╟─a0962510-b8ee-454b-8660-598e4dba55dc
+# ╟─3848b2b0-34bd-4677-ade5-a4b263e32453
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
