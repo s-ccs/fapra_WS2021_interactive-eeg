@@ -350,6 +350,12 @@ The filter types are named straight forward. Once you've heard them you understa
 	Also often called Notch. A bandpass filter is also a combination of a lowpass and a highpass filter. You can imagine it as the inverted bandpass filter. The passband of the bandpass filter is now a stopband and blocks the corresponding frequencies. To get the bandstop filter a lowpass and bandpass is applied separately to the original signal, afterwards the signal is combined.
 """
 
+# ╔═╡ a6e53659-ed15-4bfc-a72b-0ac3bcca16ac
+md"""
+!!! note \"More Background Information\"
+	If you want to get a more detailed background in filters, this [MNE Tutorial](https://mne.tools/dev/auto_tutorials/preprocessing/25_background_filtering.html) is a great resource!
+"""
+
 # ╔═╡ aed71610-558e-466d-a031-c81bc7b71460
 begin
 	data = [
@@ -516,7 +522,10 @@ end;
 # ╔═╡ 901f7bfd-9098-4f47-b67d-530c64ec74c8
 begin
 	selection_method_bond = @bind selection_method Radio(
-			["4"=>"FIR causal", "2"=>"FIR acausal", "1"=> "Butterworth", "3"=>"Chebychev1"], default="2")
+			["1"=>"FIR causal", "2"=>"FIR acausal", "3"=> "Butterworth", "4"=>"Chebychev1"], default="2")
+	#selection_method_bond = @bind selection_method Radio(
+	#		["4"=>"FIR causal", "2"=>"FIR acausal", "1"=> "Butterworth", "
+	#3"=>"Chebychev1"], default="2")
 end;
 
 # ╔═╡ 3a3fc8a3-788e-471d-b7f4-7e6fe8be42e7
@@ -544,6 +553,16 @@ slider_cutoff_low = md"Change the low cutoff $(@bind low Slider(slider_range, de
 
 # ╔═╡ 3f8e3872-c7d3-4005-89f9-575ff571371d
 slider_cutoff_high = md"Change the high cutoff $(@bind high Slider(slider_range, default=80, show_value=true))";
+
+# ╔═╡ 8045a798-c881-46d6-bc6e-44d076e0b8b2
+begin
+	if low > high
+	md"""
+	!!! warning \"Wrong slider configuration \"
+		Because of some limitations in the implementation, some slider configurations are possible which are not desirable! **Low cutoff must be smaller than high cutoff!**
+	"""
+	end
+end
 
 # ╔═╡ f1df47fb-880d-4512-9049-656f943ea070
 begin	
@@ -590,7 +609,7 @@ begin
 	elseif selection_filter == "3"
 		# Bandpass
 		# set responsetype 
-		if selection_method == "2" || selection_method == "4"
+		if selection_method == "1" || selection_method == "2"
 			responsetype_bpass_low = Lowpass(high; fs=1/ts)
 			responsetype_bpass_high = Highpass(low; fs=1/ts)
 		else
@@ -600,7 +619,7 @@ begin
 	elseif selection_filter == "4"
 		# Notch
 		# set responsetype (switch high an low cutoff)
-		if selection_method == "2"
+		if selection_method == "1" || selection_method == "2"
 			responsetype_bpass_low = Lowpass(low; fs=1/ts)
 			responsetype_bpass_high = Highpass(high; fs=1/ts)
 		else
@@ -659,17 +678,13 @@ end
 
 # ╔═╡ c518cbd0-60ca-4d1a-81f7-91ef6711bbf4
 begin
-	if selection_method == "1"
-		# Butterworth
-		# set designmethod
-		designmethod = Butterworth(4)
+	if selection_method == "1" || selection_method == "2"
 		
-		# set delay to zero
-		delay = 0
-	
-	elseif selection_method == "2" || selection_method == "4"
-		# FIR Hamming acausal
+		# FIR Hamming causal or acausal
+		
 		if selection_filter == "3" || selection_filter == "4"
+			# if bandpass or bandstop 
+			
 			# compute the filter order for FIR
 			order_bpass_low = default_fir_filterorder(responsetype_bpass_low, 1/ts)
 			order_bpass_high = default_fir_filterorder(responsetype_bpass_high, 1/ts)
@@ -679,27 +694,42 @@ begin
 			designmethod_bpass_high = FIRWindow(hamming(order_bpass_high), scale=true)
 		
 			# compute delay
-			delay_bpass_low = filterdelay(digitalfilter(responsetype_bpass_low, 
+			if selection_method == "2" && (selection_filter == "3" || selection_filter == "4")
+				delay_bpass_low = filterdelay(digitalfilter(responsetype_bpass_low, 
 				designmethod_bpass_low))
-			delay_bpass_high = filterdelay(digitalfilter(responsetype_bpass_high, 
+			
+				delay_bpass_high = filterdelay(digitalfilter(responsetype_bpass_high, 
 				designmethod_bpass_high))
-			if selection_method == "2"
-				delay = delay_bpass_low + delay_bpass_high
+
+				if selection_filter == "3"
+					delay = delay_bpass_low + delay_bpass_high
+				else
+					delay=0
+				end
 			else
+				delay_bpass_low = 0
+				delay_bpass_high = 0
 				delay = 0
 			end
 		else
-			# if lowpass or bandpass FIR
+			# if lowpass or highpass FIR
 			order = default_fir_filterorder(responsetype, 1/ts)
 			designmethod = FIRWindow(hamming(abs.(order)), scale=true)
-			if selection_method == "2"
+			if selection_method == "2" 
 				delay = filterdelay(digitalfilter(responsetype, designmethod))
 			else
 				delay = 0
 			end
 		end
-			
 	elseif selection_method == "3"
+		# Butterworth
+		# set designmethod
+		designmethod = Butterworth(4)
+		
+		# set delay to zero
+		delay = 0
+		
+	elseif selection_method == "4"
 		# Chebyshev1
 		# set designmethod
 		designmethod = Chebyshev1(4, 1)
@@ -716,7 +746,7 @@ begin
 	signal_base[end÷2] = 1
 	
 	# filtering
-	if (selection_method == "2" || selection_method == "4") && selection_filter == "3"
+	if (selection_method == "1" || selection_method == "2") && selection_filter == "3"
 		# filtering if bandpass
 		# apply low and higpasss filter sequentially after each other
 		signal_filt_temp = filt(
@@ -732,7 +762,7 @@ begin
 		signal_base_filt = filt(digitalfilter(responsetype_bpass_high, 
 			designmethod_bpass_high), signal_base_filt_temp)
 		
-	elseif (selection_method == "2" || selection_method == "4") && selection_filter == "4"
+	elseif (selection_method == "1" || selection_method == "2") && selection_filter == "4"
 		# filtering if bandstop 
 		
 		# apply low and highpass filter each separate to signal and then combine
@@ -1969,8 +1999,10 @@ version = "0.9.1+5"
 # ╟─059cc196-345e-4e2a-bf63-a2772aa78bca
 # ╟─b2baa9dc-93cb-45bd-bb06-aa5dd4a08cea
 # ╟─758654b7-e5a0-4554-82e9-a6876bc13174
+# ╟─a6e53659-ed15-4bfc-a72b-0ac3bcca16ac
 # ╟─aed71610-558e-466d-a031-c81bc7b71460
 # ╟─3ae1b7ac-e676-4f4d-ba1d-b6e2014046a7
+# ╟─8045a798-c881-46d6-bc6e-44d076e0b8b2
 # ╟─89d523bd-0a4b-4eec-ad17-2ed48c346630
 # ╟─e802afe4-1e15-4228-921e-9f3ca98b3ab9
 # ╟─46687a8d-32dc-4806-bf11-c8ce2273c598
@@ -1987,14 +2019,14 @@ version = "0.9.1+5"
 # ╟─352c8ed9-2070-485b-8d12-4370c2850cf9
 # ╟─fd7b297b-29ec-488c-a866-a2128f9224bf
 # ╟─c41393dd-0593-4f63-91ee-2fddd3d5a751
-# ╟─901f7bfd-9098-4f47-b67d-530c64ec74c8
+# ╠═901f7bfd-9098-4f47-b67d-530c64ec74c8
 # ╟─6d4b0e02-3829-4b28-9040-fb7c8f88edcb
 # ╟─ce4a1ad6-1db6-4cb7-bbd6-872111ee3b91
 # ╟─3f8e3872-c7d3-4005-89f9-575ff571371d
 # ╟─f1df47fb-880d-4512-9049-656f943ea070
-# ╟─df332112-2ab2-414e-ad06-12e3cc300152
-# ╟─c518cbd0-60ca-4d1a-81f7-91ef6711bbf4
-# ╟─6204deba-8bab-4eff-807f-884c6d05fbd1
+# ╠═df332112-2ab2-414e-ad06-12e3cc300152
+# ╠═c518cbd0-60ca-4d1a-81f7-91ef6711bbf4
+# ╠═6204deba-8bab-4eff-807f-884c6d05fbd1
 # ╟─a0962510-b8ee-454b-8660-598e4dba55dc
 # ╟─3848b2b0-34bd-4677-ade5-a4b263e32453
 # ╟─00000000-0000-0000-0000-000000000001
