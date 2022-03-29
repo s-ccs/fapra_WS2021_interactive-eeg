@@ -25,6 +25,7 @@ begin
 	using Random
 	using Plots
 	using Plots.PlotMeasures
+	using DataFrames
     plotly()
 
 	html"""
@@ -203,11 +204,11 @@ begin
 		}
 
 		.third {
-			top: 26.25rem !important;
+			top: 31.25rem !important;
 		}
 
 		.fourth {
-			top: 35.75rem !important;
+			top: 40.75rem !important;
 		}
 		
 		div.plutoui-sidebar.aside.hide {
@@ -233,7 +234,15 @@ begin
 		.sidebar-toggle {
 			cursor: pointer;
 		}
+
+		div.admonition.info {
+			background: rgba(60,60,60,1) !important;
+			border-color: darkgrey !important
+		}
 		
+		div.admonition.info .admonition-title {
+			background: darkgrey !important;
+		}
 	</style>
 	<script>
 		document.addEventListener('click', event => {
@@ -248,22 +257,121 @@ begin
 end
 
 # ╔═╡ 90966406-941e-11ec-213c-ef9ebe29ca85
-md""" # Filter Artefacts"""
+md""" # Filter Effects & Artefacts"""
 
-# ╔═╡ a1e143e5-8af7-4297-96ad-a57553ebefc2
+# ╔═╡ 7c34beab-4932-4fa1-8309-838b404b7596
 md"""
-# TODO
-- Filterorder:
-  - Butterworth (currently fixed to 4)
-  - Chebychev1
- 
-- Text
-  - Filter (Lowpass, Highpass, Bandpass, Bandstop)
-  - Methods (FIR, Butterworth, Chebychev, ...)
-    - causal vs. acausal
-  - Artefacts
-    - Examples
-""";
+This is an interactive notebook about filters and the consequences you need to be aware of if you use filters. Before we come to the interactive part (the plots and the options in the sidebar), we briefly discuss some general knowledge about filtering in EEG.
+"""
+
+# ╔═╡ 6a13b44c-211a-4b72-b74a-49974dbd227f
+md"""
+## Why do we filter?
+
+Short & Simple: Because of Noise. Many if not all EEG signals would be nearly to impossible to analyse without filtering. And yes: One man's noise is another man's signal.\
+For now just consider for example high-frequency from the power line as noise*.
+"""
+
+# ╔═╡ 61bd5619-151f-4a15-ab74-fbc88faf91a0
+md"""
+## What are the problems?
+Filtering can distort the original signal. The result are so called filter effects or artefacts.\
+Those can be e.g. ...
+  - a smoother or different amplitude of the signal
+  - a phase shift or time distortion of the signal
+
+The use of filters when you are unaware of the resulting consequences therefore lay the foundation for wrong interpretations!
+
+To further take a look into the possible artefacts we have to consider the different possible filter methods. Often the artefacts are strongly related to the used method. By knowing the resulting artefacts from different filter methods you can avoid certain kind of artefacts by choosing a corresponding filter method.
+"""
+
+# ╔═╡ fb838cbe-55c4-4294-9e0f-9a4ca31a6fcb
+md"""
+## FIR vs. IIR
+To understand the difference between FIR & IIR take a look at the written out abbreviations:
+- FIR := Finite Impulse Response
+- IIR := Infinite Impulse Response
+We have two open case:
+- What is an impulse response?
+- When is it called finite / infinite?
+
+Let's start with the first one! An impulse response is the response of a filter to a unit impulse (signal that is 1 at the onset and 0 everywhere else). The response in the fourier domain is called frequency response. Easy! Onto the second one...\
+\
+A Finite IR Filter has an finite impulse response which is after a time t zero.
+FIR Filters are also called linear phase filters. \
+\
+A Infinite IR Filter has no finite impulse response. 
+"""
+
+# ╔═╡ 059cc196-345e-4e2a-bf63-a2772aa78bca
+md"""
+## Causal vs. Acausal
+
+!!! info \"Causal\"
+	Filter uses only the past and present => can only result in effects and artefacts after the onset
+
+!!! info \"Acausal\"
+	Filter uses the past, present & future => can result in effects and artefacts before the onset. In practice this is achieved by filtering twice. Once with the original signal, once with the signal reversed (corresponds to backwards filtering).
+"""
+
+# ╔═╡ b2baa9dc-93cb-45bd-bb06-aa5dd4a08cea
+md"""
+## Filter Methods
+In this notebook four filter methods are used. Here are some characteristics listed...
+1) FIR causal
+   - linear phase
+   - causal => no effect before onset
+3) FIR acausal
+   - linear phase
+   - acausal => effects before onset
+4) Butterworth of order 4 (IIR)
+   - causal
+   - phase distortion possible
+5) Chebyshev of order 4 with 1 ripple (IIR)
+   - causal
+   - phase distortion possible
+"""
+
+# ╔═╡ 758654b7-e5a0-4554-82e9-a6876bc13174
+md"""
+## Filter Type
+The filter types are named straight forward. Once you've heard them you understand them.
+
+!!! info \"Lowpass\"
+	A **lowpass filter** let's the low frequencies pass. It is used to zero out frequencies above a certain threshold / cutoff.
+
+!!! info \"Highpass\"
+	A **highpass filter** is the inverse of the lowpass filter. It let's the frequencies above a certain threshold pass. 
+
+!!! info \"Bandpass\"
+	A **bandpass filter** is a combination of a lowpass and a highpass filter. It let's frequencies in a by parameter defined range pass. This range is called the passband. This is achieved by applying the low and highpass filter sequentially.
+
+!!! info \"Bandstop\"
+	Also often called Notch. A bandpass filter is also a combination of a lowpass and a highpass filter. You can imagine it as the inverted bandpass filter. The passband of the bandpass filter is now a stopband and blocks the corresponding frequencies. To get the bandstop filter a lowpass and bandpass is applied separately to the original signal, afterwards the signal is combined.
+"""
+
+# ╔═╡ aed71610-558e-466d-a031-c81bc7b71460
+begin
+	data = [
+		(signal="Unit Impulse", freq="-", ftype="Lowpass", fmethod="FIR causal", low_cutoff="10 Hz", high_cutoff="-", notes="=> causal"),
+		(signal="Unit Impulse", freq="-", ftype="Lowpass", fmethod="FIR acausal", low_cutoff="10 Hz", high_cutoff="-", notes="=> acausal"),
+		(signal="Unit Impulse", freq="-", ftype="Lowpass", fmethod="Butterworth", low_cutoff="10 Hz", high_cutoff="-", notes="=> causal"),
+		(signal="Unit Impulse", freq="-", ftype="Lowpass", fmethod="Chebychev1", low_cutoff="10 Hz", high_cutoff="-", notes="=> causal"),
+		(signal="ERP", freq="-", ftype="Highpass", fmethod="FIR", low_cutoff="-", high_cutoff="1 Hz", notes="-")
+	]
+	df = DataFrame(data)
+
+	md"""## Example Configurations
+ 	Here are some example configuration which produce some interesting structures...\
+	Hint: Start by comparing the impulse response of the unit impulse to get an better understanding. of the filters.
+ 	$(df)
+	"""
+end
+
+# ╔═╡ 3ae1b7ac-e676-4f4d-ba1d-b6e2014046a7
+md"""
+## Interactive Plots
+"""
 
 # ╔═╡ d7972009-03aa-4c3a-903a-751c2fd01424
 Plots.default(
@@ -288,11 +396,10 @@ begin
 end
 
 # ╔═╡ 8f8cc0bb-d54e-42d6-94b5-dbfb8126504c
-function_impulse_response_bond = @bind selection_function Radio(["1" => "ERP", "2" => "Boxplot", "3" => "Sinussoidal"], default="1");
+selection_function_bond = @bind selection_function Radio(["1" => "ERP", "4" => "Unit Impulse", "2" => "Boxplot", "3" => "Sinussoidal"], default="1");
 
 # ╔═╡ 04ea0e0e-ceca-42bf-ad08-d0c558b14484
-#slider_noise = md"""Noise $(@bind noise Slider([0, 0.4], 		
-#	default=0, show_value=true))""";
+slider_noise = md"""Noise $(@bind noise Slider([0, 0.1, 0.4], default=0, show_value=true))""";
 
 # ╔═╡ 00ceec9c-83de-4990-b28b-2550c649de94
 extra_artifacts = vbox([
@@ -300,17 +407,33 @@ extra_artifacts = vbox([
 	hbox([md"$(@bind shift CheckBox())", md"Shift at t=2"])
 ]);
 
+# ╔═╡ e3caab76-c034-4966-94f8-3b9b6e4201de
+begin
+	###
+	# Definition of sliders of functions
+	###
+
+	if selection_function == "3"
+		# Sinusoidal Pulse
+		slider_freq = md"""Frequency $(@bind freq Slider([1, 2, 4, 8, 16], 		
+  			default=4, show_value=true))"""
+		sliders_signal = vbox([slider_noise, slider_freq])
+	else
+		sliders_signal = vbox([slider_noise])
+	end
+end;
+
 # ╔═╡ 6974a88f-0d7f-43e3-a74d-53c8d0f98652
 begin
 	sidebar2 = Div([
-		md""" **Impulse Response**""",
+		md""" **Signal**""",
 		md"---",
-		hbox([function_impulse_response_bond, 
-			md"``\hspace{30mm}``", 
-			extra_artifacts
+		hbox([selection_function_bond, 
+			md"``\hspace{25mm}``", 
+			sliders_signal
 		]),
-		#md"---",
-		#sliders_impulse_response
+		md"---",
+		extra_artifacts
 	], class="plutoui-sidebar aside second")
 end
 
@@ -335,7 +458,7 @@ begin
 	
 		f(x) = 5g(2x, σ) + 5g2(2x, σ2) + 5g3(2x, σ3)
 		function_text = Markdown.parse("\$f(x)= ERP\$")
-
+		
 	elseif selection_function == "2"
 		# Step Function
 		f(x) = H(x-1) - H(x-2)
@@ -343,34 +466,16 @@ begin
 		t2 = md"""$\hspace{10mm}\text{with}\hspace{2mm}$"""
 		t3 = Markdown.parse("\$H(x)=0.5* (sign(x) +1)\$")
 		function_text = Div([t1, t2, t3], style=center_style)
-
 	elseif selection_function == "3"
 		# Sinusoidal Pulse
-		f(x) = ((x > 1 && x < 1+2π/1π) ? 1.5sin.(2π * 4 .* x) : 0)		
+		f(x) = ((x > 1 && x < 1+2π/1π) ? 1.5sin.(2π * freq .* x) : 0)		
 		function_text = Markdown.parse("\$f(x)=sin(2π*$(freq)*x)\$")
-	end
-end;
-
-# ╔═╡ e3caab76-c034-4966-94f8-3b9b6e4201de
-begin
-	###
-	# Definition of sliders of functions
-	###
-
-	#if selection_function == "1"
-		# ERP look-a-like
-		#sliders_impulse_response = vbox([slider_noise])
-
-	#elseif selection_function == "2"
-		# Boxplot
-		#sliders_impulse_response = vbox([slider_noise])
 		
-	#elseif selection_function == "3"
-		# Sinusoidal Pulse
-		#slider_freq = md"""Frequency $(@bind freq Slider([1, 2, 4, 8, 16], 		
-  		#	default=4, show_value=true))"""
-		#sliders_impulse_response = vbox([slider_noise])
-	#end
+	elseif selection_function == "4"
+		# Unit Impulse (Scaled x10)
+		f(x) = 10*(x==1)
+		function_text = Markdown.parse("\$f(x)= Unit Impulse\$")
+	end
 end;
 
 # ╔═╡ 352c8ed9-2070-485b-8d12-4370c2850cf9
@@ -384,7 +489,7 @@ begin
 	n = length(t)
 	
 	# signal 
-	signal = f.(t) + 0 .* randn(rng, size(t)) + line_noise * 0.5cos.(2π*50*t) + shift * H.(t.-2)
+	signal = f.(t) + noise .* randn(rng, size(t)) + line_noise * 0.5cos.(2π*50*t) + shift * H.(t.-2)
 	
 	# fourier transformation
 	F = fft(signal) |> fftshift
@@ -408,26 +513,26 @@ begin
 		default="3")
 end;
 
+# ╔═╡ 901f7bfd-9098-4f47-b67d-530c64ec74c8
+begin
+	selection_method_bond = @bind selection_method Radio(
+			["4"=>"FIR causal", "2"=>"FIR acausal", "1"=> "Butterworth", "3"=>"Chebychev1"], default="2")
+end;
+
 # ╔═╡ 3a3fc8a3-788e-471d-b7f4-7e6fe8be42e7
 begin
 	sidebar3 = Div([
-		md""" **Filter**""",
+		md""" **Filter Type & Method**""",
 		md"---",
-		filter_bond,
-		#method_bond,
+		hbox([
+			filter_bond,
+			md"``\hspace{34mm}``", 
+			selection_method_bond,
+		])
 		#md"---",
 		#filter
 	], class="plutoui-sidebar aside third")
 end
-
-# ╔═╡ 901f7bfd-9098-4f47-b67d-530c64ec74c8
-begin
-	#method_bond = md"""Choose the filter method: $(
-	#	@bind selection_method Select(
-	#		[2=> "FIR"],
-	#	default=2))"""
-	selection_method = 2
-end;
 
 # ╔═╡ 6d4b0e02-3829-4b28-9040-fb7c8f88edcb
 begin
@@ -462,7 +567,7 @@ end;
 # ╔═╡ b0430c29-453e-4b77-bf74-84a8b349102d
 begin
 	sidebar4 = Div([
-		md""" **Filter**""",
+		md""" **Filter Parameters**""",
 		md"---",
 		filter
 	], class="plutoui-sidebar aside fourth")
@@ -485,7 +590,7 @@ begin
 	elseif selection_filter == "3"
 		# Bandpass
 		# set responsetype 
-		if selection_method == 2
+		if selection_method == "2" || selection_method == "4"
 			responsetype_bpass_low = Lowpass(high; fs=1/ts)
 			responsetype_bpass_high = Highpass(low; fs=1/ts)
 		else
@@ -495,7 +600,7 @@ begin
 	elseif selection_filter == "4"
 		# Notch
 		# set responsetype (switch high an low cutoff)
-		if selection_method == 2
+		if selection_method == "2"
 			responsetype_bpass_low = Lowpass(low; fs=1/ts)
 			responsetype_bpass_high = Highpass(high; fs=1/ts)
 		else
@@ -554,7 +659,7 @@ end
 
 # ╔═╡ c518cbd0-60ca-4d1a-81f7-91ef6711bbf4
 begin
-	if selection_method == 1
+	if selection_method == "1"
 		# Butterworth
 		# set designmethod
 		designmethod = Butterworth(4)
@@ -562,8 +667,8 @@ begin
 		# set delay to zero
 		delay = 0
 	
-	elseif selection_method == 2
-		# FIR Hamming
+	elseif selection_method == "2" || selection_method == "4"
+		# FIR Hamming acausal
 		if selection_filter == "3" || selection_filter == "4"
 			# compute the filter order for FIR
 			order_bpass_low = default_fir_filterorder(responsetype_bpass_low, 1/ts)
@@ -577,18 +682,27 @@ begin
 			delay_bpass_low = filterdelay(digitalfilter(responsetype_bpass_low, 
 				designmethod_bpass_low))
 			delay_bpass_high = filterdelay(digitalfilter(responsetype_bpass_high, 
-				designmethod_bpass_high))	
-			delay = delay_bpass_low + delay_bpass_high
+				designmethod_bpass_high))
+			if selection_method == "2"
+				delay = delay_bpass_low + delay_bpass_high
+			else
+				delay = 0
+			end
 		else
+			# if lowpass or bandpass FIR
 			order = default_fir_filterorder(responsetype, 1/ts)
 			designmethod = FIRWindow(hamming(abs.(order)), scale=true)
-			delay = filterdelay(digitalfilter(responsetype, designmethod))
+			if selection_method == "2"
+				delay = filterdelay(digitalfilter(responsetype, designmethod))
+			else
+				delay = 0
+			end
 		end
 			
-	elseif selection_method == 3
+	elseif selection_method == "3"
 		# Chebyshev1
 		# set designmethod
-		designmethod = Chebyshev1(10, 1)
+		designmethod = Chebyshev1(4, 1)
 		
 		# set delay to zero
 		delay = 0
@@ -602,7 +716,7 @@ begin
 	signal_base[end÷2] = 1
 	
 	# filtering
-	if selection_method == 2 && selection_filter == "3"
+	if (selection_method == "2" || selection_method == "4") && selection_filter == "3"
 		# filtering if bandpass
 		# apply low and higpasss filter sequentially after each other
 		signal_filt_temp = filt(
@@ -618,7 +732,7 @@ begin
 		signal_base_filt = filt(digitalfilter(responsetype_bpass_high, 
 			designmethod_bpass_high), signal_base_filt_temp)
 		
-	elseif selection_method == 2 && selection_filter == "4"
+	elseif (selection_method == "2" || selection_method == "4") && selection_filter == "4"
 		# filtering if bandstop 
 		
 		# apply low and highpass filter each separate to signal and then combine
@@ -627,8 +741,12 @@ begin
 		
 		sginal_filt_high = filt(digitalfilter(responsetype_bpass_high, 
 			designmethod_bpass_high), signal)
+
+		sginal_filt_low = circshift(sginal_filt_low, -delay_bpass_low)
+		sginal_filt_high = circshift(sginal_filt_high, -delay_bpass_high)
 		
 		signal_filt = sginal_filt_low .+ sginal_filt_high
+
 
 		# same for filter response
 		signal_base_filt_low = filt(digitalfilter(responsetype_bpass_low, 
@@ -694,6 +812,7 @@ plot(freq_domain_filt)
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 HypertextLiteral = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
@@ -703,6 +822,7 @@ SignalAnalysis = "df1fea92-c066-49dd-8b36-eace3378ea47"
 
 [compat]
 DSP = "~0.7.5"
+DataFrames = "~1.3.2"
 FFTW = "~1.4.6"
 HypertextLiteral = "~0.9.3"
 Plots = "~1.27.1"
@@ -814,6 +934,11 @@ git-tree-sha1 = "9f02045d934dc030edad45944ea80dbd1f0ebea7"
 uuid = "d38c429a-6771-53c6-b99e-75d170b6e991"
 version = "0.5.7"
 
+[[deps.Crayons]]
+git-tree-sha1 = "249fe38abf76d48563e2f4556bebd215aa317e15"
+uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
+version = "4.1.1"
+
 [[deps.DSP]]
 deps = ["Compat", "FFTW", "IterTools", "LinearAlgebra", "Polynomials", "Random", "Reexport", "SpecialFunctions", "Statistics"]
 git-tree-sha1 = "3e03979d16275ed5d9078d50327332c546e24e68"
@@ -824,6 +949,12 @@ version = "0.7.5"
 git-tree-sha1 = "cc70b17275652eb47bc9e5f81635981f13cea5c8"
 uuid = "9a962f9c-6df0-11e9-0e5d-c546b8b5ee8a"
 version = "1.9.0"
+
+[[deps.DataFrames]]
+deps = ["Compat", "DataAPI", "Future", "InvertedIndices", "IteratorInterfaceExtensions", "LinearAlgebra", "Markdown", "Missings", "PooledArrays", "PrettyTables", "Printf", "REPL", "Reexport", "SortingAlgorithms", "Statistics", "TableTraits", "Tables", "Unicode"]
+git-tree-sha1 = "ae02104e835f219b8930c7664b8012c93475c340"
+uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+version = "1.3.2"
 
 [[deps.DataStructures]]
 deps = ["Compat", "InteractiveUtils", "OrderedCollections"]
@@ -954,6 +1085,10 @@ git-tree-sha1 = "aa31987c2ba8704e23c6c8ba8a4f769d5d7e4f91"
 uuid = "559328eb-81f9-559d-9380-de523a88c83c"
 version = "1.0.10+0"
 
+[[deps.Future]]
+deps = ["Random"]
+uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
+
 [[deps.GLFW_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libglvnd_jll", "Pkg", "Xorg_libXcursor_jll", "Xorg_libXi_jll", "Xorg_libXinerama_jll", "Xorg_libXrandr_jll"]
 git-tree-sha1 = "51d2dfe8e590fbd74e7a842cf6d13d8a2f45dc01"
@@ -1056,6 +1191,11 @@ deps = ["Test"]
 git-tree-sha1 = "91b5dcf362c5add98049e6c29ee756910b03051d"
 uuid = "3587e190-3f89-42d0-90ee-14403ec27112"
 version = "0.1.3"
+
+[[deps.InvertedIndices]]
+git-tree-sha1 = "bee5f1ef5bf65df56bdd2e40447590b272a5471f"
+uuid = "41ab1584-1d38-5bbf-9106-f11c6c58b48f"
+version = "1.1.0"
 
 [[deps.IrrationalConstants]]
 git-tree-sha1 = "7fd44fd4ff43fc60815f8e764c0f352b83c49151"
@@ -1373,11 +1513,23 @@ git-tree-sha1 = "0107e2f7f90cc7f756fee8a304987c574bbd7583"
 uuid = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
 version = "3.0.0"
 
+[[deps.PooledArrays]]
+deps = ["DataAPI", "Future"]
+git-tree-sha1 = "28ef6c7ce353f0b35d0df0d5930e0d072c1f5b9b"
+uuid = "2dfb63ee-cc39-5dd5-95bd-886bf059d720"
+version = "1.4.1"
+
 [[deps.Preferences]]
 deps = ["TOML"]
 git-tree-sha1 = "d3538e7f8a790dc8903519090857ef8e1283eecd"
 uuid = "21216c6a-2e73-6563-6e65-726566657250"
 version = "1.2.5"
+
+[[deps.PrettyTables]]
+deps = ["Crayons", "Formatting", "Markdown", "Reexport", "Tables"]
+git-tree-sha1 = "dfb54c4e414caa595a1f2ed759b160f5a3ddcba5"
+uuid = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
+version = "1.3.1"
 
 [[deps.Printf]]
 deps = ["Unicode"]
@@ -1810,9 +1962,17 @@ version = "0.9.1+5"
 
 # ╔═╡ Cell order:
 # ╟─90966406-941e-11ec-213c-ef9ebe29ca85
+# ╟─7c34beab-4932-4fa1-8309-838b404b7596
+# ╟─6a13b44c-211a-4b72-b74a-49974dbd227f
+# ╟─61bd5619-151f-4a15-ab74-fbc88faf91a0
+# ╠═fb838cbe-55c4-4294-9e0f-9a4ca31a6fcb
+# ╟─059cc196-345e-4e2a-bf63-a2772aa78bca
+# ╟─b2baa9dc-93cb-45bd-bb06-aa5dd4a08cea
+# ╟─758654b7-e5a0-4554-82e9-a6876bc13174
+# ╟─aed71610-558e-466d-a031-c81bc7b71460
+# ╟─3ae1b7ac-e676-4f4d-ba1d-b6e2014046a7
 # ╟─89d523bd-0a4b-4eec-ad17-2ed48c346630
 # ╟─e802afe4-1e15-4228-921e-9f3ca98b3ab9
-# ╟─a1e143e5-8af7-4297-96ad-a57553ebefc2
 # ╟─46687a8d-32dc-4806-bf11-c8ce2273c598
 # ╟─d7972009-03aa-4c3a-903a-751c2fd01424
 # ╟─e0a8a22d-9131-48db-9817-e12dc5edf638
@@ -1825,16 +1985,16 @@ version = "0.9.1+5"
 # ╟─047b33a6-6cf0-4670-8452-b7f76a2c2dcb
 # ╟─e3caab76-c034-4966-94f8-3b9b6e4201de
 # ╟─352c8ed9-2070-485b-8d12-4370c2850cf9
-# ╠═fd7b297b-29ec-488c-a866-a2128f9224bf
+# ╟─fd7b297b-29ec-488c-a866-a2128f9224bf
 # ╟─c41393dd-0593-4f63-91ee-2fddd3d5a751
 # ╟─901f7bfd-9098-4f47-b67d-530c64ec74c8
 # ╟─6d4b0e02-3829-4b28-9040-fb7c8f88edcb
 # ╟─ce4a1ad6-1db6-4cb7-bbd6-872111ee3b91
 # ╟─3f8e3872-c7d3-4005-89f9-575ff571371d
 # ╟─f1df47fb-880d-4512-9049-656f943ea070
-# ╠═df332112-2ab2-414e-ad06-12e3cc300152
-# ╠═c518cbd0-60ca-4d1a-81f7-91ef6711bbf4
-# ╠═6204deba-8bab-4eff-807f-884c6d05fbd1
+# ╟─df332112-2ab2-414e-ad06-12e3cc300152
+# ╟─c518cbd0-60ca-4d1a-81f7-91ef6711bbf4
+# ╟─6204deba-8bab-4eff-807f-884c6d05fbd1
 # ╟─a0962510-b8ee-454b-8660-598e4dba55dc
 # ╟─3848b2b0-34bd-4677-ade5-a4b263e32453
 # ╟─00000000-0000-0000-0000-000000000001
