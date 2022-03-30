@@ -269,7 +269,7 @@ md"""
 ## Why do we filter?
 
 Short & Simple: Because of Noise. Many if not all EEG signals would be nearly to impossible to analyse without filtering. And yes: One man's noise is another man's signal.\
-For now just consider for example high-frequency from the power line as noise*.
+For now just consider for example high-frequency from the power line as noise.
 """
 
 # ╔═╡ 61bd5619-151f-4a15-ab74-fbc88faf91a0
@@ -288,7 +288,7 @@ To further take a look into the possible artefacts we have to consider the diffe
 # ╔═╡ fb838cbe-55c4-4294-9e0f-9a4ca31a6fcb
 md"""
 ## FIR vs. IIR
-To understand the difference between FIR & IIR take a look at the written out abbreviations:
+To understand the difference between FIR & IIR filters take a look at the written out abbreviations:
 - FIR := Finite Impulse Response
 - IIR := Infinite Impulse Response
 We have two open case:
@@ -297,10 +297,9 @@ We have two open case:
 
 Let's start with the first one! An impulse response is the response of a filter to a unit impulse (signal that is 1 at the onset and 0 everywhere else). The response in the fourier domain is called frequency response. Easy! Onto the second one...\
 \
-A Finite IR Filter has an finite impulse response which is after a time t zero.
-FIR Filters are also called linear phase filters. \
+A Finite IR Filter has an finite impulse response which is after a finite time t zero. FIR Filters are also called linear phase filters. This means that all frequencies are shifted by the same value and no phase distortion takes place.\
 \
-A Infinite IR Filter has no finite impulse response. 
+A Infinite IR Filter has no finite impulse response. So theoretically the impulse response based on the parameter choice can get an infinite number of non-zero values.
 """
 
 # ╔═╡ 059cc196-345e-4e2a-bf63-a2772aa78bca
@@ -327,9 +326,11 @@ In this notebook four filter methods are used. Here are some characteristics lis
 4) Butterworth of order 4 (IIR)
    - causal
    - phase distortion possible
+   - flat pass band but broad transition band
 5) Chebyshev of order 4 with 1 ripple (IIR)
    - causal
    - phase distortion possible
+   - steeper transition band, but ripples in the pass band
 """
 
 # ╔═╡ 758654b7-e5a0-4554-82e9-a6876bc13174
@@ -353,7 +354,7 @@ The filter types are named straight forward. Once you've heard them you understa
 # ╔═╡ a6e53659-ed15-4bfc-a72b-0ac3bcca16ac
 md"""
 !!! note \"More Background Information\"
-	If you want to get a more detailed background in filters, this [MNE Tutorial](https://mne.tools/dev/auto_tutorials/preprocessing/25_background_filtering.html) is a great resource!
+	If you want to get a more detailed background in filters, this [MNE Tutorial](https://mne.tools/dev/auto_tutorials/preprocessing/25_background_filtering.html) as well as this [Paper](https://doi.org/10.1016/j.neuron.2019.02.039) is a great resource! 
 """
 
 # ╔═╡ aed71610-558e-466d-a031-c81bc7b71460
@@ -556,7 +557,7 @@ slider_cutoff_high = md"Change the high cutoff $(@bind high Slider(slider_range,
 
 # ╔═╡ 8045a798-c881-46d6-bc6e-44d076e0b8b2
 begin
-	if low > high
+	if low > high && (selection_filter == 3 || selection_filter == 4)
 	md"""
 	!!! warning \"Wrong slider configuration \"
 		Because of some limitations in the implementation, some slider configurations are possible which are not desirable! **Low cutoff must be smaller than high cutoff!**
@@ -1995,7 +1996,7 @@ version = "0.9.1+5"
 # ╟─7c34beab-4932-4fa1-8309-838b404b7596
 # ╟─6a13b44c-211a-4b72-b74a-49974dbd227f
 # ╟─61bd5619-151f-4a15-ab74-fbc88faf91a0
-# ╠═fb838cbe-55c4-4294-9e0f-9a4ca31a6fcb
+# ╟─fb838cbe-55c4-4294-9e0f-9a4ca31a6fcb
 # ╟─059cc196-345e-4e2a-bf63-a2772aa78bca
 # ╟─b2baa9dc-93cb-45bd-bb06-aa5dd4a08cea
 # ╟─758654b7-e5a0-4554-82e9-a6876bc13174
@@ -2019,14 +2020,14 @@ version = "0.9.1+5"
 # ╟─352c8ed9-2070-485b-8d12-4370c2850cf9
 # ╟─fd7b297b-29ec-488c-a866-a2128f9224bf
 # ╟─c41393dd-0593-4f63-91ee-2fddd3d5a751
-# ╠═901f7bfd-9098-4f47-b67d-530c64ec74c8
+# ╟─901f7bfd-9098-4f47-b67d-530c64ec74c8
 # ╟─6d4b0e02-3829-4b28-9040-fb7c8f88edcb
 # ╟─ce4a1ad6-1db6-4cb7-bbd6-872111ee3b91
 # ╟─3f8e3872-c7d3-4005-89f9-575ff571371d
 # ╟─f1df47fb-880d-4512-9049-656f943ea070
-# ╠═df332112-2ab2-414e-ad06-12e3cc300152
-# ╠═c518cbd0-60ca-4d1a-81f7-91ef6711bbf4
-# ╠═6204deba-8bab-4eff-807f-884c6d05fbd1
+# ╟─df332112-2ab2-414e-ad06-12e3cc300152
+# ╟─c518cbd0-60ca-4d1a-81f7-91ef6711bbf4
+# ╟─6204deba-8bab-4eff-807f-884c6d05fbd1
 # ╟─a0962510-b8ee-454b-8660-598e4dba55dc
 # ╟─3848b2b0-34bd-4677-ade5-a4b263e32453
 # ╟─00000000-0000-0000-0000-000000000001
