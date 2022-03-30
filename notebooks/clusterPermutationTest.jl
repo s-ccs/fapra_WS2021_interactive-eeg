@@ -30,10 +30,7 @@ begin
 	using HypertextLiteral
 	using AbstractPlutoDingetjes
 	import Base:get,show
-	using PlotThemes
-
-	# Setting theme of plots
-	theme(:juno)
+	plotly()
 	
 	
 	html"""
@@ -238,6 +235,14 @@ begin
 		.sidebar-toggle {
 			cursor: pointer;
 		}
+
+		div.admonition.info {
+			background: rgba(60,60,60,1) !important;
+			border-color: darkgrey !important
+		}
+		div.admonition.info .admonition-title {
+			background: darkgrey !important;
+		}
 		
 	</style>
 	<script>
@@ -252,6 +257,42 @@ begin
 	"""
 end
 
+# ╔═╡ 4f29192e-d5b2-4007-a022-e6f16c294f8f
+begin
+	Plots.default(
+		#linewidth=2, 
+		background_color=:transparent, 
+		foreground_color=:white,
+		#xlims=(0,5),
+		formatter = :plain, 
+		legend=true
+	)
+	md"""
+	# Cluster Permutation Test
+	
+	No matter in which field you work, if you are in research, you can't avoid statistics. \
+	Even if you would like. 
+	
+	This interactive tutorial has the goal to give you an insight into cluster permutation tests. Afterwards should be clear why cluster permutation is used and how it works! This journey is separated into five steps.
+	"""
+end
+
+# ╔═╡ 291903ea-ca84-440e-81ae-0aaffdd8f38e
+md"""
+Why do we need cluster permutation tests?	
+To answer this question we need to know more about the setup / scenario we are in.\
+\
+Assume we have recorded EEG data over multiple electrodes and we want to analyse it. This leads to the unovoidable problem of performing statistical tests on all of these electrode and timepoint combinations. 
+
+Isn't possible to use a multiple t-test? No!
+Already with a small number of timepoints and electrodes the probability of a false positive would be close to 100%. This is accumulation of type 1 errors is called the multiple comparison problem.
+
+!!! info \"The Multiple Comparison Problem\"
+	The more hypotheses one tests on a data set, the higher the probability is that one of them will be incorrectly accepted as true.
+
+ Therfore other possibilities need to be look at! Cluster Permutation Tests for example :)
+"""
+
 # ╔═╡ 3540008c-5597-4b78-be59-ab7d368549fa
 begin
 	sidebar = Div([@htl("""<header>
@@ -263,30 +304,6 @@ begin
 		Feel free to change them!"""
 	], class="plutoui-sidebar aside")
 end
-
-# ╔═╡ f944631f-e6e9-4a3d-8f34-ec8fa814d1a0
-md"""
-# Cluster Permutation Test
-
-No matter in which field you work, if you are in research, you can't avoid statistics. \
-Even if you would like. 
-
-This interactive tutorial has the goal to give you an insight into cluster permutation tests. Afterwards should be clear why cluster permutation is used and how it works! This journey is separated into five steps.
-
-Let's start of by specifying the setup we are in:
-Assume we have recorded EEG data. 
-
-
-Let's start with a small question as introduction:\
-
-Why do we need cluster permutation tests?	
-Isn't possible to use a simple t-test? To answer this question we need to know more about the setup / scenario we are in.\
-\
-Assume we have recorded EEG data.
-
-!!! info \"The Multiple Comparison Problem\"
-	L
-"""
 
 # ╔═╡ d717352e-e926-4ff2-b5ea-4547cf7b58ad
 begin
@@ -310,16 +327,14 @@ md"""## Step 0: Data, pinknoise & clustermass"""
 
 # ╔═╡ 65baa13b-4f64-40ad-8798-34cc59a6db53
 md"""
-In praxis the procedure would be the following:
+In praxis the procedure would be the following (simplyfied):
 1. Collect EEG data (time x sensor) from multiple subjects (and for each condition).
-2. Multiply it with a mixing matrix (the component map we extracted through ICA).
-
-=> We receive a one dimensional IC activation profile over time. 
+2. Extract ERPs per subject and condition.
 
 But since we are here on theoretical terrain, things are a bit tidier :) \
-Instead of going through hours of hours of EEG data collection, we simulate the EEG data or more specific the trials for the conditions.
+Instead of going through hours of hours of EEG data collection, we simulate the EEG data or more specific the ERPs for the conditions.
 
-In our case we have trials of two conditions (A and B). Feel free to change the effect size and noise with the sliders below!
+In our case we have ERPs of two conditions (A and B). Feel free to change the effect size and noise with the sliders below!
 """
 
 # ╔═╡ 951a7527-a68b-45f9-8d08-01556a6f52c7
@@ -401,33 +416,16 @@ We now check whether our observed cluster mass (Step 2) is greater than 95% of w
 If we would have initially observed multiple clusters, we can check each against the same distribution.
 """
 
-# ╔═╡ 765837ac-f83c-406a-8b20-7cc6eba82d5c
-html"""
-<style>
-	div.admonition.info {
-		background: rgba(60,60,60,1) !important;
-		border-color: darkgrey !important
-	}
-	div.admonition.info .admonition-title {
-		background: darkgrey !important;
-	}
-</style>
-"""
-
 # ╔═╡ 28970003-cb8d-4ddf-9f9a-a9473a50a817
 md"""
-\
-\
-\
-
 ## Functions
-"""
+""";
 
 # ╔═╡ e3a35d10-af7b-4ea5-be1f-116658ecf244
 """
 tvalue function
 """
-t(x, σ, n) = x/(σ/sqrt(n))
+t(x, σ, n) = x/(σ/sqrt(n));
 
 # ╔═╡ 3b2f63e3-7183-4f84-b0cd-4851c1e594ac
 """
@@ -440,7 +438,7 @@ function compute_tvalues(mat)
 	n = size(mat, 1)
 	tvalues = t.(x, σ, n)
 	return tvalues
-end
+end;
 
 # ╔═╡ 2f9f6ed2-7f8c-4dd4-bdd6-e13bb4b10a08
 """
@@ -462,7 +460,7 @@ ToggleButton(text="Toggle", class=".test") = @htl("""
 			button.innerText = "Show more...";
 		}
 	})
-</script>""")
+</script>""");
 
 # ╔═╡ b9422e74-0497-4ddc-9b57-7b701d5a08b2
 """
@@ -511,7 +509,7 @@ function compute_clustermass(values, boundary)
 
 	return clustermass
 	
-end	
+end	;
 
 # ╔═╡ 38ec8e97-612a-40e7-90c7-8dea4b2f1dcd
 begin
@@ -556,7 +554,7 @@ begin
 	Counter button with max value
 	"""
 	CounterButtonMax() = CounterButtonMax("Click", 10)
-end
+end;
 
 # ╔═╡ f3679998-b5a8-4cdc-bcc1-36e61eaab852
 begin 
@@ -630,7 +628,7 @@ begin
 	plot_b = plot(range, data_b, color=:red, ylims=(-2,2))
 	plot_diff = plot(range, data_diff, color=:purple, ylims=(-2,2))
 	plot(plot_a, plot_b, plot_diff, layout=(1,3), ylim=(-1,1), legend=false, 
-		size=(600,300), background_color=:transparent)
+		size=(600,300))
 end
 
 # ╔═╡ 55165b94-5d5b-43c8-b289-da189f9dbf35
@@ -644,14 +642,15 @@ begin
 	
 	t_values_diff = vec(compute_tvalues(mat_diff))
 	
-	plot(range, t_values_diff, ylims=(-20, 20), fillrange = [threshold], 
-		fillalpha = 0.35, c = :lightgrey, size=(600,200))
+	plot(range, t_values_diff, ylims=(-20, 20), fillrange=fill(threshold, 
+		length(range)), fillalpha = 0.35, c = :lightgrey, size=(600,200))
 	
-	plot!(range, t_values_diff, fillrange = [-threshold], 
-		fillalpha = 0.35, c = "#101010")
+	plot!(range, t_values_diff, fillrange = fill(-threshold, 
+		length(range)), fillalpha = 0.35, c = "#101010")
 	
-	plot!(range, t_values_diff, fillrange = (-threshold, threshold), 
-		fillalpha = 1, c = "#21252B")
+	plot!(range, t_values_diff, fillrange = (fill(-threshold, 
+		length(range)), fill(threshold+0.2, length(range))), 
+		fillalpha = 1, c = "#1F1F1F")
 	
 	plot!(range, t_values_diff, color=:lightskyblue, legend=false, grids=:all)
 	
@@ -782,14 +781,14 @@ begin
 	###
 
 	# create plot
-	plot(range, tvalues[i], ylims=(-5, 5), fillrange = [threshold], 
-		fillalpha = 0.35, c = :lightgrey, size=(600,300), xlims=(0,11.9))
+	plot(range, tvalues[i], ylims=(-5, 5), fillrange = fill(threshold, 
+		length(range)), fillalpha = 0.35, c = :lightgrey, size=(600,300), xlims=(0,11.9))
 	
-	plot!(range, tvalues[i], fillrange = [-threshold], 
-		fillalpha = 1, c = :orange)
+	plot!(range, tvalues[i], fillrange = fill(-threshold, 
+		length(range)), fillalpha = 1, c = :orange)
 	
-	plot!(range, tvalues[i], fillrange = (-threshold, threshold), 
-		fillalpha = 1, c = "#21252B")
+	plot!(range, tvalues[i], fillrange = (-fill(threshold +0.1, 
+		length(range)), fill(threshold+0.1, length(range))), fillalpha = 1, c = "#1F1F1F")
 	
 	plot!(range, tvalues[i], color=:black, legend=false, grids=:off,
 		size=(600, 200))
@@ -933,7 +932,7 @@ function shuffle_indices(mat, seed)
 	end
 
 	return h0A, h0B
-end
+end;
 
 # ╔═╡ 9955c443-0134-42c4-8b4d-95fb689b71bf
 begin
@@ -1001,7 +1000,6 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 AbstractPlutoDingetjes = "6e696c72-6542-2067-7265-42206c756150"
 HypertextLiteral = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
 ImageFiltering = "6a3955dd-da59-5b1f-98d4-e7296123deb5"
-PlotThemes = "ccf2f8ad-2431-5c83-bf29-c5338b663b6a"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
@@ -1012,7 +1010,6 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 AbstractPlutoDingetjes = "~1.1.4"
 HypertextLiteral = "~0.9.3"
 ImageFiltering = "~0.7.1"
-PlotThemes = "~2.0.1"
 Plots = "~1.25.10"
 PlutoUI = "~0.7.34"
 SignalAnalysis = "~0.4.1"
@@ -2229,16 +2226,17 @@ version = "0.9.1+5"
 
 # ╔═╡ Cell order:
 # ╟─1f7c5d20-9239-11ec-177b-a3278b921aee
+# ╟─4f29192e-d5b2-4007-a022-e6f16c294f8f
+# ╟─291903ea-ca84-440e-81ae-0aaffdd8f38e
 # ╟─3540008c-5597-4b78-be59-ab7d368549fa
 # ╟─d422f53f-86ea-4a34-9319-914a79c494ac
 # ╟─2537bb83-5154-4791-a984-58614ba1d5b4
-# ╟─f944631f-e6e9-4a3d-8f34-ec8fa814d1a0
-# ╠═d717352e-e926-4ff2-b5ea-4547cf7b58ad
+# ╟─d717352e-e926-4ff2-b5ea-4547cf7b58ad
 # ╟─f4728014-2a2f-452d-bbe2-2a4995874bea
 # ╟─65baa13b-4f64-40ad-8798-34cc59a6db53
 # ╟─f3679998-b5a8-4cdc-bcc1-36e61eaab852
-# ╠═36738573-80c6-4197-a911-1d4b6e4fc06f
-# ╠═9d399b21-50ac-45eb-b4b7-ead4c639842f
+# ╟─36738573-80c6-4197-a911-1d4b6e4fc06f
+# ╟─9d399b21-50ac-45eb-b4b7-ead4c639842f
 # ╟─ef1b60d2-8de5-41b1-9334-de148b222a51
 # ╟─951a7527-a68b-45f9-8d08-01556a6f52c7
 # ╟─55165b94-5d5b-43c8-b289-da189f9dbf35
@@ -2266,9 +2264,8 @@ version = "0.9.1+5"
 # ╟─bc0124c0-a9a2-424c-a45e-757589825c8b
 # ╟─f143c8ac-fc02-49bc-af3f-fc64b90c0494
 # ╟─29ad628a-a6a6-481f-a70f-b5ad0f6a02ad
-# ╟─765837ac-f83c-406a-8b20-7cc6eba82d5c
 # ╟─28970003-cb8d-4ddf-9f9a-a9473a50a817
-# ╠═3b2f63e3-7183-4f84-b0cd-4851c1e594ac
+# ╟─3b2f63e3-7183-4f84-b0cd-4851c1e594ac
 # ╟─e3a35d10-af7b-4ea5-be1f-116658ecf244
 # ╟─2f9f6ed2-7f8c-4dd4-bdd6-e13bb4b10a08
 # ╟─b9422e74-0497-4ddc-9b57-7b701d5a08b2
