@@ -1,0 +1,10 @@
+[Export]
+baked_notebookfile = false
+pluto_cdn_root = "https://cdn.jsdelivr.net/gh/llips/Pluto.jl@HEAD/frontend/"
+
+[SliderServer]
+port = 2345
+
+[Precompute]
+enabled = true
+max_filesize_per_group = 1_500_000_000
