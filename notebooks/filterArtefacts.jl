@@ -667,7 +667,7 @@ function default_fir_filterorder(responsetype::FilterType, samplingrate::Number)
 		filterorder += 1 # we need odd filter order
 	end
     return filterorder
-end
+end;
 
 # ╔═╡ 3848b2b0-34bd-4677-ade5-a4b263e32453
 """
@@ -675,7 +675,7 @@ Compute filter delay
 """
 function filterdelay(fobj::Vector)
     return (length(fobj) - 1) ÷ 2
-end
+end;
 
 # ╔═╡ c518cbd0-60ca-4d1a-81f7-91ef6711bbf4
 begin
