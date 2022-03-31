@@ -10,7 +10,8 @@ This is a student project trying to visualize common EEG stuff interactivly via 
     - ``splineRegression.jl``
 - ``PlutoDeployment.toml`` custom configuration of the pluto slider server
 - ``Project.toml`` dependencies
-- ``start.jl`` startup script for the pluto slider server
+- ``export.jl`` script to export the notebooks precomputed as .html-files
+- ``start.jl`` script for startup of the pluto slider server
 
 
 ## **Export precomputed notebooks**
