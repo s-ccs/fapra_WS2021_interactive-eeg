@@ -1,5 +1,5 @@
 # Interactive EEG
-This is a student project trying to visualize common EEG stuff interactivly via [Pluto.jl](https://github.com/fonsp/Pluto.jl). Feel free to contribute with ideas or notebooks as well as correcting me 
+This is a student project trying to visualize common EEG stuff interactivly via [Pluto.jl](https://github.com/fonsp/Pluto.jl). Feel free to contribute with ideas or notebooks as well as correcting me at places where i made mistakes. Thanks :)
 
 ## **Files**
 - ``/notebooks`` folder containing the notebooks listed below
@@ -40,7 +40,6 @@ This is a student project trying to visualize common EEG stuff interactivly via 
     ```
 
     > **_NOTE:_**  Should work also on the branch #29. But if you want to have the newest PlutoSliderServer.jl you might have to free the package again (if you have used the precomputation branch before).
-    julia environment of current project 
     ```console
     $ julia --project="."
     ```
