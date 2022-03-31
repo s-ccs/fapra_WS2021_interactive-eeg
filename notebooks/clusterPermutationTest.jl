@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.18.0
+# v0.18.4
 
 using Markdown
 using InteractiveUtils
@@ -264,7 +264,6 @@ begin
 		background_color=:transparent, 
 		foreground_color=:white,
 		#xlims=(0,5),
-		formatter = :plain, 
 		legend=true
 	)
 	md"""
