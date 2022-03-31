@@ -30,13 +30,13 @@ This is a student project trying to visualize common EEG stuff interactivly via 
 
 - Start precomputing & exporting the slider server by running the following:
     ```console
-    julia --project="." export.jl
+    $ julia --project="." export.jl
     ```
 
 ## **Starting as pluto slider server**
 - If you don't want to precompute the notebooks and simply run them, type the following (Then also the the pull request #29 is not neccessary):
     ```console
-    julia --project="." start.jl
+    $ julia --project="." start.jl
     ```
 
     > **_NOTE:_**  Should work also on the branch #29. But if you want to have the newest PlutoSliderServer.jl you might have to free the package again (if you have used the precomputation branch before).
