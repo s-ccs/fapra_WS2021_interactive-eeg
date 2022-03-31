@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.18.0
+# v0.18.4
 
 using Markdown
 using InteractiveUtils
@@ -414,35 +414,10 @@ extra_artifacts = vbox([
 	hbox([md"$(@bind shift CheckBox())", md"Shift at t=2"])
 ]);
 
-# ╔═╡ e3caab76-c034-4966-94f8-3b9b6e4201de
-begin
-	###
-	# Definition of sliders of functions
-	###
-
-	if selection_function == "3"
-		# Sinusoidal Pulse
-		slider_freq = md"""Frequency $(@bind freq Slider([1, 2, 4, 8, 16], 		
-  			default=4, show_value=true))"""
-		sliders_signal = vbox([slider_noise, slider_freq])
-	else
-		sliders_signal = vbox([slider_noise])
-	end
-end;
-
-# ╔═╡ 6974a88f-0d7f-43e3-a74d-53c8d0f98652
-begin
-	sidebar2 = Div([
-		md""" **Signal**""",
-		md"---",
-		hbox([selection_function_bond, 
-			md"``\hspace{25mm}``", 
-			sliders_signal
-		]),
-		md"---",
-		extra_artifacts
-	], class="plutoui-sidebar aside second")
-end
+# ╔═╡ 644c6cfb-c39b-418b-a8a9-dcb7a86a1fec
+# Sinusoidal Pulse
+slider_freq = md"""Frequency $(@bind freq Slider([1, 2, 4, 8, 16], 		
+	default=4, show_value=true))""";
 
 # ╔═╡ 047b33a6-6cf0-4670-8452-b7f76a2c2dcb
 begin
@@ -485,6 +460,33 @@ begin
 	end
 end;
 
+# ╔═╡ e3caab76-c034-4966-94f8-3b9b6e4201de
+begin
+	###
+	# Definition of sliders of functions
+	###
+
+	if selection_function == "3"
+		sliders_signal = vbox([slider_noise, slider_freq])
+	else
+		sliders_signal = vbox([slider_noise])
+	end
+end;
+
+# ╔═╡ 6974a88f-0d7f-43e3-a74d-53c8d0f98652
+begin
+	sidebar2 = Div([
+		md""" **Signal**""",
+		md"---",
+		hbox([selection_function_bond, 
+			md"``\hspace{25mm}``", 
+			sliders_signal
+		]),
+		md"---",
+		extra_artifacts
+	], class="plutoui-sidebar aside second")
+end
+
 # ╔═╡ 352c8ed9-2070-485b-8d12-4370c2850cf9
 rng = MersenneTwister(parse(Int64, selection_function));
 
@@ -524,9 +526,6 @@ end;
 begin
 	selection_method_bond = @bind selection_method Radio(
 			["1"=>"FIR causal", "2"=>"FIR acausal", "3"=> "Butterworth", "4"=>"Chebychev1"], default="2")
-	#selection_method_bond = @bind selection_method Radio(
-	#		["4"=>"FIR causal", "2"=>"FIR acausal", "1"=> "Butterworth", "
-	#3"=>"Chebychev1"], default="2")
 end;
 
 # ╔═╡ 3a3fc8a3-788e-471d-b7f4-7e6fe8be42e7
@@ -2016,6 +2015,7 @@ version = "0.9.1+5"
 # ╟─04ea0e0e-ceca-42bf-ad08-d0c558b14484
 # ╟─00ceec9c-83de-4990-b28b-2550c649de94
 # ╟─047b33a6-6cf0-4670-8452-b7f76a2c2dcb
+# ╟─644c6cfb-c39b-418b-a8a9-dcb7a86a1fec
 # ╟─e3caab76-c034-4966-94f8-3b9b6e4201de
 # ╟─352c8ed9-2070-485b-8d12-4370c2850cf9
 # ╟─fd7b297b-29ec-488c-a866-a2128f9224bf
