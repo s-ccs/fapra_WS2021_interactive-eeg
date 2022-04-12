@@ -1,6 +1,6 @@
 [Export]
 baked_notebookfile = false
-pluto_cdn_root = "https://cdn.jsdelivr.net/gh/llips/Pluto.jl@HEAD/frontend/"
+#pluto_cdn_root = "https://cdn.jsdelivr.net/gh/llips/Pluto.jl@HEAD/frontend/"
 
 [SliderServer]
 port = 2345
