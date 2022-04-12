@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.18.4
+# v0.19.0
 
 using Markdown
 using InteractiveUtils
@@ -2261,7 +2261,7 @@ version = "0.9.1+5"
 # ╟─b589d979-44c3-4919-b2bb-1319fec230a1
 # ╟─c0cab26b-6513-4153-8ede-388587bc44ef
 # ╟─bc0124c0-a9a2-424c-a45e-757589825c8b
-# ╟─f143c8ac-fc02-49bc-af3f-fc64b90c0494
+# ╠═f143c8ac-fc02-49bc-af3f-fc64b90c0494
 # ╟─29ad628a-a6a6-481f-a70f-b5ad0f6a02ad
 # ╟─28970003-cb8d-4ddf-9f9a-a9473a50a817
 # ╟─3b2f63e3-7183-4f84-b0cd-4851c1e594ac
