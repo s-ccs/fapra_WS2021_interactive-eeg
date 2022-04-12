@@ -71,15 +71,15 @@ sidebar = Div([
 	md"""##### Change it up""",
 	md"""Select a nonlinear function$(test = @bind bt_nonLinearFun Select(["x","x²","sin(x)"],default="x²"))""",
 	md"---",
-	md"""How many samples? $(@bind n_samples PlutoUI.Slider(5:5:100;default=40,show_value=true))""",
+	md"""How many samples? $(@bind n_samples PlutoUI.Slider(5:15:100;default=50,show_value=true))""",
 	md"---",
-	md"""Scale the noise σ: 	$(@bind σ PlutoUI.Slider(0:0.1:1;default=0.2,show_value=true))""",
+	md"""Scale the noise σ: 	$(@bind σ PlutoUI.Slider(0:0.2:1;default=0.2,show_value=true))""",
 	md"---",
 	md"##### Plot 2",
 	md""" Weight basisfunctions by β?$(@bind bt_weighted CheckBox())""",
 	md"---",
 	md"##### Plot 2&3",
-	md"""Number of splines $(@bind n_splines PlutoUI.Slider(3:1:50;default=10,show_value=true))""",
+	md"""Number of splines $(@bind n_splines PlutoUI.Slider([3:10..., 20, 50];default=10,show_value=true))""",
 	
 	],
 	
