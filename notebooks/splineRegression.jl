@@ -76,7 +76,7 @@ sidebar = Div([
 	md"""Scale the noise σ: 	$(@bind σ PlutoUI.Slider(0:0.2:1;default=0.2,show_value=true))""",
 	md"---",
 	md"##### Plot 2",
-	md""" Weight basisfunctions by β?$(@bind bt_weighted CheckBox())""",
+	md""" Weight basisfunctions by β?$(@bind bt_weighted CheckBox(default=true))""",
 	md"---",
 	md"##### Plot 2&3",
 	md"""Number of splines $(@bind n_splines PlutoUI.Slider([3:10..., 20, 50];default=10,show_value=true))""",
@@ -126,6 +126,10 @@ begin
 	ax1 = Axis(fig1[1,1])
 	ax2 = Axis(fig2[1,1])
 	ax3 = Axis(fig3[1,1])
+
+	lines!(ax2,x,Float64.(splBasis*β[2:end]),color="black",linewidth=10) #
+
+	# plot individual splines
 	for k = 1:n_splines
 		
 		if bt_weighted
@@ -146,6 +150,7 @@ begin
 	plot!(ax3,x,nonLinearFun(x),color="gray") # org Function
 	scatter!(ax3,events.continuousA,data[1,1,:])
 	lines!(ax3,x,Float64.(splBasis*β[2:end].+β[1]),color="black",linewidth=10) #
+	
 	ylims!(ax1,(-2,2))
 	#ylims!(ax2,(-1,4))
 	#ylims!(ax3,(-2,2))
