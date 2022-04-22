@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.18.4
+# v0.19.0
 
 using Markdown
 using InteractiveUtils
@@ -261,8 +261,31 @@ md""" # Filter Effects & Artefacts"""
 
 # ╔═╡ 7c34beab-4932-4fa1-8309-838b404b7596
 md"""
-This is an interactive notebook about filters and the consequences you need to be aware of if you use filters. Before we come to the interactive part (the plots and the options in the sidebar), we briefly discuss some general knowledge about filtering in EEG.
+This is an interactive notebook about filters and the consequences you need to be aware of if you use filters. While the interactive part is at the top, we briefly discuss some general knowledge about filtering in EEG below it - be sure to check it out!
 """
+
+# ╔═╡ 3ae1b7ac-e676-4f4d-ba1d-b6e2014046a7
+md"""
+## Interactive Plots
+"""
+
+# ╔═╡ aed71610-558e-466d-a031-c81bc7b71460
+begin
+	data = [
+		(signal="Unit Impulse", freq="-", ftype="Lowpass", fmethod="FIR causal", low_cutoff="10 Hz", high_cutoff="-", notes="=> causal"),
+		(signal="Unit Impulse", freq="-", ftype="Lowpass", fmethod="FIR acausal", low_cutoff="10 Hz", high_cutoff="-", notes="=> acausal"),
+		(signal="Unit Impulse", freq="-", ftype="Lowpass", fmethod="Butterworth", low_cutoff="10 Hz", high_cutoff="-", notes="=> causal"),
+		(signal="Unit Impulse", freq="-", ftype="Lowpass", fmethod="Chebychev1", low_cutoff="10 Hz", high_cutoff="-", notes="=> causal"),
+		(signal="ERP", freq="-", ftype="Highpass", fmethod="FIR", low_cutoff="-", high_cutoff="1 Hz", notes="-")
+	]
+	df = DataFrame(data)
+
+	md"""###### Example Configurations
+ 	Here are some example configuration which produce some interesting structures...\
+	Hint: Start by comparing the impulse response of the unit impulse to get an better understanding. of the filters.
+ 	$(df)
+	"""
+end
 
 # ╔═╡ 6a13b44c-211a-4b72-b74a-49974dbd227f
 md"""
@@ -355,29 +378,6 @@ The filter types are named straight forward. Once you've heard them you understa
 md"""
 !!! note \"More Background Information\"
 	If you want to get a more detailed background in filters, this [MNE Tutorial](https://mne.tools/dev/auto_tutorials/preprocessing/25_background_filtering.html) as well as this [Paper](https://doi.org/10.1016/j.neuron.2019.02.039) is a great resource! 
-"""
-
-# ╔═╡ aed71610-558e-466d-a031-c81bc7b71460
-begin
-	data = [
-		(signal="Unit Impulse", freq="-", ftype="Lowpass", fmethod="FIR causal", low_cutoff="10 Hz", high_cutoff="-", notes="=> causal"),
-		(signal="Unit Impulse", freq="-", ftype="Lowpass", fmethod="FIR acausal", low_cutoff="10 Hz", high_cutoff="-", notes="=> acausal"),
-		(signal="Unit Impulse", freq="-", ftype="Lowpass", fmethod="Butterworth", low_cutoff="10 Hz", high_cutoff="-", notes="=> causal"),
-		(signal="Unit Impulse", freq="-", ftype="Lowpass", fmethod="Chebychev1", low_cutoff="10 Hz", high_cutoff="-", notes="=> causal"),
-		(signal="ERP", freq="-", ftype="Highpass", fmethod="FIR", low_cutoff="-", high_cutoff="1 Hz", notes="-")
-	]
-	df = DataFrame(data)
-
-	md"""## Example Configurations
- 	Here are some example configuration which produce some interesting structures...\
-	Hint: Start by comparing the impulse response of the unit impulse to get an better understanding. of the filters.
- 	$(df)
-	"""
-end
-
-# ╔═╡ 3ae1b7ac-e676-4f4d-ba1d-b6e2014046a7
-md"""
-## Interactive Plots
 """
 
 # ╔═╡ d7972009-03aa-4c3a-903a-751c2fd01424
@@ -1993,6 +1993,10 @@ version = "0.9.1+5"
 # ╔═╡ Cell order:
 # ╟─90966406-941e-11ec-213c-ef9ebe29ca85
 # ╟─7c34beab-4932-4fa1-8309-838b404b7596
+# ╟─3ae1b7ac-e676-4f4d-ba1d-b6e2014046a7
+# ╟─89d523bd-0a4b-4eec-ad17-2ed48c346630
+# ╟─e802afe4-1e15-4228-921e-9f3ca98b3ab9
+# ╟─aed71610-558e-466d-a031-c81bc7b71460
 # ╟─6a13b44c-211a-4b72-b74a-49974dbd227f
 # ╟─61bd5619-151f-4a15-ab74-fbc88faf91a0
 # ╟─fb838cbe-55c4-4294-9e0f-9a4ca31a6fcb
@@ -2000,18 +2004,14 @@ version = "0.9.1+5"
 # ╟─b2baa9dc-93cb-45bd-bb06-aa5dd4a08cea
 # ╟─758654b7-e5a0-4554-82e9-a6876bc13174
 # ╟─a6e53659-ed15-4bfc-a72b-0ac3bcca16ac
-# ╟─aed71610-558e-466d-a031-c81bc7b71460
-# ╟─3ae1b7ac-e676-4f4d-ba1d-b6e2014046a7
 # ╟─8045a798-c881-46d6-bc6e-44d076e0b8b2
-# ╟─89d523bd-0a4b-4eec-ad17-2ed48c346630
-# ╟─e802afe4-1e15-4228-921e-9f3ca98b3ab9
-# ╟─46687a8d-32dc-4806-bf11-c8ce2273c598
-# ╟─d7972009-03aa-4c3a-903a-751c2fd01424
-# ╟─e0a8a22d-9131-48db-9817-e12dc5edf638
-# ╟─6974a88f-0d7f-43e3-a74d-53c8d0f98652
-# ╟─3a3fc8a3-788e-471d-b7f4-7e6fe8be42e7
-# ╟─b0430c29-453e-4b77-bf74-84a8b349102d
-# ╟─8f8cc0bb-d54e-42d6-94b5-dbfb8126504c
+# ╠═46687a8d-32dc-4806-bf11-c8ce2273c598
+# ╠═d7972009-03aa-4c3a-903a-751c2fd01424
+# ╠═e0a8a22d-9131-48db-9817-e12dc5edf638
+# ╠═6974a88f-0d7f-43e3-a74d-53c8d0f98652
+# ╠═3a3fc8a3-788e-471d-b7f4-7e6fe8be42e7
+# ╠═b0430c29-453e-4b77-bf74-84a8b349102d
+# ╠═8f8cc0bb-d54e-42d6-94b5-dbfb8126504c
 # ╟─04ea0e0e-ceca-42bf-ad08-d0c558b14484
 # ╟─00ceec9c-83de-4990-b28b-2550c649de94
 # ╟─047b33a6-6cf0-4670-8452-b7f76a2c2dcb

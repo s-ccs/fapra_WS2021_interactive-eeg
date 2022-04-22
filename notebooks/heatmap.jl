@@ -16,6 +16,8 @@ end
 
 # ╔═╡ 522b4dcc-5eaa-11ec-1e07-7d526bcb09f2
 begin
+			using PlutoUI.ExperimentalLayout: vbox, hbox, Div
+
 using CairoMakie
 using DataFrames
 	using Random
@@ -23,20 +25,9 @@ using DataFrames
 	using Distributions
 	using GaussianRandomFields
 	using StatsBase
-
+using 	HypertextLiteral
 	using PlutoUI
 end
-
-# ╔═╡ bc2590d5-982b-4946-a624-2f52fd8c5dbc
-md"""
-Random Seed: $(@bind seed PlutoUI.Slider(1:3,default=1,show_value=true)) 
-
-KernelSize: $(@bind kernelSizeVisAng PlutoUI.Slider(0.1:1:10,default=3,show_value=true))° visual angle
-
-
-Plot Fixations on top? $(@bind plotScatter PlutoUI.CheckBox())
-"""
-
 
 # ╔═╡ fe7874d3-7baa-465c-8c2d-8f4f8008ee51
 md"### The code"
@@ -67,6 +58,45 @@ cov = CovarianceFunction(2, Matern(1/10, 5/4))
 	grf = GaussianRandomField(cov, CirculantEmbedding(), pts, pts, minpadding=2001)
 end;
 
+# ╔═╡ a35a6f48-9cd2-4f93-9daf-4fcea8842366
+md"""
+### Sampling Fixations
+We have to sample the Field now, This is extremely inefficient code, I thinkg a solution based on modulo & round(division) should work, but I was too foggy to follow it up. So for now it is slow :)
+"""
+
+
+# ╔═╡ f550fc5b-a1a5-4bc2-8ad6-031ab222ebba
+begin	# SIDEBAR
+	sidebar = Div([@htl("""<header>
+			<span class="sidebar-toggle open-sidebar">🕹</span>
+     		<span class="sidebar-toggle closed-sidebar">🕹</span>
+			Interactive Sliders
+			</header>"""),
+		md"""Here are all interactive bits of the notebook at one place.\
+		Feel free to change them!"""
+	], class="plutoui-sidebar aside")
+	
+
+extra_artifacts = vbox([
+	hbox([md" $(@bind plotScatter PlutoUI.CheckBox(default=true))", md"Plot Fixations on Top?"]),
+	hbox([ md"Kernel Size: ",md"$(@bind kernelSizeVisAng PlutoUI.Slider(0.1:1:10,default=3,show_value=true))",md"°"]),
+	hbox([md"Example Number: ",md"$(@bind seed PlutoUI.Slider(1:3,default=1,show_value=true))",]) 
+]);
+	
+	sidebar = Div([@htl("""<header>
+			<span class="sidebar-toggle open-sidebar">🕹</span>
+     		<span class="sidebar-toggle closed-sidebar">🕹</span>
+			Interactive Sliders
+			</header>"""),
+		md"""Here are all interactive bits of the notebook at one place.\
+		Feel free to change them!""",
+		extra_artifacts,
+	], class="plutoui-sidebar aside")
+
+	
+	sidebar
+end
+
 # ╔═╡ ffb180cd-e290-481d-912d-656032965960
 begin
 	RngRandomFields = Random.MersenneTwister(seed);
@@ -76,13 +106,6 @@ begin
 
 	vecP=vec(p)
 end;
-
-# ╔═╡ a35a6f48-9cd2-4f93-9daf-4fcea8842366
-md"""
-### Sampling Fixations
-We have to sample the Field now, This is extremely inefficient code, I thinkg a solution based on modulo & round(division) should work, but I was too foggy to follow it up. So for now it is slow :)
-"""
-
 
 # ╔═╡ bd8d2f5d-7c4b-4949-81c7-438490a748dd
 begin
@@ -118,11 +141,240 @@ end
 	f
 end
 
+# ╔═╡ 4fb984a6-5c00-4c86-acc4-f37d3eedbc44
+heatmap(dataHist.weights)
+
 # ╔═╡ c8e0ddc1-3a6f-4c04-acdd-f95e952ab773
 scatter(data[:,1],data[:,2])
 
-# ╔═╡ 4fb984a6-5c00-4c86-acc4-f37d3eedbc44
-heatmap(dataHist.weights)
+# ╔═╡ b14e8ea9-88ec-4454-9bd5-52c9f929d9ac
+# CSS Code
+	html"""
+	<style>
+		:root {
+			--image-filters: invert(1) hue-rotate(180deg) contrast(0.8);
+			--out-of-focus-opacity: 0.5;
+			--main-bg-color: hsl(0deg 0% 12%);
+			--rule-color: rgba(255, 255, 255, 0.15);
+			--kbd-border-color: #222222;
+			--header-bg-color: hsl(30deg 3% 16%);
+			--header-border-color: transparent;
+			--ui-button-color: rgb(255, 255, 255);
+			--cursor-color: white;
+			--normal-cell: 100, 100, 100;
+			--error-color: 255, 125, 125;
+			--normal-cell-color: rgba(var(--normal-cell), 0.2);
+			--dark-normal-cell-color: rgba(var(--normal-cell), 0.4);
+			--selected-cell-color: rgb(40 147 189 / 65%);
+			--code-differs-cell-color: #9b906c;
+			--error-cell-color: rgba(var(--error-color), 0.6);
+			--bright-error-cell-color: rgba(var(--error-color), 0.9);
+			--light-error-cell-color: rgba(var(--error-color), 0);
+			--export-bg-color: hsl(225deg 17% 18%);
+			--export-color: rgb(255 255 255 / 84%);
+			--export-card-bg-color: rgb(73 73 73);
+			--export-card-title-color: rgba(255, 255, 255, 0.85);
+			--export-card-text-color: rgb(255 255 255 / 70%);
+			--export-card-shadow-color: #0000001c;
+			--pluto-schema-types-color: rgba(255, 255, 255, 0.6);
+			--pluto-schema-types-border-color: rgba(255, 255, 255, 0.2);
+			--pluto-dim-output-color: hsl(0, 0, 70%);
+			--pluto-output-color: hsl(0deg 0% 77%);
+			--pluto-output-h-color: hsl(0, 0%, 90%);
+			--pluto-output-bg-color: var(--main-bg-color);
+			--a-underline: #ffffff69;
+			--blockquote-color: inherit;
+			--blockquote-bg: #2e2e2e;
+			--admonition-title-color: black;
+			--jl-message-color: rgb(38 90 32);
+			--jl-message-accent-color: rgb(131 191 138);
+			--jl-info-color: rgb(42 73 115);
+			--jl-info-accent-color: rgb(92 140 205);
+			--jl-warn-color: rgb(96 90 34);
+			--jl-warn-accent-color: rgb(221 212 100);
+			--jl-danger-color: rgb(100 47 39);
+			--jl-danger-accent-color: rgb(255, 117, 98);
+			--jl-debug-color: hsl(288deg 33% 27%);
+			--jl-debug-accent-color: hsl(283deg 59% 69%);
+			--table-border-color: rgba(255, 255, 255, 0.2);
+			--table-bg-hover-color: rgba(193, 192, 235, 0.15);
+			--pluto-tree-color: rgb(209 207 207 / 61%);
+			--disabled-cell-bg-color: rgba(139, 139, 139, 0.25);
+			--selected-cell-bg-color: rgb(42 115 205 / 78%);
+			--hover-scrollbar-color-1: rgba(0, 0, 0, 0.15);
+			--hover-scrollbar-color-2: rgba(0, 0, 0, 0.05);
+			--shoulder-hover-bg-color: rgba(255, 255, 255, 0.05);
+			--pluto-logs-bg-color: hsl(240deg 10% 29%);
+			--pluto-logs-progress-fill: #5f7f5b;
+			--pluto-logs-progress-border: hsl(210deg 35% 72%);
+			--nav-h1-text-color: white;
+			--nav-filepicker-color: #b6b6b6;
+			--nav-filepicker-border-color: #c7c7c7;
+			--nav-process-status-bg-color: rgb(82, 82, 82);
+			--nav-process-status-color: var(--pluto-output-h-color);
+			--restart-recc-header-color: rgb(44 106 157 / 56%);
+			--restart-req-header-color: rgb(145 66 60 / 56%);
+			--dead-process-header-color: rgba(250, 75, 21, 0.473);
+			--loading-header-color: hsl(0deg 0% 20% / 50%);
+			--disconnected-header-color: rgba(255, 169, 114, 0.56);
+			--binder-loading-header-color: hsl(51deg 64% 90% / 50%);
+			--loading-grad-color-1: #a9d4f1;
+			--loading-grad-color-2: #d0d4d7;
+			--overlay-button-bg: #2c2c2c;
+			--overlay-button-border: #c7a74670;
+			--overlay-button-color: white;
+			--input-context-menu-border-color: rgba(255, 255, 255, 0.1);
+			--input-context-menu-bg-color: rgb(39, 40, 47);
+			--input-context-menu-soon-color: #b1b1b144;
+			--input-context-menu-hover-bg-color: rgba(255, 255, 255, 0.1);
+			--input-context-menu-li-color: #c7c7c7;
+			--pkg-popup-bg: #3d2f44;
+			--pkg-popup-border-color: #574f56;
+			--pkg-popup-buttons-bg-color: var(--input-context-menu-bg-color);
+			--black: white;
+			--white: black;
+			--pkg-terminal-bg-color: #252627;
+			--pkg-terminal-border-color: #c3c3c388;
+			--pluto-runarea-bg-color: rgb(43, 43, 43);
+			--pluto-runarea-span-color: hsl(353, 5%, 64%);
+			--dropruler-bg-color: rgba(255, 255, 255, 0.1);
+			--jlerror-header-color: #d9baba;
+			--jlerror-mark-bg-color: rgb(0 0 0 / 18%);
+			--jlerror-a-bg-color: rgba(82, 58, 58, 0.5);
+			--jlerror-a-border-left-color: #704141;
+			--jlerror-mark-color: #b1a9a9;
+			--helpbox-bg-color: rgb(30 34 31);
+			--helpbox-box-shadow-color: #00000017;
+			--helpbox-header-bg-color: #2c3e36;
+			--helpbox-header-color: rgb(255 248 235);
+			--helpbox-notfound-header-color: rgb(139, 139, 139);
+			--helpbox-text-color: rgb(230, 230, 230);
+			--code-section-bg-color: rgb(44, 44, 44);
+			--code-section-border-color: #555a64;
+			--footer-color: #cacaca;
+			--footer-bg-color: rgb(38, 39, 44);
+			--footer-atag-color: rgb(114, 161, 223);
+			--footer-input-border-color: #6c6c6c;
+			--footer-filepicker-button-color: black;
+			--footer-filepicker-focus-color: #9d9d9d;
+			--footnote-border-color: rgba(114, 225, 231, 0.15);
+			--undo-delete-box-shadow-color: rgba(213, 213, 214, 0.2);
+			--cm-editor-tooltip-border-color: rgba(0, 0, 0, 0.2);
+			--cm-editor-li-aria-selected-bg-color: #3271e7;
+			--cm-editor-li-aria-selected-color: white;
+			--cm-editor-li-notexported-color: rgba(255, 255, 255, 0.5);
+			--code-background: hsl(222deg 16% 19%);
+			--cm-code-differs-gutters-color: rgb(235 213 28 / 11%);
+			--cm-line-numbers-color: #8d86875e;
+			--cm-selection-background: hsl(215deg 64% 59% / 48%);
+			--cm-selection-background-blurred: hsl(215deg 0% 59% / 48%);
+			--cm-editor-text-color: #ffe9fc;
+			--cm-comment-color: #e96ba8;
+			--cm-atom-color: hsl(8deg 72% 62%);
+			--cm-number-color: hsl(271deg 45% 64%);
+			--cm-property-color: #f99b15;
+			--cm-keyword-color: #ff7a6f;
+			--cm-string-color: hsl(20deg 69% 59%);
+			--cm-var-color: #afb7d3;
+			--cm-var2-color: #06b6ef;
+			--cm-macro-color: #82b38b;
+			--cm-builtin-color: #5e7ad3;
+			--cm-function-color: #f99b15;
+			--cm-type-color: hsl(51deg 32% 44%);
+			--cm-bracket-color: #a2a273;
+			--cm-tag-color: #ef6155;
+			--cm-link-color: #815ba4;
+			--cm-error-bg-color: #ef6155;
+			--cm-error-color: #f7f7f7;
+			--cm-matchingBracket-color: white;
+			--cm-matchingBracket-bg-color: #c58c237a;
+			--cm-placeholder-text-color: rgb(255 255 255 / 20%);
+			--autocomplete-menu-bg-color: var(--input-context-menu-bg-color);
+			--index-text-color: rgb(199, 199, 199);
+			--index-clickable-text-color: rgb(235, 235, 235);
+			--docs-binding-bg: #323431;
+			--cm-html-color: #00ab85;
+			--cm-html-accent-color: #00e7b4;
+			--cm-css-color: #ebd073;
+			--cm-css-accent-color: #fffed2;
+			--cm-css-why-doesnt-codemirror-highlight-all-the-text-aaa: #ffffea;
+			--cm-md-color: #a2c9d5;
+			--cm-md-accent-color: #00a9d1;
+		}
+		
+		div.plutoui-sidebar.aside {
+			position: fixed;
+			right: 1rem;
+			top: 10rem;
+			width: min(80vw, 25%);
+			padding: 10px;
+			border: 3px solid rgba(0, 0, 0, 0.15);
+			border-radius: 10px;
+			box-shadow: 0 0 11px 0px #00000010;
+			max-height: calc(100vh - 5rem - 56px);
+			overflow: auto;
+			z-index: 40;
+			background: white;
+			transition: transform 300ms cubic-bezier(0.18, 0.89, 0.45, 1.12);
+			color: var(--pluto-output-color);
+			background-color: var(--main-bg-color);
+		}
+
+		.second {
+			top: 18rem !important;
+		}
+
+		.third {
+			top: 31.25rem !important;
+		}
+
+		.fourth {
+			top: 40.75rem !important;
+		}
+		
+		div.plutoui-sidebar.aside.hide {
+			transform: translateX(calc(100% - 28px));
+		}
+		
+		.plutoui-sidebar header {
+			display: block;
+			font-size: 1.5em;
+			margin-top: -0.1em;
+			margin-bottom: 0.4em;
+			padding-bottom: 0.4em;
+			margin-left: 0;
+			margin-right: 0;
+			font-weight: bold;
+			border-bottom: 2px solid rgba(0, 0, 0, 0.15);
+		}
+		
+		.plutoui-sidebar.aside.hide .open-sidebar, .plutoui-sidebar.aside:not(.hide) .closed-sidebar, .plutoui-sidebar:not(.aside) .closed-sidebar {
+			display: none;
+		}
+
+		.sidebar-toggle {
+			cursor: pointer;
+		}
+
+		div.admonition.info {
+			background: rgba(60,60,60,1) !important;
+			border-color: darkgrey !important
+		}
+		
+		div.admonition.info .admonition-title {
+			background: darkgrey !important;
+		}
+	</style>
+	<script>
+		document.addEventListener('click', event => {
+			if (event.target.classList.contains("sidebar-toggle")) {
+				document.querySelectorAll('.plutoui-sidebar').forEach(function(el) {
+   					el.classList.toggle("hide");
+				});
+			}
+		});
+	</script>
+	"""
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -131,6 +383,7 @@ CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 GaussianRandomFields = "e4b2fa32-6e09-5554-b718-106ed5adafe9"
+HypertextLiteral = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
 ImageFiltering = "6a3955dd-da59-5b1f-98d4-e7296123deb5"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
@@ -141,6 +394,7 @@ CairoMakie = "~0.6.6"
 DataFrames = "~1.3.0"
 Distributions = "~0.25.36"
 GaussianRandomFields = "~2.1.5"
+HypertextLiteral = "~0.9.3"
 ImageFiltering = "~0.7.1"
 PlutoUI = "~0.7.23"
 StatsBase = "~0.33.13"
@@ -1358,7 +1612,6 @@ version = "3.5.0+0"
 """
 
 # ╔═╡ Cell order:
-# ╟─bc2590d5-982b-4946-a624-2f52fd8c5dbc
 # ╟─442dfdfa-ca25-430c-9628-d40d9125c2b9
 # ╟─fe7874d3-7baa-465c-8c2d-8f4f8008ee51
 # ╟─3ecc0d4f-278f-4679-9d58-5cfb94ab12b6
@@ -1374,5 +1627,7 @@ version = "3.5.0+0"
 # ╠═6e2e265a-dd1e-4f6d-8259-f533967ad843
 # ╠═c8e0ddc1-3a6f-4c04-acdd-f95e952ab773
 # ╠═4fb984a6-5c00-4c86-acc4-f37d3eedbc44
+# ╠═f550fc5b-a1a5-4bc2-8ad6-031ab222ebba
+# ╠═b14e8ea9-88ec-4454-9bd5-52c9f929d9ac
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
