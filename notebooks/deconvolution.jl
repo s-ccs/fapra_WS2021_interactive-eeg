@@ -14,14 +14,6 @@ macro bind(def, element)
     end
 end
 
-# ╔═╡ 17a23f15-53a3-4ec4-a50b-1a3d9eb1a78d
-begin
-	#import Pkg
-	#Pkg.develop(path="/Users/luis/git/Plots.jl")
-	#Pkg.instantiate()
-	using Plots
-end
-
 # ╔═╡ fa539a20-447e-11ec-0a13-71fa39527f8f
 begin
 	using PlutoUI
@@ -258,48 +250,30 @@ begin
 	"""
 end
 
+# ╔═╡ 17a23f15-53a3-4ec4-a50b-1a3d9eb1a78d
+begin
+	#import Pkg
+	#Pkg.develop(path="/Users/luis/git/Plots.jl")
+	#Pkg.instantiate()
+	using Plots
+end
+
 # ╔═╡ 8b39f28e-d889-4f98-9601-380e015b7d35
 md"""
 # Deconvolution (Overlap-Correction)
+*An interactive exploration by **Luis Lips** under the supervision of **Benedikt Ehinger**.*
 
 Let's get right into it - you are probably asking yourself, what is this about? Do i need to know this? Here is a small motivation...
 
-In state-of-the-art EEG research the experiment setup is highly controlled and simplified in a way to avoid overlaps of stimuli responses. This means often only a single stimulation per trial is presented. But the more complex and realistic the research topic, the more complex gets the experiment design. Up to a point were it isn't anymore possible to avoid overlaps. Examples for this are experiments were eye tracking and EEG is combined or the tracking of EEG data in a free environment. However also classic EEG research experiments often contain overlapping responses as simple as a manual button presses or involuntary microsaccades. 
+In state-of-the-art EEG research the experiment setup is highly controlled and simplified in a way to avoid **temporal overlaps** of brain responses to stimuli. This means often, that we ensure to have only a single event per trial. But the more complex and realistic the research topic, the more complex gets the experiment design. Up to a point were it isn't anymore possible to avoid temporal overlap. Examples for this are experiments were eye tracking and EEG is combined or the tracking of EEG data in a free environment. However also classic EEG research experiments often contain overlapping responses as simple as a stimulus with a button press.
 
-In this case adequately modeling of those overlaps, different to simple averaging is required! If not further considered, this can lead to wrong interpretations and false reasoning.
+In this case adequately modeling of those overlaps, different to simple averaging is required! **If not further considered, this can lead to wrong interpretations and false reasoning.**
 
 This notebook should give an intuition **why** the approach of deconvolution should further be investigated and **what** the consequences of not accounting for overlaps are!
 """
 
 # ╔═╡ fbed300c-0778-480c-bd88-8e8b06f4fc20
 md""" #### Deconvolution (Left) vs. Without-Deconvolution (Right)"""
-
-# ╔═╡ 34e215c5-9278-4906-890a-2563c8a87b08
-let
-	img_path = "comparison.png"
-	load(img_path)
-end
-
-# ╔═╡ 129ce3d1-93dd-4c75-b56d-f8756e9b5ab9
-Plots.default(
-		linewidth=2, 
-		background_color=:transparent, 
-		foreground_color=:white,
-		formatter = :plain, 
-		legend=:outerbottom
-	)
-
-# ╔═╡ 32a4879a-7916-4b33-93cf-1e5a395c62b7
-begin
-	sidebar = Div([@htl("""<header>
-			<span class="sidebar-toggle open-sidebar">🕹</span>
-     		<span class="sidebar-toggle closed-sidebar">🕹</span>
-			Interactive Sliders
-			</header>"""),
-		md"""Here are all interactive bits of the notebook at one place.\
-		Feel free to change them!"""
-	], class="plutoui-sidebar aside")
-end
 
 # ╔═╡ a9d99a1d-59f2-4c02-89dd-33c9a27db84a
 md"""
@@ -493,18 +467,6 @@ elseif selection_erp_b ==4
 		\\cdot ℯ^{-(\\frac{t - $(d)}{\\frac{1}{8}})^{2}}\$")
 end
 
-# ╔═╡ ffa5a4be-f4c2-434b-badb-053c7d0b2672
-begin
-	sidebar2 = Div([
-		md""" **Stimuli Response**""",
-		selection_erp_a_bond,
-		l_a,
-		md"""""",
-		selection_erp_b_bond,
-		l_b,
-	], class="plutoui-sidebar aside second")
-end
-
 # ╔═╡ 0bb4cf30-6e78-41d0-8fa5-bbef696ef9f6
 begin
 	# plot erp b
@@ -538,16 +500,6 @@ end
 begin	
 	slider_mean = md"""Change mean:μ\_1 = $(@bind μ Slider(0:0.4:2, default=0, 
 		show_value=true))"""
-end
-
-# ╔═╡ ff745930-696a-4700-a084-5130b2895da4
-begin
-	sidebar3 = Div([
-		md""" **Event onsets**""",
-		slider_deviation,
-		md"""""",
-		slider_mean,
-	], class="plutoui-sidebar aside third")
 end
 
 # ╔═╡ 4cbafc47-71c7-4dfa-9deb-f1b9ca418426
@@ -713,15 +665,6 @@ begin
 	slider_noise = md"""Change noise: σ = $(@bind σ Slider([0, 0.4, 0.8, 1.6], default=0, show_value=true))"""
 end
 
-# ╔═╡ 14df787b-01bb-441b-8a59-658b185bc415
-begin
-	sidebar4 = Div([
-		md""" **Linear Deconvolution**""",
-		slider_noise,
-		#slider_window
-	], class="plutoui-sidebar aside fourth")
-end
-
 # ╔═╡ bd06e0c4-4728-4c6f-a1d0-a371c91750fd
 begin
 	range = 0:0.1:600;
@@ -881,6 +824,67 @@ begin
 		label="", xlims=τ)
 	
 	plot(pₒ, pₘ, layout=(1,2), legend=false)
+end
+
+# ╔═╡ 34e215c5-9278-4906-890a-2563c8a87b08
+let
+	#img_path = "comparison.png"
+	#load(img_path)
+		plot(pₒ, pₘ, layout=(1,2), legend=false)
+end
+
+# ╔═╡ 14df787b-01bb-441b-8a59-658b185bc415
+begin
+	sidebar4 = Div([
+		md""" **Linear Deconvolution**""",
+		slider_noise,
+		#slider_window
+	], class="plutoui-sidebar aside fourth")
+end
+
+# ╔═╡ ffa5a4be-f4c2-434b-badb-053c7d0b2672
+begin
+	sidebar2 = Div([
+		md""" **Stimuli Response**""",
+		selection_erp_a_bond,
+		l_a,
+		md"""""",
+		selection_erp_b_bond,
+		l_b,
+	], class="plutoui-sidebar aside second")
+end
+
+# ╔═╡ ff745930-696a-4700-a084-5130b2895da4
+begin
+	sidebar3 = Div([
+		md""" **Event onsets**""",
+		slider_deviation,
+		md"""""",
+		slider_mean,
+	], class="plutoui-sidebar aside third")
+end
+
+# ╔═╡ 129ce3d1-93dd-4c75-b56d-f8756e9b5ab9
+Plots.default(
+		linewidth=2, 
+		background_color=:transparent, 
+		foreground_color=:white,
+		formatter = :plain, 
+		legend=:outerbottom
+	)
+
+# ╔═╡ 32a4879a-7916-4b33-93cf-1e5a395c62b7
+begin
+	sidebar = Div([@htl("""<header>
+			<span class="sidebar-toggle open-sidebar">🕹</span>
+     		<span class="sidebar-toggle closed-sidebar">🕹</span>
+			Interactive Sliders
+			</header>"""),
+		md"""Here are all interactive bits of the notebook at one place.\
+		Feel free to change them!"""
+	], class="plutoui-sidebar aside")
+
+	
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -2847,13 +2851,6 @@ version = "0.9.1+5"
 # ╟─8b39f28e-d889-4f98-9601-380e015b7d35
 # ╟─fbed300c-0778-480c-bd88-8e8b06f4fc20
 # ╟─34e215c5-9278-4906-890a-2563c8a87b08
-# ╟─17a23f15-53a3-4ec4-a50b-1a3d9eb1a78d
-# ╟─fa539a20-447e-11ec-0a13-71fa39527f8f
-# ╟─129ce3d1-93dd-4c75-b56d-f8756e9b5ab9
-# ╟─32a4879a-7916-4b33-93cf-1e5a395c62b7
-# ╟─ffa5a4be-f4c2-434b-badb-053c7d0b2672
-# ╟─ff745930-696a-4700-a084-5130b2895da4
-# ╟─14df787b-01bb-441b-8a59-658b185bc415
 # ╟─a9d99a1d-59f2-4c02-89dd-33c9a27db84a
 # ╟─18f302aa-35d5-441e-ad18-a107d4bf9cc4
 # ╟─df5a7318-de9f-487d-907b-9535620f95ba
@@ -2904,5 +2901,12 @@ version = "0.9.1+5"
 # ╟─d22a9b9c-b57c-4c34-b1e9-fce1392631ee
 # ╟─71b0682e-228b-48fe-8754-a81b42abb948
 # ╟─f0f36214-29f6-4483-b39c-4a65b78f5f03
+# ╟─14df787b-01bb-441b-8a59-658b185bc415
+# ╟─fa539a20-447e-11ec-0a13-71fa39527f8f
+# ╟─ffa5a4be-f4c2-434b-badb-053c7d0b2672
+# ╟─ff745930-696a-4700-a084-5130b2895da4
+# ╟─129ce3d1-93dd-4c75-b56d-f8756e9b5ab9
+# ╟─32a4879a-7916-4b33-93cf-1e5a395c62b7
+# ╟─17a23f15-53a3-4ec4-a50b-1a3d9eb1a78d
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

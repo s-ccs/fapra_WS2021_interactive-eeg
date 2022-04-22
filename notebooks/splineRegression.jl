@@ -28,6 +28,13 @@ begin
 end
 
 
+# ╔═╡ f20df51d-9d12-473a-904e-7d80e0a23b61
+md"""
+## Spline Regression
+*An interactive exploration by **Benedikt Ehinger** with support from **Luis Lips**.*
+
+"""
+
 # ╔═╡ e026cfe6-61fb-48b0-bda9-2969c28d8956
 html"""
 <h4>Figure 1. <span style="color:gray">Non-Linear function</span> and sampled <span style="color:darkblue">datapoints</span></h4>
@@ -1788,6 +1795,7 @@ version = "3.5.0+0"
 """
 
 # ╔═╡ Cell order:
+# ╟─f20df51d-9d12-473a-904e-7d80e0a23b61
 # ╟─e026cfe6-61fb-48b0-bda9-2969c28d8956
 # ╟─c3a54666-7e61-4950-9ca9-7390da43f5ec
 # ╟─09449f95-851c-4b27-8464-488b5f3465af

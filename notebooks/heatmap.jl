@@ -29,6 +29,12 @@ using 	HypertextLiteral
 	using PlutoUI
 end
 
+# ╔═╡ 4c9f5e44-8245-4080-bf08-2fd9fa5d9ce6
+md"""
+## Eye Tracking Heatmaps
+*An interactive exploration by **Benedikt Ehinger** with support from **Luis Lips**.*
+"""
+
 # ╔═╡ fe7874d3-7baa-465c-8c2d-8f4f8008ee51
 md"### The code"
 
@@ -1612,6 +1618,7 @@ version = "3.5.0+0"
 """
 
 # ╔═╡ Cell order:
+# ╟─4c9f5e44-8245-4080-bf08-2fd9fa5d9ce6
 # ╟─442dfdfa-ca25-430c-9628-d40d9125c2b9
 # ╟─fe7874d3-7baa-465c-8c2d-8f4f8008ee51
 # ╟─3ecc0d4f-278f-4679-9d58-5cfb94ab12b6

@@ -268,11 +268,14 @@ begin
 	)
 	md"""
 	# Cluster Permutation Test
+	*An interactive exploration by **Luis Lips** under the supervision of **Benedikt Ehinger**.*
+	\
+	\
 	
 	No matter in which field you work, if you are in research, you can't avoid statistics. \
 	Even if you would like. 
 	
-	This interactive tutorial has the goal to give you an insight into cluster permutation tests. Afterwards should be clear why cluster permutation is used and how it works! This journey is separated into five steps.
+	This interactive tutorial has the goal to give you an insight into **cluster permutation tests**. Afterwards should be clear why cluster permutation is used and how it works! This journey is separated into five steps.
 	"""
 end
 
@@ -2224,13 +2227,8 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
-# ╟─1f7c5d20-9239-11ec-177b-a3278b921aee
 # ╟─4f29192e-d5b2-4007-a022-e6f16c294f8f
 # ╟─291903ea-ca84-440e-81ae-0aaffdd8f38e
-# ╟─3540008c-5597-4b78-be59-ab7d368549fa
-# ╟─d422f53f-86ea-4a34-9319-914a79c494ac
-# ╟─2537bb83-5154-4791-a984-58614ba1d5b4
-# ╟─d717352e-e926-4ff2-b5ea-4547cf7b58ad
 # ╟─f4728014-2a2f-452d-bbe2-2a4995874bea
 # ╟─65baa13b-4f64-40ad-8798-34cc59a6db53
 # ╟─f3679998-b5a8-4cdc-bcc1-36e61eaab852
@@ -2261,8 +2259,12 @@ version = "0.9.1+5"
 # ╟─b589d979-44c3-4919-b2bb-1319fec230a1
 # ╟─c0cab26b-6513-4153-8ede-388587bc44ef
 # ╟─bc0124c0-a9a2-424c-a45e-757589825c8b
-# ╠═f143c8ac-fc02-49bc-af3f-fc64b90c0494
+# ╟─f143c8ac-fc02-49bc-af3f-fc64b90c0494
 # ╟─29ad628a-a6a6-481f-a70f-b5ad0f6a02ad
+# ╟─d422f53f-86ea-4a34-9319-914a79c494ac
+# ╟─2537bb83-5154-4791-a984-58614ba1d5b4
+# ╟─3540008c-5597-4b78-be59-ab7d368549fa
+# ╟─d717352e-e926-4ff2-b5ea-4547cf7b58ad
 # ╟─28970003-cb8d-4ddf-9f9a-a9473a50a817
 # ╟─3b2f63e3-7183-4f84-b0cd-4851c1e594ac
 # ╟─e3a35d10-af7b-4ea5-be1f-116658ecf244
@@ -2270,5 +2272,6 @@ version = "0.9.1+5"
 # ╟─b9422e74-0497-4ddc-9b57-7b701d5a08b2
 # ╟─38ec8e97-612a-40e7-90c7-8dea4b2f1dcd
 # ╟─5cc0197b-ab07-4557-92d2-aad9d5b34399
+# ╟─1f7c5d20-9239-11ec-177b-a3278b921aee
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

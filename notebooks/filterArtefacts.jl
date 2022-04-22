@@ -261,12 +261,18 @@ md""" # Filter Effects & Artefacts"""
 
 # ╔═╡ 7c34beab-4932-4fa1-8309-838b404b7596
 md"""
+*An interactive exploration by **Luis Lips** under Supervision of **Benedikt Ehinger**.*
+
 This is an interactive notebook about filters and the consequences you need to be aware of if you use filters. While the interactive part is at the top, we briefly discuss some general knowledge about filtering in EEG below it - be sure to check it out!
 """
+
+# ╔═╡ 45e61910-19cb-4bbb-bb04-c54f3ebf67a7
+
 
 # ╔═╡ 3ae1b7ac-e676-4f4d-ba1d-b6e2014046a7
 md"""
 ## Interactive Plots
+Jump-start your exploration! If you need guidance, **scroll down**
 """
 
 # ╔═╡ aed71610-558e-466d-a031-c81bc7b71460
@@ -1993,6 +1999,7 @@ version = "0.9.1+5"
 # ╔═╡ Cell order:
 # ╟─90966406-941e-11ec-213c-ef9ebe29ca85
 # ╟─7c34beab-4932-4fa1-8309-838b404b7596
+# ╠═45e61910-19cb-4bbb-bb04-c54f3ebf67a7
 # ╟─3ae1b7ac-e676-4f4d-ba1d-b6e2014046a7
 # ╟─89d523bd-0a4b-4eec-ad17-2ed48c346630
 # ╟─e802afe4-1e15-4228-921e-9f3ca98b3ab9
@@ -2005,13 +2012,13 @@ version = "0.9.1+5"
 # ╟─758654b7-e5a0-4554-82e9-a6876bc13174
 # ╟─a6e53659-ed15-4bfc-a72b-0ac3bcca16ac
 # ╟─8045a798-c881-46d6-bc6e-44d076e0b8b2
-# ╠═46687a8d-32dc-4806-bf11-c8ce2273c598
-# ╠═d7972009-03aa-4c3a-903a-751c2fd01424
-# ╠═e0a8a22d-9131-48db-9817-e12dc5edf638
-# ╠═6974a88f-0d7f-43e3-a74d-53c8d0f98652
-# ╠═3a3fc8a3-788e-471d-b7f4-7e6fe8be42e7
-# ╠═b0430c29-453e-4b77-bf74-84a8b349102d
-# ╠═8f8cc0bb-d54e-42d6-94b5-dbfb8126504c
+# ╟─46687a8d-32dc-4806-bf11-c8ce2273c598
+# ╟─d7972009-03aa-4c3a-903a-751c2fd01424
+# ╟─e0a8a22d-9131-48db-9817-e12dc5edf638
+# ╟─6974a88f-0d7f-43e3-a74d-53c8d0f98652
+# ╟─3a3fc8a3-788e-471d-b7f4-7e6fe8be42e7
+# ╟─b0430c29-453e-4b77-bf74-84a8b349102d
+# ╟─8f8cc0bb-d54e-42d6-94b5-dbfb8126504c
 # ╟─04ea0e0e-ceca-42bf-ad08-d0c558b14484
 # ╟─00ceec9c-83de-4990-b28b-2550c649de94
 # ╟─047b33a6-6cf0-4670-8452-b7f76a2c2dcb
