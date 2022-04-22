@@ -266,9 +266,6 @@ md"""
 This is an interactive notebook about filters and the consequences you need to be aware of if you use filters. While the interactive part is at the top, we briefly discuss some general knowledge about filtering in EEG below it - be sure to check it out!
 """
 
-# ╔═╡ 45e61910-19cb-4bbb-bb04-c54f3ebf67a7
-
-
 # ╔═╡ 3ae1b7ac-e676-4f4d-ba1d-b6e2014046a7
 md"""
 ## Interactive Plots
@@ -1999,7 +1996,6 @@ version = "0.9.1+5"
 # ╔═╡ Cell order:
 # ╟─90966406-941e-11ec-213c-ef9ebe29ca85
 # ╟─7c34beab-4932-4fa1-8309-838b404b7596
-# ╠═45e61910-19cb-4bbb-bb04-c54f3ebf67a7
 # ╟─3ae1b7ac-e676-4f4d-ba1d-b6e2014046a7
 # ╟─89d523bd-0a4b-4eec-ad17-2ed48c346630
 # ╟─e802afe4-1e15-4228-921e-9f3ca98b3ab9
