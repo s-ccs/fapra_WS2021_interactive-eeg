@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.0
+# v0.19.2
 
 using Markdown
 using InteractiveUtils
@@ -295,35 +295,6 @@ Already with a small number of timepoints and electrodes the probability of a fa
  Therfore other possibilities need to be look at! Cluster Permutation Tests for example :)
 """
 
-# ╔═╡ 3540008c-5597-4b78-be59-ab7d368549fa
-begin
-	sidebar = Div([@htl("""<header>
-			<span class="sidebar-toggle open-sidebar">🕹</span>
-     		<span class="sidebar-toggle closed-sidebar">🕹</span>
-			Interactive Sliders
-			</header>"""),
-		md"""Here are all interactive bits of the notebook at one place.\
-		Feel free to change them!"""
-	], class="plutoui-sidebar aside")
-end
-
-# ╔═╡ d717352e-e926-4ff2-b5ea-4547cf7b58ad
-begin
-	###
-	# Generate Pink Noise separatly (because of reactivity of pluto)
-	# used for example and stimulus A, B
-	###
-	
-	# range for data generation
-	range = 0:0.1:12
-
-	# length of range for pink noise generation
-	range_length = size(range)[1] 
-
-	# generation of pink noise
-	pink_noise = PinkGaussian(range_length, 5.0) 
-end;
-
 # ╔═╡ f4728014-2a2f-452d-bbe2-2a4995874bea
 md"""## Step 0: Data, pinknoise & clustermass"""
 
@@ -397,6 +368,9 @@ By interacting with the corresponding buttons below you can see how the histogra
 # ╔═╡ bde97247-b7ec-483a-965f-c93446e24c3a
 md"""**...and calculate the clustersize...**"""
 
+# ╔═╡ 45afc614-5a7f-4de1-8a4a-d251636309cf
+
+
 # ╔═╡ d3ad1686-3900-435a-9e4e-302c0cf70797
 md"""**...and add the clustersize to the histogram.**"""
 
@@ -417,6 +391,35 @@ We now check whether our observed cluster mass (Step 2) is greater than 95% of w
 
 If we would have initially observed multiple clusters, we can check each against the same distribution.
 """
+
+# ╔═╡ 3540008c-5597-4b78-be59-ab7d368549fa
+begin
+	sidebar = Div([@htl("""<header>
+			<span class="sidebar-toggle open-sidebar">🕹</span>
+     		<span class="sidebar-toggle closed-sidebar">🕹</span>
+			Interactive Sliders
+			</header>"""),
+		md"""Here are all interactive bits of the notebook at one place.\
+		Feel free to change them!"""
+	], class="plutoui-sidebar aside")
+end
+
+# ╔═╡ d717352e-e926-4ff2-b5ea-4547cf7b58ad
+begin
+	###
+	# Generate Pink Noise separatly (because of reactivity of pluto)
+	# used for example and stimulus A, B
+	###
+	
+	# range for data generation
+	range = 0:0.1:12
+
+	# length of range for pink noise generation
+	range_length = size(range)[1] 
+
+	# generation of pink noise
+	pink_noise = PinkGaussian(range_length, 5.0) 
+end;
 
 # ╔═╡ 28970003-cb8d-4ddf-9f9a-a9473a50a817
 md"""
@@ -570,16 +573,6 @@ begin
 		$(@bind p Slider([0.01, 0.02, 0.04, 0.08, 0.16], default=0.05, show_value=true))"""
 end
 
-# ╔═╡ d422f53f-86ea-4a34-9319-914a79c494ac
-begin
-	sidebar2 = Div([
-		md""" **Data, pinknoise & observed clustermass**""",
-		slider_effect,
-		md"""""",
-		slider_pinknoise,
-	], class="plutoui-sidebar aside second")
-end
-
 # ╔═╡ 9d399b21-50ac-45eb-b4b7-ead4c639842f
 begin
 	###
@@ -669,6 +662,16 @@ begin
 	value = Markdown.parse("\$$observed_clustermass\$")
 
 	Div(hbox([text, value]), style="display: flex;justify-content: center;")
+end
+
+# ╔═╡ d422f53f-86ea-4a34-9319-914a79c494ac
+begin
+	sidebar2 = Div([
+		md""" **Data, pinknoise & observed clustermass**""",
+		slider_effect,
+		md"""""",
+		slider_pinknoise,
+	], class="plutoui-sidebar aside second")
 end
 
 # ╔═╡ ea360fa1-ed47-41c7-aa41-dc8ea77d2f9a
@@ -768,20 +771,12 @@ begin
 	slider_permutation = md"""Change the permutation step $(@bind i Slider([1,2,3,4,5,6,7,8,9,10,20,30,50,100, 1000], default=1, show_value=true))"""
 end
 
-# ╔═╡ 2537bb83-5154-4791-a984-58614ba1d5b4
-begin
-	sidebar3 = Div([
-		md""" **Permutation of data**""",
-		slider_permutation
-	], class="plutoui-sidebar aside third")
-end
-
 # ╔═╡ cc436498-aebc-4207-8bf3-9f84b13df023
 begin
 	###
 	# Plot for tvalues
 	###
-
+	p
 	# create plot
 	plot(range, tvalues[i], ylims=(-5, 5), fillrange = fill(threshold, 
 		length(range)), fillalpha = 0.35, c = :lightgrey, size=(600,300), xlims=(0,11.9))
@@ -911,6 +906,14 @@ let
 		$(info(t3))
 		"""
 	end
+end
+
+# ╔═╡ 2537bb83-5154-4791-a984-58614ba1d5b4
+begin
+	sidebar3 = Div([
+		md""" **Permutation of data**""",
+		slider_permutation
+	], class="plutoui-sidebar aside third")
 end
 
 # ╔═╡ 5cc0197b-ab07-4557-92d2-aad9d5b34399
@@ -1779,9 +1782,9 @@ uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
 [[deps.Qt5Base_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Fontconfig_jll", "Glib_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "OpenSSL_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libxcb_jll", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_keysyms_jll", "Xorg_xcb_util_renderutil_jll", "Xorg_xcb_util_wm_jll", "Zlib_jll", "xkbcommon_jll"]
-git-tree-sha1 = "ad368663a5e20dbb8d6dc2fddeefe4dae0781ae8"
+git-tree-sha1 = "c6c0f690d0cc7caddb74cef7aa847b824a16b256"
 uuid = "ea2cea3b-5b76-57ae-a6ef-0a8af62496e1"
-version = "5.15.3+0"
+version = "5.15.3+1"
 
 [[deps.QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]
@@ -2253,6 +2256,7 @@ version = "0.9.1+5"
 # ╟─5956d03a-d429-4dc8-a996-fbbf44fdaf9e
 # ╟─bde97247-b7ec-483a-965f-c93446e24c3a
 # ╟─cc436498-aebc-4207-8bf3-9f84b13df023
+# ╠═45afc614-5a7f-4de1-8a4a-d251636309cf
 # ╟─d3ad1686-3900-435a-9e4e-302c0cf70797
 # ╟─f6ef2113-7f3c-4474-81cf-ea1ed11ddd00
 # ╟─d28e3b0d-0dff-40dd-9caa-20f6a2e55ce2

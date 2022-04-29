@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.0
+# v0.19.2
 
 using Markdown
 using InteractiveUtils
@@ -28,7 +28,6 @@ begin
 	using PlutoUI.ExperimentalLayout: vbox, hbox, Div
 	using HypertextLiteral
 	using Distributions
-	plotly()
 	
 	html"""
 	<style>
@@ -256,6 +255,16 @@ begin
 	#Pkg.develop(path="/Users/luis/git/Plots.jl")
 	#Pkg.instantiate()
 	using Plots
+	plotly()
+	Plots.default(
+		linewidth=2, 
+		background_color=:transparent, 
+		foreground_color=:white,
+		formatter = :plain, 
+		legend=:outerbottom
+	)
+
+
 end
 
 # ╔═╡ 8b39f28e-d889-4f98-9601-380e015b7d35
@@ -865,13 +874,7 @@ begin
 end
 
 # ╔═╡ 129ce3d1-93dd-4c75-b56d-f8756e9b5ab9
-Plots.default(
-		linewidth=2, 
-		background_color=:transparent, 
-		foreground_color=:white,
-		formatter = :plain, 
-		legend=:outerbottom
-	)
+
 
 # ╔═╡ 32a4879a-7916-4b33-93cf-1e5a395c62b7
 begin
@@ -2248,9 +2251,9 @@ version = "0.2.1"
 
 [[deps.Qt5Base_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Fontconfig_jll", "Glib_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "OpenSSL_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libxcb_jll", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_keysyms_jll", "Xorg_xcb_util_renderutil_jll", "Xorg_xcb_util_wm_jll", "Zlib_jll", "xkbcommon_jll"]
-git-tree-sha1 = "ad368663a5e20dbb8d6dc2fddeefe4dae0781ae8"
+git-tree-sha1 = "c6c0f690d0cc7caddb74cef7aa847b824a16b256"
 uuid = "ea2cea3b-5b76-57ae-a6ef-0a8af62496e1"
-version = "5.15.3+0"
+version = "5.15.3+1"
 
 [[deps.QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]
