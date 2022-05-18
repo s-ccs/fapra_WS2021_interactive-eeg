@@ -811,7 +811,7 @@ md"""
 
 This plot shows the comparison between the **deconvolution with overlap correction** (left) and the **mass-univariate approach** (right).
 
-As a reminder: Feel free to play around with the interaactive parts (at the right side) and compare the results for differnt functions and values.
+As a reminder: Feel free to play around with the interaactive parts (at the right side) and compare the results for different functions and values.
 """
 
 # ╔═╡ f0f36214-29f6-4483-b39c-4a65b78f5f03
